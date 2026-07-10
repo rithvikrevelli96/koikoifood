@@ -1,0 +1,8 @@
+{
+  "name": "Koi Koi Dabba",
+  "description": "An interactive subscription and onboarding application for Koi Koi Dabba meals, showcasing meal details, plans, tracking, and personalized diet setups.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
