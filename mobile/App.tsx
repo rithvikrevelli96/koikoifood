@@ -85,6 +85,7 @@ import {
   Users,
   X
 } from 'lucide-react-native';
+import FluidAnimationsDemo from './FluidAnimationsDemo';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -142,10 +143,11 @@ type Screen =
   | 'splash' | 'ob1' | 'ob2' | 'ob3' | 'auth'
   | 'setup1' | 'setup2' | 'setup3'
   | 'home' | 'meals' | 'kitchen' | 'profile'
-  | 'meal_detail' | 'subscribe_flow'
+  | 'meal_detail' | 'subscribe_flow' | 'tour_booking'
   | 'notifications' | 'tracking' | 'offers' | 'rewards'
   | 'appearance' | 'support' | 'addresses' | 'payments'
-  | 'personal' | 'refer' | 'plans' | 'health_info';
+  | 'personal' | 'refer' | 'plans' | 'health_info'
+  | 'animation_demo';
 
 // ─── Food Images (Unsplash High-Quality) ───────────────────────────────────
 
@@ -566,6 +568,81 @@ export default function App() {
   const [showLocationPermission, setShowLocationPermission] = useState(false);
   const [showMapSelection, setShowMapSelection] = useState(false);
   const [selectedMapPinIdx, setSelectedMapPinIdx] = useState(0);
+  const [selectedPlanId, setSelectedPlanId] = useState<string>('monthly');
+  const [showManageOptions, setShowManageOptions] = useState<boolean>(false);
+  const [checkoutMealPref, setCheckoutMealPref] = useState<'Veg' | 'Non-Veg'>('Veg');
+  const [checkoutFreq, setCheckoutFreq] = useState<'lunch' | 'dinner' | 'both'>('both');
+  const [checkoutCustomPrefs, setCheckoutCustomPrefs] = useState<string[]>(['Medium Spicy']);
+  const [checkoutStartDate, setCheckoutStartDate] = useState<'tomorrow' | 'custom'>('tomorrow');
+  const [tourDate, setTourDate] = useState('15-07-2026');
+  const [tourTimeSlot, setTourTimeSlot] = useState('11:30 AM');
+  const [tourVisitors, setTourVisitors] = useState(1);
+  const [tourContactName, setTourContactName] = useState('');
+  const [tourContactPhone, setTourContactPhone] = useState('');
+
+  const getNumericPrice = (priceStr: string) => {
+    return parseInt(priceStr.replace(/[^0-9]/g, ''), 10) || 0;
+  };
+
+  // Pinterest style Menu Carousel Animations and Tabs
+  const [activeMealIndex, setActiveMealIndex] = useState(0);
+  const [menuActiveTab, setMenuActiveTab] = useState<'recipes' | 'customize'>('recipes');
+  const plateScale = useRef(new Animated.Value(1)).current;
+  const plateRotate = useRef(new Animated.Value(0)).current;
+  const plateFade = useRef(new Animated.Value(1)).current;
+  const touchStartRef = useRef(0);
+  const touchStartRefY = useRef(0);
+
+  // Derived filtered meals for boundaries
+  const currentFilteredMeals = useMemo(() => {
+    return MEALS.filter(m => {
+      let matchesType = true;
+      if (selectedFilter === 'Veg') matchesType = m.type === 'veg';
+      else if (selectedFilter === 'Non-Veg') matchesType = m.type === 'non-veg';
+      else if (selectedFilter === 'Egg') matchesType = m.type === 'egg';
+
+      let matchesCat = true;
+      if (selectedCategory !== 'All Menu' && selectedCategory !== 'All Categories') {
+        matchesCat = m.categories.includes(selectedCategory);
+      }
+
+      return matchesType && matchesCat;
+    });
+  }, [selectedFilter, selectedCategory]);
+
+  // Adjust active index when filters change
+  useEffect(() => {
+    if (activeMealIndex >= currentFilteredMeals.length) {
+      setActiveMealIndex(0);
+    }
+  }, [selectedFilter, selectedCategory, currentFilteredMeals.length]);
+
+  // Animate active plate on change
+  useEffect(() => {
+    plateScale.setValue(0.5);
+    plateRotate.setValue(-0.8);
+    plateFade.setValue(0.3);
+
+    Animated.parallel([
+      Animated.spring(plateScale, {
+        toValue: 1,
+        friction: 6,
+        tension: 30,
+        useNativeDriver: true
+      }),
+      Animated.spring(plateRotate, {
+        toValue: 0,
+        friction: 7,
+        tension: 25,
+        useNativeDriver: true
+      }),
+      Animated.timing(plateFade, {
+        toValue: 1,
+        duration: 250,
+        useNativeDriver: true
+      })
+    ]).start();
+  }, [activeMealIndex]);
 
   const calorieCalc = useMemo(() => {
     const w = parseFloat(user.weight) || 70;
@@ -3426,12 +3503,52 @@ export default function App() {
               </View>
             </View>
             
+            <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+              <TouchableOpacity
+                style={{ paddingHorizontal: 12, height: 44, borderRadius: 22, backgroundColor: t.card, borderWidth: 1, borderColor: t.border, flexDirection: 'row', alignItems: 'center', gap: 6 }}
+                onPress={() => go('payments')}
+              >
+                <Wallet size={16} color={B.orange} />
+                <Text style={{ fontSize: 13, fontWeight: '900', color: t.text }}>₹1,250</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: t.card, borderWidth: 1, borderColor: t.border, justifyContent: 'center', alignItems: 'center' }}
+                onPress={() => go('notifications')}
+              >
+                <Bell size={20} color={t.text} />
+                <View style={{ position: 'absolute', top: 12, right: 12, width: 8, height: 8, borderRadius: 4, backgroundColor: '#EF4444' }} />
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Fluid Animations Demo Link */}
+          <View style={{ paddingHorizontal: 16, marginTop: 16 }}>
             <TouchableOpacity
-              style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: t.card, borderWidth: 1, borderColor: t.border, justifyContent: 'center', alignItems: 'center' }}
-              onPress={() => go('notifications')}
+              onPress={() => go('animation_demo')}
+              style={{
+                backgroundColor: B.orange,
+                borderRadius: 20,
+                paddingVertical: 12,
+                paddingHorizontal: 16,
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                shadowColor: B.orange,
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.15,
+                shadowRadius: 8,
+                elevation: 3
+              }}
             >
-              <Bell size={20} color={t.text} />
-              <View style={{ position: 'absolute', top: 12, right: 12, width: 8, height: 8, borderRadius: 4, backgroundColor: '#EF4444' }} />
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <Sparkles size={16} color="#FFFFFF" />
+                <View>
+                  <Text style={{ color: '#FFFFFF', fontSize: 13, fontWeight: '800' }}>Fluid Animations Demo</Text>
+                  <Text style={{ color: 'rgba(255, 255, 255, 0.85)', fontSize: 10, marginTop: 1 }}>3D Carousel, Bottom Sheet, Shared List, Particle Arc</Text>
+                </View>
+              </View>
+              <ChevronRight size={16} color="#FFFFFF" />
             </TouchableOpacity>
           </View>
 
@@ -3795,7 +3912,7 @@ export default function App() {
     );
   }
 
-  // 8. Meals Screen (Daily Menu)
+  // 8. Meals Screen (Daily Menu & Customized Setup)
   function RenderMeals() {
     const filteredMeals = mealsList.filter(m => {
       let matchesType = true;
@@ -3805,246 +3922,843 @@ export default function App() {
 
       let matchesCat = true;
       if (selectedCategory !== 'All Menu' && selectedCategory !== 'All Categories') {
-        matchesCat = m.categories.includes(selectedCategory);
+        let targetCat = selectedCategory;
+        if (selectedCategory === 'Chef Special') targetCat = 'Chef Specials';
+        if (selectedCategory === 'Healthy Diet') targetCat = 'Healthy';
+        if (selectedCategory === 'Traditional thali') {
+          matchesCat = m.categories.includes('South Indian') || m.categories.includes('North Indian') || m.categories.includes('Andhra');
+        } else if (selectedCategory === 'Quick Bites') {
+          matchesCat = m.categories.includes('Lunch') || m.categories.includes('Dinner');
+        } else {
+          matchesCat = m.categories.includes(targetCat);
+        }
       }
 
       return matchesType && matchesCat;
     });
 
+    const activeMeal = filteredMeals[activeMealIndex] || filteredMeals[0] || MEALS[0];
+    const prevMeal = activeMealIndex > 0 ? filteredMeals[activeMealIndex - 1] : filteredMeals[filteredMeals.length - 1];
+    const nextMeal = activeMealIndex < filteredMeals.length - 1 ? filteredMeals[activeMealIndex + 1] : filteredMeals[0];
+
+    const rotateInterpolated = plateRotate.interpolate({
+      inputRange: [-0.8, 0, 0.8],
+      outputRange: ['-30deg', '0deg', '30deg']
+    });
+
+    const handleTouchStart = (evt: any) => {
+      const pageX = evt.nativeEvent.pageX || (evt.nativeEvent.touches && evt.nativeEvent.touches[0] ? evt.nativeEvent.touches[0].pageX : 0);
+      const pageY = evt.nativeEvent.pageY || (evt.nativeEvent.touches && evt.nativeEvent.touches[0] ? evt.nativeEvent.touches[0].pageY : 0);
+      touchStartRef.current = pageX;
+      touchStartRefY.current = pageY;
+    };
+
+    const handleMoveShouldSetResponder = (evt: any) => {
+      const pageX = evt.nativeEvent.pageX || (evt.nativeEvent.touches && evt.nativeEvent.touches[0] ? evt.nativeEvent.touches[0].pageX : 0);
+      const pageY = evt.nativeEvent.pageY || (evt.nativeEvent.touches && evt.nativeEvent.touches[0] ? evt.nativeEvent.touches[0].pageY : 0);
+      const dx = Math.abs(pageX - touchStartRef.current);
+      const dy = Math.abs(pageY - touchStartRefY.current);
+      return dx > 20 && dx > dy;
+    };
+
+    const handleResponderRelease = (evt: any) => {
+      const currentX = evt.nativeEvent.pageX || (evt.nativeEvent.changedTouches && evt.nativeEvent.changedTouches[0] ? evt.nativeEvent.changedTouches[0].pageX : 0);
+      const dx = currentX - touchStartRef.current;
+      if (Math.abs(dx) > 40) {
+        if (dx > 0) {
+          setActiveMealIndex(prev => prev > 0 ? prev - 1 : filteredMeals.length - 1);
+        } else {
+          setActiveMealIndex(prev => prev < filteredMeals.length - 1 ? prev + 1 : 0);
+        }
+      }
+    };
+
     const categoryList = ['All Menu', 'Chef Special', 'Healthy Diet', 'Traditional thali', 'Quick Bites'];
 
     return (
       <SafeAreaView style={[styles.safeArea, { backgroundColor: 'transparent' }]}>
-        {/* Header */}
-        <View style={{ paddingHorizontal: 16, paddingTop: 16, paddingBottom: 12 }}>
-          <Text style={{ fontSize: 28, fontWeight: '900', color: t.text, letterSpacing: -0.5 }}>Daily Menu</Text>
-          <Text style={{ fontSize: 12, color: t.sub, marginTop: 2 }}>Curated home-cooked recipes, made fresh daily.</Text>
+        {/* Top Header Bar */}
+        <View style={{ paddingHorizontal: 20, paddingTop: 16, paddingBottom: 8, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <View>
+            <Text style={{ fontSize: 24, fontWeight: '900', color: t.text, letterSpacing: -0.5 }}>Koi Koi Dabba</Text>
+            <Text style={{ fontSize: 11, color: t.sub, marginTop: 2 }}>Premium food menu & customization</Text>
+          </View>
+          <TouchableOpacity onPress={() => go('notifications')} style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: t.card, borderWidth: 1, borderColor: t.border, justifyContent: 'center', alignItems: 'center' }}>
+            <Bell size={18} color={t.text} />
+          </TouchableOpacity>
         </View>
 
-        {/* Veg/Non-Veg Filter Row */}
-        <View style={{ flexDirection: 'row', paddingHorizontal: 16, marginTop: 12, gap: 8 }}>
-          {['All', 'Veg', 'Non-Veg', 'Egg'].map(f => {
-            const isSelected = selectedFilter === f;
-            return (
-              <TouchableOpacity
-                key={f}
-                style={{
-                  paddingHorizontal: 16,
-                  paddingVertical: 8,
-                  borderRadius: 12,
-                  borderWidth: 1,
-                  borderColor: isSelected ? B.orange : t.border,
-                  backgroundColor: isSelected ? B.orangeL : t.card
-                }}
-                onPress={() => setSelectedFilter(f)}
-              >
-                <Text style={{ fontSize: 12, fontWeight: 'bold', color: isSelected ? B.orange : t.text }}>
-                  {f}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-
-        {/* Categories Horizontal Scroll */}
-        <View style={{ marginTop: 12 }}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}>
-            {categoryList.map(cat => {
-              const isSelected = selectedCategory === cat || (cat === 'All Menu' && selectedCategory === 'All Categories');
-              return (
-                <TouchableOpacity
-                  key={cat}
-                  style={{
-                    paddingHorizontal: 16,
-                    paddingVertical: 8,
-                    borderRadius: 20,
-                    borderWidth: 1,
-                    borderColor: isSelected ? B.orange : t.border,
-                    backgroundColor: isSelected ? B.orange : t.card
-                  }}
-                  onPress={() => setSelectedCategory(cat === 'All Menu' ? 'All Categories' : cat)}
-                >
-                  <Text style={{ fontSize: 12, fontWeight: 'bold', color: isSelected ? '#FFFFFF' : t.sub }}>
-                    {cat}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
-        </View>
-
-        {/* Meals Grid */}
-        <FlatList
-          data={filteredMeals}
-          keyExtractor={item => item.id.toString()}
-          contentContainerStyle={{ padding: 16, paddingBottom: 110, gap: 16 }}
-          showsVerticalScrollIndicator={false}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              style={{
-                backgroundColor: t.card,
-                borderRadius: 24,
-                borderWidth: 1,
-                borderColor: t.border,
-                overflow: 'hidden',
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 6 },
-                shadowOpacity: 0.02,
-                shadowRadius: 12,
-                elevation: 2
-              }}
-              onPress={() => {
-                setSelectedMealId(item.id);
-                go('meal_detail');
+        {/* Pinterest Style Tabs Toggle: Recipes | Customize */}
+        <View style={{ 
+          flexDirection: 'row', 
+          justifyContent: 'center', 
+          alignItems: 'center', 
+          marginVertical: 14,
+          paddingHorizontal: 20
+        }}>
+          <View style={{ 
+            flexDirection: 'row', 
+            backgroundColor: t.card, 
+            borderRadius: 25, 
+            padding: 4, 
+            borderWidth: 1.5, 
+            borderColor: t.border,
+            width: '80%'
+          }}>
+            <TouchableOpacity 
+              onPress={() => setMenuActiveTab('recipes')}
+              style={{ 
+                flex: 1, 
+                paddingVertical: 10, 
+                borderRadius: 20, 
+                backgroundColor: menuActiveTab === 'recipes' ? B.orange : 'transparent',
+                alignItems: 'center'
               }}
             >
-              <View style={{ height: 160, width: '100%', position: 'relative' }}>
-                <Image source={{ uri: item.img }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
-                <View style={{ position: 'absolute', top: 12, left: 12, flexDirection: 'row', gap: 6 }}>
-                  <VegPill veg={item.type === 'veg'} />
-                </View>
-                <View style={{ position: 'absolute', top: 12, right: 12, backgroundColor: 'rgba(0,0,0,0.6)', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 10, flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                  <Star size={12} color="#F59E0B" />
-                  <Text style={{ fontSize: 10, fontWeight: 'bold', color: '#FFFFFF' }}>{item.rating}</Text>
-                </View>
-              </View>
-
-              <View style={{ padding: 16 }}>
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <View style={{ flex: 1, marginRight: 8 }}>
-                    <Text style={{ fontSize: 16, fontWeight: '900', color: t.text }}>{item.name}</Text>
-                    <Text style={{ fontSize: 12, color: t.sub, marginTop: 4 }} numberOfLines={1}>{item.desc}</Text>
-                  </View>
-                  <Text style={{ fontSize: 18, fontWeight: '900', color: B.orange }}>{item.price}</Text>
-                </View>
-
-                {/* Nutrition Stats Row */}
-                <View style={{ flexDirection: 'row', backgroundColor: t.input, borderRadius: 14, padding: 10, marginTop: 12, justifyContent: 'space-between', alignItems: 'center' }}>
-                  <View style={{ alignItems: 'center' }}>
-                    <Text style={{ fontSize: 11, fontWeight: 'bold', color: t.text }}>{item.cal} kcal</Text>
-                    <Text style={{ fontSize: 9, color: t.muted, marginTop: 2 }}>Calories</Text>
-                  </View>
-                  <View style={{ width: 1, height: 16, backgroundColor: t.border }} />
-                  <View style={{ alignItems: 'center' }}>
-                    <Text style={{ fontSize: 11, fontWeight: 'bold', color: t.text }}>{item.protein}g</Text>
-                    <Text style={{ fontSize: 9, color: t.muted, marginTop: 2 }}>Protein</Text>
-                  </View>
-                  <View style={{ width: 1, height: 16, backgroundColor: t.border }} />
-                  <View style={{ alignItems: 'center' }}>
-                    <Text style={{ fontSize: 11, fontWeight: 'bold', color: t.text }}>{item.carbs}g</Text>
-                    <Text style={{ fontSize: 9, color: t.muted, marginTop: 2 }}>Carbs</Text>
-                  </View>
-                  <View style={{ width: 1, height: 16, backgroundColor: t.border }} />
-                  <View style={{ alignItems: 'center' }}>
-                    <Text style={{ fontSize: 11, fontWeight: 'bold', color: t.text }}>{item.fat}g</Text>
-                    <Text style={{ fontSize: 9, color: t.muted, marginTop: 2 }}>Fats</Text>
-                  </View>
-                </View>
-              </View>
+              <Text style={{ fontSize: 13, fontWeight: '900', color: menuActiveTab === 'recipes' ? '#FFFFFF' : t.sub }}>Recipes</Text>
             </TouchableOpacity>
-          )}
-          ListEmptyComponent={() => (
-            <View style={{ paddingVertical: 40, alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={{ fontSize: 14, color: t.text, fontWeight: 'bold' }}>No Dabbas Found</Text>
-              <Text style={{ fontSize: 12, color: t.muted, marginTop: 4 }}>Try clearing filters</Text>
+            
+            <View style={{ width: 1, height: 20, backgroundColor: t.border, alignSelf: 'center' }} />
+            
+            <TouchableOpacity 
+              onPress={() => setMenuActiveTab('customize')}
+              style={{ 
+                flex: 1, 
+                paddingVertical: 10, 
+                borderRadius: 20, 
+                backgroundColor: menuActiveTab === 'customize' ? B.orange : 'transparent',
+                alignItems: 'center'
+              }}
+            >
+              <Text style={{ fontSize: 13, fontWeight: '900', color: menuActiveTab === 'customize' ? '#FFFFFF' : t.sub }}>Customize</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {menuActiveTab === 'recipes' ? (
+          <View
+            onTouchStart={handleTouchStart}
+            onStartShouldSetResponder={() => false}
+            onMoveShouldSetResponder={handleMoveShouldSetResponder}
+            onResponderRelease={handleResponderRelease}
+            style={{ flex: 1 }}
+          >
+            <ScrollView contentContainerStyle={{ paddingBottom: 110 }} showsVerticalScrollIndicator={false}>
+            {/* Filter Pill Row */}
+            <View style={{ flexDirection: 'row', paddingHorizontal: 20, marginTop: 4, gap: 8 }}>
+              {['All', 'Veg', 'Non-Veg', 'Egg'].map(f => {
+                const isSelected = selectedFilter === f;
+                return (
+                  <TouchableOpacity
+                    key={f}
+                    style={{
+                      paddingHorizontal: 16,
+                      paddingVertical: 8,
+                      borderRadius: 14,
+                      borderWidth: 1.5,
+                      borderColor: isSelected ? B.orange : t.border,
+                      backgroundColor: isSelected ? B.orangeL : t.card
+                    }}
+                    onPress={() => setSelectedFilter(f)}
+                  >
+                    <Text style={{ fontSize: 11, fontWeight: '900', color: isSelected ? B.orange : t.text }}>
+                      {f}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
             </View>
-          )}
-        />
+
+            {/* Horizontal Food Categories Carousel */}
+            <View style={{ marginTop: 12 }}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, gap: 8 }}>
+                {categoryList.map(cat => {
+                  const isSelected = selectedCategory === cat || (cat === 'All Menu' && selectedCategory === 'All Categories');
+                  return (
+                    <TouchableOpacity
+                      key={cat}
+                      style={{
+                        paddingHorizontal: 16,
+                        paddingVertical: 8,
+                        borderRadius: 20,
+                        borderWidth: 1.5,
+                        borderColor: isSelected ? B.orange : t.border,
+                        backgroundColor: isSelected ? B.orange : t.card
+                      }}
+                      onPress={() => setSelectedCategory(cat === 'All Menu' ? 'All Categories' : cat)}
+                    >
+                      <Text style={{ fontSize: 11, fontWeight: '900', color: isSelected ? '#FFFFFF' : t.sub }}>
+                        {cat}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+            </View>
+
+            {filteredMeals.length > 0 ? (
+              <View style={{ marginTop: 20, alignItems: 'center' }}>
+                {/* Plate Carousel Box */}
+                <View 
+                  style={{ height: 230, width: '100%', flexDirection: 'row', justifyContent: 'center', alignItems: 'center', position: 'relative', overflow: 'hidden' }}
+                >
+                  
+                  {/* Glow effect behind the active circular plate */}
+                  <View 
+                    pointerEvents="none"
+                    style={{
+                      position: 'absolute',
+                      width: 220,
+                      height: 220,
+                      borderRadius: 110,
+                      backgroundColor: B.orange,
+                      opacity: isDark ? 0.08 : 0.05,
+                      zIndex: 1
+                    }} 
+                  />
+
+                  {/* Previous Plate (Left Peek) */}
+                  {filteredMeals.length > 1 && (
+                    <View 
+                      pointerEvents="none"
+                      style={{
+                        position: 'absolute',
+                        left: -50,
+                        opacity: 0.35,
+                        zIndex: 2,
+                        transform: [{ scale: 0.8 }]
+                      }}
+                    >
+                      <Image 
+                        source={{ uri: prevMeal.img }} 
+                        style={{ width: 110, height: 110, borderRadius: 55, borderWidth: 3, borderColor: t.border }} 
+                      />
+                    </View>
+                  )}
+
+                  {/* Active Plate (Centered Spotlight) */}
+                  <Animated.View 
+                    pointerEvents="none"
+                    style={{
+                      width: 190,
+                      height: 190,
+                      borderRadius: 95,
+                      zIndex: 10,
+                      elevation: 8,
+                      shadowColor: '#000',
+                      shadowOffset: { width: 0, height: 8 },
+                      shadowOpacity: 0.18,
+                      shadowRadius: 12,
+                      borderWidth: 4,
+                      borderColor: t.border,
+                      overflow: 'hidden',
+                      transform: [
+                        { scale: plateScale },
+                        { rotate: rotateInterpolated }
+                      ],
+                      opacity: plateFade
+                    }}
+                  >
+                    <Image source={{ uri: activeMeal.img }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+                  </Animated.View>
+
+                  {/* Next Plate (Right Peek) */}
+                  {filteredMeals.length > 1 && (
+                    <View 
+                      pointerEvents="none"
+                      style={{
+                        position: 'absolute',
+                        right: -50,
+                        opacity: 0.35,
+                        zIndex: 2,
+                        transform: [{ scale: 0.8 }]
+                      }}
+                    >
+                      <Image 
+                        source={{ uri: nextMeal.img }} 
+                        style={{ width: 110, height: 110, borderRadius: 55, borderWidth: 3, borderColor: t.border }} 
+                      />
+                    </View>
+                  )}
+                </View>
+
+                {/* Swiper Indicators */}
+                {filteredMeals.length > 1 && (
+                  <View style={{ flexDirection: 'row', gap: 6, marginTop: 10 }}>
+                    {filteredMeals.map((_, i) => (
+                      <View 
+                        key={i} 
+                        style={{ 
+                          width: activeMealIndex === i ? 20 : 6, 
+                          height: 6, 
+                          borderRadius: 3, 
+                          backgroundColor: activeMealIndex === i ? B.orange : t.muted 
+                        }} 
+                      />
+                    ))}
+                  </View>
+                )}
+
+                {/* Details Sheet Section */}
+                <View style={{ width: '100%', paddingHorizontal: 20, marginTop: 16, alignItems: 'center' }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <VegPill veg={activeMeal.type === 'veg'} />
+                    <View style={{ backgroundColor: B.orangeL, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                      <Star size={10} color={B.orange} />
+                      <Text style={{ fontSize: 9, fontWeight: '900', color: B.orange }}>{activeMeal.rating}</Text>
+                    </View>
+                  </View>
+
+                  <Text style={{ fontSize: 20, fontWeight: '900', color: t.text, marginTop: 8, textAlign: 'center' }}>
+                    {activeMeal.name.toUpperCase()}
+                  </Text>
+                  
+                  <Text style={{ fontSize: 13, color: t.sub, marginTop: 4, textAlign: 'center', paddingHorizontal: 16 }} numberOfLines={2}>
+                    {activeMeal.desc}
+                  </Text>
+
+                  <Text style={{ fontSize: 24, fontWeight: '900', color: B.orange, marginTop: 12 }}>
+                    {activeMeal.price}
+                  </Text>
+
+                  {/* Nutrition stats grid */}
+                  <View style={{ 
+                    flexDirection: 'row', 
+                    backgroundColor: t.card, 
+                    borderRadius: 20, 
+                    padding: 14, 
+                    marginTop: 16, 
+                    justifyContent: 'space-between', 
+                    alignItems: 'center',
+                    borderWidth: 1.5,
+                    borderColor: t.border,
+                    width: '100%'
+                  }}>
+                    <View style={{ alignItems: 'center', flex: 1 }}>
+                      <Text style={{ fontSize: 13, fontWeight: '900', color: t.text }}>{activeMeal.cal} kcal</Text>
+                      <Text style={{ fontSize: 9, color: t.muted, marginTop: 2 }}>Calories</Text>
+                    </View>
+                    <View style={{ width: 1.5, height: 20, backgroundColor: t.border }} />
+                    <View style={{ alignItems: 'center', flex: 1 }}>
+                      <Text style={{ fontSize: 13, fontWeight: '900', color: t.text }}>{activeMeal.protein}g</Text>
+                      <Text style={{ fontSize: 9, color: t.muted, marginTop: 2 }}>Protein</Text>
+                    </View>
+                    <View style={{ width: 1.5, height: 20, backgroundColor: t.border }} />
+                    <View style={{ alignItems: 'center', flex: 1 }}>
+                      <Text style={{ fontSize: 13, fontWeight: '900', color: t.text }}>{activeMeal.carbs}g</Text>
+                      <Text style={{ fontSize: 9, color: t.muted, marginTop: 2 }}>Carbs</Text>
+                    </View>
+                    <View style={{ width: 1.5, height: 20, backgroundColor: t.border }} />
+                    <View style={{ alignItems: 'center', flex: 1 }}>
+                      <Text style={{ fontSize: 13, fontWeight: '900', color: t.text }}>{activeMeal.fat}g</Text>
+                      <Text style={{ fontSize: 9, color: t.muted, marginTop: 2 }}>Fats</Text>
+                    </View>
+                  </View>
+
+                  {/* Chef Bio Details Card (like Pinterest's bottom info tile) */}
+                  <View style={{
+                    width: '100%',
+                    backgroundColor: t.card,
+                    borderRadius: 24,
+                    borderWidth: 1.5,
+                    borderColor: t.border,
+                    padding: 16,
+                    marginTop: 16,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 12
+                  }}>
+                    <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: B.orangeL, justifyContent: 'center', alignItems: 'center', borderWidth: 1.5, borderColor: B.orange }}>
+                      <Text style={{ fontSize: 20 }}>👩‍🍳</Text>
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontSize: 13, fontWeight: '900', color: t.text }}>{activeMeal.chef}</Text>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 }}>
+                        <Text style={{ fontSize: 10, color: t.sub }}>Central Kitchen Specialist</Text>
+                        <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: t.muted }} />
+                        <Text style={{ fontSize: 10, fontWeight: 'bold', color: B.orange }}>Verified</Text>
+                      </View>
+                    </View>
+                    <View style={{ alignItems: 'flex-end' }}>
+                      <Text style={{ fontSize: 13, fontWeight: '900', color: t.text }}>9.4</Text>
+                      <Text style={{ fontSize: 8, color: t.muted, marginTop: 1 }}>Rating Index</Text>
+                    </View>
+                  </View>
+
+                  {/* Action Row */}
+                  <View style={{ flexDirection: 'row', gap: 10, marginTop: 20, width: '100%' }}>
+                    <TouchableOpacity
+                      style={{
+                        flex: 1.2,
+                        height: 52,
+                        borderRadius: 26,
+                        borderWidth: 1.5,
+                        borderColor: t.border,
+                        backgroundColor: t.card,
+                        justifyContent: 'center',
+                        alignItems: 'center'
+                      }}
+                      onPress={() => {
+                        setSelectedMealId(activeMeal.id);
+                        go('meal_detail');
+                      }}
+                    >
+                      <Text style={{ fontSize: 14, fontWeight: '900', color: t.text }}>Full Recipe</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={{
+                        flex: 2,
+                        height: 52,
+                        borderRadius: 26,
+                        overflow: 'hidden',
+                        shadowColor: B.orange,
+                        shadowOffset: { width: 0, height: 4 },
+                        shadowOpacity: 0.15,
+                        shadowRadius: 8,
+                        elevation: 3
+                      }}
+                      onPress={() => {
+                        setToast(`Added ${activeMeal.name} to today's plate!`);
+                      }}
+                    >
+                      <LinearGradient colors={['#FF852C', '#FD4F1B']} style={{ flex: 1, justifyContent: 'center', alignItems: 'center', flexDirection: 'row', gap: 6 }}>
+                        <Plus size={16} color="#FFFFFF" />
+                        <Text style={{ color: '#FFFFFF', fontSize: 14, fontWeight: '900' }}>Add to Dabba</Text>
+                      </LinearGradient>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+            ) : (
+              <View style={{ paddingVertical: 80, alignItems: 'center', justifyContent: 'center' }}>
+                <Text style={{ fontSize: 15, color: t.text, fontWeight: 'bold' }}>No Dabbas Found</Text>
+                <Text style={{ fontSize: 12, color: t.muted, marginTop: 4 }}>Try clearing selected filters</Text>
+              </View>
+            )}
+            </ScrollView>
+          </View>
+        ) : (
+          /* Customize Workspace View: setup preferences and subscription packages */
+          <ScrollView contentContainerStyle={{ paddingBottom: 110, paddingHorizontal: 20 }} showsVerticalScrollIndicator={false}>
+            {/* Target Calorie Output widget */}
+            <View style={{ 
+              backgroundColor: t.card,
+              borderRadius: 28,
+              borderWidth: 1.5,
+              borderColor: t.border,
+              padding: 20,
+              marginTop: 10,
+              alignItems: 'center'
+            }}>
+              <Text style={{ fontSize: 12, fontWeight: 'bold', color: B.orange, letterSpacing: 1 }}>YOUR ADAPTIVE CALORIE BUDGET</Text>
+              <Text style={{ fontSize: 36, fontWeight: '900', color: t.text, marginTop: 8 }}>{calorieCalc} kcal</Text>
+              <Text style={{ fontSize: 11, color: t.sub, marginTop: 4, textAlign: 'center', lineHeight: 15 }}>
+                Adapts dynamically based on your height ({user.height || 178}cm), weight ({user.weight || 74}kg) & activity factor.
+              </Text>
+              <View style={{ height: 1.5, width: '80%', backgroundColor: t.border, marginVertical: 14 }} />
+              <View style={{ flexDirection: 'row', width: '100%', justifyContent: 'space-between' }}>
+                <View style={{ alignItems: 'center', flex: 1 }}>
+                  <Text style={{ fontSize: 12, fontWeight: 'bold', color: t.text }}>{Math.round(calorieCalc * 0.15)}g</Text>
+                  <Text style={{ fontSize: 9, color: t.muted, marginTop: 2 }}>Target Protein</Text>
+                </View>
+                <View style={{ width: 1.5, height: 18, backgroundColor: t.border }} />
+                <View style={{ alignItems: 'center', flex: 1 }}>
+                  <Text style={{ fontSize: 12, fontWeight: 'bold', color: t.text }}>{Math.round(calorieCalc * 0.5 / 4)}g</Text>
+                  <Text style={{ fontSize: 9, color: t.muted, marginTop: 2 }}>Target Carbs</Text>
+                </View>
+                <View style={{ width: 1.5, height: 18, backgroundColor: t.border }} />
+                <View style={{ alignItems: 'center', flex: 1 }}>
+                  <Text style={{ fontSize: 12, fontWeight: 'bold', color: t.text }}>{Math.round(calorieCalc * 0.3 / 9)}g</Text>
+                  <Text style={{ fontSize: 9, color: t.muted, marginTop: 2 }}>Target Fats</Text>
+                </View>
+              </View>
+            </View>
+
+            {/* Custom spice levels */}
+            <Text style={{ fontSize: 15, fontWeight: '900', color: t.text, marginTop: 24, marginBottom: 12 }}>Custom Spice Profile</Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+              {['🌶 Mild', '🌶🌶 Medium', '🌶🌶🌶 Spicy', '🔥 Extra Hot'].map(level => {
+                const cleanName = level.split(' ').slice(1).join(' ');
+                const isSelected = user.spiceLevel === cleanName || (user.spiceLevel === 'Medium' && cleanName === 'Medium');
+                return (
+                  <TouchableOpacity
+                    key={level}
+                    style={{
+                      paddingHorizontal: 16,
+                      paddingVertical: 10,
+                      borderRadius: 16,
+                      borderWidth: 1.5,
+                      borderColor: isSelected ? B.orange : t.border,
+                      backgroundColor: isSelected ? B.orangeL : t.card,
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 4
+                    }}
+                    onPress={() => {
+                      setUser(prev => ({ ...prev, spiceLevel: cleanName }));
+                      setToast(`Spice tolerance updated to: ${cleanName}`);
+                    }}
+                  >
+                    <Text style={{ fontSize: 12, fontWeight: 'bold', color: isSelected ? B.orange : t.text }}>{level}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
+            {/* Subscription Packages Selection */}
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 28, marginBottom: 12 }}>
+              <Text style={{ fontSize: 15, fontWeight: '900', color: t.text }}>Choose Custom Dabba Plan</Text>
+              <TouchableOpacity onPress={() => go('plans')}>
+                <Text style={{ fontSize: 11, fontWeight: 'bold', color: B.orange }}>View All Tiers →</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Package Cards */}
+            <View style={{ gap: 12 }}>
+              {PLANS.map(plan => {
+                return (
+                  <TouchableOpacity
+                    key={plan.id}
+                    style={{
+                      backgroundColor: t.card,
+                      borderRadius: 24,
+                      borderWidth: 1.5,
+                      borderColor: t.border,
+                      padding: 16,
+                      position: 'relative',
+                      overflow: 'hidden'
+                    }}
+                    onPress={() => {
+                      go('subscribe_flow');
+                    }}
+                  >
+                    {plan.badge ? (
+                      <View style={{
+                        position: 'absolute',
+                        top: 0,
+                        right: 16,
+                        backgroundColor: plan.color,
+                        paddingHorizontal: 10,
+                        paddingVertical: 4,
+                        borderBottomLeftRadius: 10,
+                        borderBottomRightRadius: 10
+                      }}>
+                        <Text style={{ fontSize: 8, fontWeight: '900', color: '#FFFFFF', letterSpacing: 0.5 }}>{plan.badge}</Text>
+                      </View>
+                    ) : null}
+
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <View>
+                        <Text style={{ fontSize: 16, fontWeight: '900', color: t.text }}>{plan.name} Dabba</Text>
+                        <Text style={{ fontSize: 11, color: t.sub, marginTop: 4 }}>{plan.sub}</Text>
+                      </View>
+                      <View style={{ alignItems: 'flex-end' }}>
+                        <Text style={{ fontSize: 18, fontWeight: '900', color: B.orange }}>{plan.price}</Text>
+                        <Text style={{ fontSize: 9, color: t.muted, marginTop: 2 }}>{plan.unit}</Text>
+                      </View>
+                    </View>
+
+                    <View style={{ height: 1, backgroundColor: t.border, marginVertical: 12 }} />
+
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 14 }}>
+                      {plan.perks.map((perk, i) => (
+                        <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                          <Check size={12} color={B.green} />
+                          <Text style={{ fontSize: 10, color: t.sub }}>{perk}</Text>
+                        </View>
+                      ))}
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </ScrollView>
+        )}
 
         <BottomTabNav active="meals" />
       </SafeAreaView>
     );
   }
 
-  // 9. Kitchen Screen (Live Webcast)
+  // 9. Kitchen Screen (Live Webcast & Sourcing Documentary)
   function RenderKitchen() {
-    const commentsList = [
-      { name: 'Priya', msg: 'Countertops are sparking clean! 👍' },
-      { name: 'Rahul', msg: 'The paneer looks incredibly fresh today.' },
-      { name: 'Aparna', msg: 'Love seeing the steel containers being packed.' },
-      { name: 'Sanjay', msg: 'Hygiene levels are top notch!' }
+    const spaces = [
+      { name: 'Vegetables Prepping', desc: 'Triple-washing in ozone water to remove pesticide residues.', icon: '🥗', image: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=300' },
+      { name: 'Stone-Ground Spices', desc: 'Slow cold-grinding to protect essential volatile oils.', icon: '🌶️', image: 'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=300' },
+      { name: 'Traditional Slow Cooking', desc: 'Gentle clay-pot heating maintaining glycemic properties.', icon: '🍲', image: 'https://images.unsplash.com/photo-1547592180-85f173990554?w=300' },
+      { name: 'Zero-Contamination Packaging', desc: 'Automated sealing in medical-grade stainless steel dabbas.', icon: '🍱', image: 'https://images.unsplash.com/photo-1577106263724-2c8e03bfe9cf?w=300' }
+    ];
+
+    const standardLogs = [
+      { label: 'Air filtration units checked', val: 'Every 4 hours' },
+      { label: 'Floor & counters ozone sanitization', val: 'Hourly' },
+      { label: 'Staff temperature & wellness audit', val: 'Every shift' },
+      { label: 'Stainless-steel steam cleaning', val: 'Post-operation daily' }
     ];
 
     return (
       <SafeAreaView style={[styles.safeArea, { backgroundColor: 'transparent' }]}>
-        <ScrollView contentContainerStyle={{ paddingBottom: 110 }} showsVerticalScrollIndicator={false}>
+        <ScrollView contentContainerStyle={{ paddingBottom: 120 }} showsVerticalScrollIndicator={false}>
           {/* Header */}
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingTop: 16 }}>
-            <View>
-              <Text style={{ fontSize: 28, fontWeight: '900', color: t.text, letterSpacing: -0.5 }}>Live Webcast</Text>
-              <Text style={{ fontSize: 12, color: t.sub, marginTop: 2 }}>Real-time transparency of our kitchens.</Text>
-            </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: B.green, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 14, gap: 4 }}>
-              <BadgeCheck size={14} color="#FFFFFF" />
-              <Text style={{ fontSize: 9, fontWeight: '900', color: '#FFFFFF' }}>A+ CERTIFIED</Text>
-            </View>
+          <View style={{ paddingHorizontal: 20, paddingTop: 16 }}>
+            <Text style={{ fontSize: 13, fontWeight: '900', color: B.orange, textTransform: 'uppercase', letterSpacing: 1.2 }}>Our Premium Kitchen</Text>
+            <Text style={{ fontSize: 26, fontWeight: '900', color: t.text, marginTop: 4 }}>The Heart of KOI KOI</Text>
+            <Text style={{ fontSize: 12.5, color: t.sub, marginTop: 8, lineHeight: 18 }}>
+              Experience complete culinary honesty. Track live preparation, review our hygiene certificates, and book a physical tour of our smart kitchen.
+            </Text>
           </View>
 
-          {/* Webcast Screen Box */}
-          <View style={{ marginHorizontal: 16, marginTop: 20, height: 210, borderRadius: 24, overflow: 'hidden', borderWidth: 1, borderColor: t.border, shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.05, shadowRadius: 16, elevation: 4 }}>
-            <Image source={{ uri: 'https://images.unsplash.com/photo-1577106263724-2c8e03bfe9cf?w=600' }} style={{ width: '100%', height: '100%' }} />
-            <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, padding: 16, justifyContent: 'space-between', backgroundColor: 'rgba(0,0,0,0.35)' }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#EF4444', alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10, gap: 4 }}>
+          {/* 1. Kitchen Live Broadcast Card */}
+          <View style={{ paddingHorizontal: 20, marginTop: 24 }}>
+            <TouchableOpacity 
+              activeOpacity={0.9}
+              style={{
+                backgroundColor: t.card,
+                borderRadius: 24,
+                borderWidth: 1.5,
+                borderColor: t.border,
+                overflow: 'hidden',
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.02,
+                shadowRadius: 10,
+                elevation: 2
+              }}
+              onPress={() => setToast("Connecting to Live Smart Kitchen Cams... Broadcast loaded.")}
+            >
+              <Image 
+                source={{ uri: 'https://images.unsplash.com/photo-1556910103-1c02745aae4d?w=600' }} 
+                style={{ width: '100%', height: 160 }} 
+              />
+              <View style={{
+                position: 'absolute',
+                top: 12,
+                left: 12,
+                backgroundColor: '#EF4444',
+                paddingHorizontal: 10,
+                paddingVertical: 4,
+                borderRadius: 10,
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 4
+              }}>
                 <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#FFFFFF' }} />
-                <Text style={{ fontSize: 9, fontWeight: '900', color: '#FFFFFF' }}>CAM {selectedCam} - LIVE</Text>
+                <Text style={{ fontSize: 9, fontWeight: '900', color: '#FFFFFF', letterSpacing: 0.5 }}>LIVE BROADCAST</Text>
               </View>
-              <Text style={{ fontSize: 11, color: '#FFFFFF', fontWeight: 'bold' }}>11:34 AM · Cook Station 04</Text>
-            </View>
-          </View>
 
-          {/* Camera Selection */}
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, gap: 8, marginTop: 12 }}>
-            {[1, 2, 3, 4].map(cam => {
-              const isSelected = selectedCam === cam;
-              return (
-                <TouchableOpacity
-                  key={cam}
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    paddingHorizontal: 14,
-                    paddingVertical: 8,
-                    borderRadius: 14,
-                    borderWidth: 1,
-                    borderColor: isSelected ? B.orange : t.border,
-                    backgroundColor: isSelected ? B.orangeL : t.card,
-                    gap: 6
-                  }}
-                  onPress={() => setSelectedCam(cam)}
-                >
-                  <Video size={14} color={isSelected ? B.orange : t.text} />
-                  <Text style={{ fontSize: 11, fontWeight: 'bold', color: isSelected ? B.orange : t.text }}>
-                    Cam {cam}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
-
-          {/* Cooking Details */}
-          <View style={{ paddingHorizontal: 16, marginTop: 24 }}>
-            <Text style={{ fontSize: 16, fontWeight: '900', color: t.text, marginBottom: 10 }}>Chef in Charge</Text>
-            <View style={{ flexDirection: 'row', alignItems: 'center', padding: 14, borderRadius: 24, borderWidth: 1, borderColor: t.border, backgroundColor: t.card }}>
-              <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: B.orangeL, justifyContent: 'center', alignItems: 'center' }}>
-                <ChefHat size={22} color={B.orange} />
-              </View>
-              <View style={{ marginLeft: 14 }}>
-                <Text style={{ fontSize: 14, fontWeight: '900', color: t.text }}>Chef Sanjay Kapoor</Text>
-                <Text style={{ fontSize: 11, color: t.sub, marginTop: 2 }}>Preparing North Indian Dinner Menu</Text>
-              </View>
-            </View>
-          </View>
-
-          {/* Live Chat Audit */}
-          <View style={{ paddingHorizontal: 16, marginTop: 24 }}>
-            <Text style={{ fontSize: 16, fontWeight: '900', color: t.text, marginBottom: 10 }}>Live Audit Comments</Text>
-            <View style={{ padding: 16, borderRadius: 24, borderWidth: 1, borderColor: t.border, backgroundColor: t.card, gap: 10 }}>
-              {commentsList.map((c, i) => (
-                <View key={i} style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <Text style={{ fontSize: 12, fontWeight: 'bold', color: B.orange }}>{c.name}:</Text>
-                  <Text style={{ fontSize: 12, color: t.text, marginLeft: 6 }}>{c.msg}</Text>
+              <View style={{ padding: 16 }}>
+                <Text style={{ fontSize: 15, fontWeight: '900', color: t.text }}>Kitchen Live Broadcast</Text>
+                <Text style={{ fontSize: 11.5, color: t.sub, marginTop: 4 }}>Tap here to review real-time raw feed from prep & packaging slots.</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 12, gap: 4 }}>
+                  <Text style={{ fontSize: 11, fontWeight: '800', color: B.orange }}>Access Live Stream →</Text>
                 </View>
+              </View>
+            </TouchableOpacity>
+          </View>
+
+          {/* 2. Vedic Cooking Documentary */}
+          <View style={{ paddingHorizontal: 20, marginTop: 20 }}>
+            <TouchableOpacity 
+              activeOpacity={0.9}
+              style={{
+                backgroundColor: t.card,
+                borderRadius: 24,
+                borderWidth: 1.5,
+                borderColor: t.border,
+                overflow: 'hidden',
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.02,
+                shadowRadius: 10,
+                elevation: 2
+              }}
+              onPress={() => setToast("Playing Vedic Cooking Documentary...")}
+            >
+              <Image 
+                source={{ uri: 'https://images.unsplash.com/photo-1505576399279-565b52d4ac71?w=600' }} 
+                style={{ width: '100%', height: 140 }} 
+              />
+              <View style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                justifyContent: 'center',
+                alignItems: 'center',
+                backgroundColor: 'rgba(0,0,0,0.2)'
+              }}>
+                <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: 'rgba(255,255,255,0.9)', justifyContent: 'center', alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 8 }}>
+                  <Play size={20} color={B.orange} fill={B.orange} style={{ marginLeft: 3 }} />
+                </View>
+              </View>
+
+              <View style={{ padding: 16 }}>
+                <Text style={{ fontSize: 11, fontWeight: '900', color: B.orange, textTransform: 'uppercase', letterSpacing: 0.5 }}>Documentary</Text>
+                <Text style={{ fontSize: 15, fontWeight: '900', color: t.text, marginTop: 2 }}>Vedic Cooking Documentary</Text>
+                <Text style={{ fontSize: 11.5, color: t.sub, marginTop: 4 }}>Video Tour · Sourcing, Spices & Packing · 3 min</Text>
+              </View>
+            </TouchableOpacity>
+          </View>
+
+          {/* 3. Physical Cooking Spaces Gallery */}
+          <View style={{ paddingHorizontal: 20, marginTop: 28 }}>
+            <Text style={{ fontSize: 13, fontWeight: '900', color: t.text, textTransform: 'uppercase', letterSpacing: 0.5 }}>Kitchen Image Gallery</Text>
+            <Text style={{ fontSize: 15, fontWeight: '900', color: t.text, marginTop: 4 }}>Physical Cooking Spaces</Text>
+            <Text style={{ fontSize: 12, color: t.sub, marginTop: 4 }}>
+              Click on any of our smart stations to open high-resolution walkthroughs and explanations.
+            </Text>
+
+            <View style={{ gap: 12, marginTop: 16 }}>
+              {spaces.map((space, idx) => (
+                <TouchableOpacity
+                  key={idx}
+                  activeOpacity={0.85}
+                  style={{
+                    backgroundColor: t.card,
+                    borderRadius: 20,
+                    borderWidth: 1.5,
+                    borderColor: t.border,
+                    overflow: 'hidden',
+                    flexDirection: 'row',
+                    height: 100
+                  }}
+                  onPress={() => setToast(`Opening ${space.name} station details...`)}
+                >
+                  <Image source={{ uri: space.image }} style={{ width: 100, height: '100%' }} />
+                  <View style={{ flex: 1, padding: 12, justifyContent: 'center' }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                      <Text style={{ fontSize: 14 }}>{space.icon}</Text>
+                      <Text style={{ fontSize: 14, fontWeight: '900', color: t.text }} numberOfLines={1}>{space.name}</Text>
+                    </View>
+                    <Text style={{ fontSize: 11, color: t.sub, marginTop: 4 }} numberOfLines={2}>{space.desc}</Text>
+                  </View>
+                </TouchableOpacity>
               ))}
+            </View>
+          </View>
+
+          {/* 4. Meet Our Chefs */}
+          <View style={{ paddingHorizontal: 20, marginTop: 28 }}>
+            <Text style={{ fontSize: 13, fontWeight: '900', color: t.text, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 14 }}>Meet Our Chefs</Text>
+            
+            <View style={{ gap: 16 }}>
+              {/* Amrita Reddy */}
+              <View style={{ backgroundColor: t.card, borderRadius: 24, padding: 18, borderWidth: 1.5, borderColor: t.border }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <View style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: B.orangeL, justifyContent: 'center', alignItems: 'center' }}>
+                    <Text style={{ fontSize: 24 }}>👩‍🍳</Text>
+                  </View>
+                  <View style={{ marginLeft: 14 }}>
+                    <Text style={{ fontSize: 16, fontWeight: '900', color: t.text }}>Amrita Reddy</Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2, gap: 6 }}>
+                      <Text style={{ fontSize: 10, fontWeight: '900', color: B.orange }}>12+ Years EXP</Text>
+                      <Text style={{ fontSize: 10, color: t.muted }}>·</Text>
+                      <Text style={{ fontSize: 10.5, fontWeight: 'bold', color: t.sub }}>Head Chef & Flavor Lead</Text>
+                    </View>
+                  </View>
+                </View>
+                <View style={{ height: 1, backgroundColor: t.border, marginVertical: 12 }} />
+                <Text style={{ fontSize: 11, fontWeight: '900', color: t.muted, textTransform: 'uppercase', letterSpacing: 0.5 }}>Specialization</Text>
+                <Text style={{ fontSize: 13, fontWeight: '800', color: t.text, marginTop: 2 }}>Traditional Andhra & Deccani Heritage Cuisine</Text>
+                <Text style={{ fontSize: 12, color: t.sub, fontStyle: 'italic', marginTop: 8, lineHeight: 16 }}>
+                  "Believes slow, gentle heating preserves natural grains sweetness without needing artificial taste-enhancers."
+                </Text>
+              </View>
+
+              {/* Harish Rao */}
+              <View style={{ backgroundColor: t.card, borderRadius: 24, padding: 18, borderWidth: 1.5, borderColor: t.border }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <View style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: '#EAF7EE', justifyContent: 'center', alignItems: 'center' }}>
+                    <Text style={{ fontSize: 24 }}>👨‍🍳</Text>
+                  </View>
+                  <View style={{ marginLeft: 14 }}>
+                    <Text style={{ fontSize: 16, fontWeight: '900', color: t.text }}>Harish Rao</Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2, gap: 6 }}>
+                      <Text style={{ fontSize: 10, fontWeight: '900', color: '#2E7D32' }}>8+ Years EXP</Text>
+                      <Text style={{ fontSize: 10, color: t.muted }}>·</Text>
+                      <Text style={{ fontSize: 10.5, fontWeight: 'bold', color: t.sub }}>Vedic Sourcing & Prep Lead</Text>
+                    </View>
+                  </View>
+                </View>
+                <View style={{ height: 1, backgroundColor: t.border, marginVertical: 12 }} />
+                <Text style={{ fontSize: 11, fontWeight: '900', color: t.muted, textTransform: 'uppercase', letterSpacing: 0.5 }}>Specialization</Text>
+                <Text style={{ fontSize: 13, fontWeight: '800', color: t.text, marginTop: 2 }}>Macrobiotic & Grain Sprouting Specialist</Text>
+                <Text style={{ fontSize: 12, color: t.sub, fontStyle: 'italic', marginTop: 8, lineHeight: 16 }}>
+                  "Focuses entirely on sourcing single-polished rice and unrefined cold-pressed oils from local organic farms."
+                </Text>
+              </View>
+            </View>
+          </View>
+
+          {/* 5. Strict Kitchen Standards */}
+          <View style={{ paddingHorizontal: 20, marginTop: 28 }}>
+            <Text style={{ fontSize: 13, fontWeight: '900', color: t.text, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 12 }}>Strict Kitchen Standards</Text>
+            
+            {/* Hygiene Logs Card */}
+            <View style={{ backgroundColor: t.card, borderRadius: 24, borderWidth: 1.5, borderColor: t.border, padding: 18 }}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+                <Text style={{ fontSize: 14, fontWeight: '900', color: t.text }}>Hygiene & Cleaning Log</Text>
+                <View style={{ backgroundColor: B.green, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 }}>
+                  <Text style={{ fontSize: 9, fontWeight: '900', color: '#FFFFFF' }}>A+ GRADE</Text>
+                </View>
+              </View>
+
+              <View style={{ gap: 10 }}>
+                {standardLogs.map((log, idx) => (
+                  <View key={idx} style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Text style={{ fontSize: 12, fontWeight: 'bold', color: t.sub }}>{log.label}</Text>
+                    <Text style={{ fontSize: 12, fontWeight: '900', color: t.text }}>{log.val}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+
+            {/* Government License Card */}
+            <View style={{ backgroundColor: t.card, borderRadius: 24, borderWidth: 1.5, borderColor: t.border, padding: 18, marginTop: 12 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: '#EFF6FF', justifyContent: 'center', alignItems: 'center' }}>
+                  <Award size={18} color="#3B82F6" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 14, fontWeight: '900', color: t.text }}>FSSAI Validated Certificate</Text>
+                  <Text style={{ fontSize: 11, fontWeight: 'bold', color: B.orange, marginTop: 2 }}>License No: 10024010004561</Text>
+                </View>
+              </View>
+              <Text style={{ fontSize: 11, color: t.sub, marginTop: 10, lineHeight: 15 }}>
+                Under Government Food Safety Standard Act, valid & audited monthly.
+              </Text>
+            </View>
+          </View>
+
+          {/* 6. Open Invitation Tour Booking */}
+          <View style={{ paddingHorizontal: 20, marginTop: 28, marginBottom: 20 }}>
+            <View style={{ backgroundColor: t.card, borderRadius: 24, borderWidth: 1.5, borderColor: t.border, padding: 20 }}>
+              <Text style={{ fontSize: 11, fontWeight: '900', color: B.orange, textTransform: 'uppercase', letterSpacing: 0.5 }}>Open Invitation Tour</Text>
+              <Text style={{ fontSize: 18, fontWeight: '900', color: t.text, marginTop: 4 }}>Book a Kitchen Visit</Text>
+              <Text style={{ fontSize: 12, color: t.sub, marginTop: 6, lineHeight: 17 }}>
+                We maintain nothing behind closed doors. Savor the experience of physical workspace inspection. Book a free 15-minute slot below.
+              </Text>
+
+              <TouchableOpacity
+                style={{
+                  height: 48,
+                  borderRadius: 24,
+                  overflow: 'hidden',
+                  marginTop: 16,
+                  shadowColor: B.orange,
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: 0.15,
+                  shadowRadius: 8,
+                  elevation: 2
+                }}
+                onPress={() => go('tour_booking')}
+              >
+                <LinearGradient colors={['#FF852C', '#FD4F1B']} style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                  <Text style={{ color: '#FFFFFF', fontSize: 14, fontWeight: '900' }}>Request Tour Booking →</Text>
+                </LinearGradient>
+              </TouchableOpacity>
             </View>
           </View>
         </ScrollView>
@@ -4061,41 +4775,44 @@ export default function App() {
       setCurrentScreen('auth');
     };
 
+    const firstLetter = (user.name || 'Bhargav').charAt(0).toUpperCase();
+
     return (
       <SafeAreaView style={[styles.safeArea, { backgroundColor: 'transparent' }]}>
         <ScrollView contentContainerStyle={{ paddingBottom: 110 }} showsVerticalScrollIndicator={false}>
-          {/* User profile details */}
-          <View style={{ alignItems: 'center', paddingVertical: 24 }}>
+          {/* User profile details header */}
+          <View style={{ paddingHorizontal: 20, paddingTop: 20, alignItems: 'center' }}>
             <View style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: B.orange, justifyContent: 'center', alignItems: 'center', shadowColor: B.orange, shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.2, shadowRadius: 10, elevation: 4 }}>
-              <Text style={{ fontSize: 36 }}>{user.avatar}</Text>
+              <Text style={{ fontSize: 32, fontWeight: '900', color: '#FFFFFF' }}>{firstLetter}</Text>
             </View>
-            <Text style={{ fontSize: 20, fontWeight: '900', color: t.text, marginTop: 12 }}>{user.name}</Text>
-            <Text style={{ fontSize: 13, color: t.sub, marginTop: 2 }}>{user.email}</Text>
+            <Text style={{ fontSize: 20, fontWeight: '900', color: t.text, marginTop: 12 }}>{user.name || 'Bhargav'}</Text>
+            <Text style={{ fontSize: 13, color: t.sub, marginTop: 2 }}>{user.phone || '+91 98765 43210'}</Text>
+            <Text style={{ fontSize: 13, color: t.sub, marginTop: 2 }}>{user.email || 'bhargav.s@gmail.com'}</Text>
 
-            {/* Loyalty tier info */}
-            <View style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 10, paddingHorizontal: 16, borderRadius: 16, backgroundColor: t.card, borderWidth: 1, borderColor: t.border, marginTop: 16 }}>
-              <Award size={20} color={B.orange} />
-              <View style={{ marginLeft: 10 }}>
-                <Text style={{ fontSize: 12, fontWeight: 'bold', color: t.text }}>Gold Tier Member</Text>
-                <Text style={{ fontSize: 10, color: t.sub }}>Unlock ₹0 delivery on student tiers</Text>
+            {/* Active Plan Box */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 12, paddingHorizontal: 20, borderRadius: 20, backgroundColor: t.card, borderWidth: 1.5, borderColor: t.border, marginTop: 20, width: '100%', justifyContent: 'space-between' }}>
+              <View>
+                <Text style={{ fontSize: 11, fontWeight: '900', color: t.muted, textTransform: 'uppercase', letterSpacing: 0.5 }}>Active Plan</Text>
+                <Text style={{ fontSize: 15, fontWeight: '900', color: t.text, marginTop: 2 }}>Monthly Veg Plan</Text>
+              </View>
+              <View style={{ backgroundColor: B.orangeL, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12 }}>
+                <Text style={{ fontSize: 11, fontWeight: '900', color: B.orange }}>1,250 pts · Gold</Text>
               </View>
             </View>
           </View>
 
-          {/* Settings Group */}
-          <View style={{ marginTop: 8 }}>
-            <Text style={{ fontSize: 10, fontWeight: '900', color: t.sub, letterSpacing: 1.5, marginLeft: 24, marginBottom: 8 }}>ACCOUNT SETTINGS</Text>
-            <View style={{ marginHorizontal: 16, borderRadius: 24, borderWidth: 1, borderColor: t.border, backgroundColor: t.card, overflow: 'hidden' }}>
+          {/* Account & Identity Section */}
+          <View style={{ marginTop: 16 }}>
+            <Text style={{ fontSize: 10, fontWeight: '900', color: t.sub, letterSpacing: 1.5, marginLeft: 24, marginBottom: 8 }}>ACCOUNT & IDENTITY</Text>
+            <View style={{ marginHorizontal: 16, borderRadius: 24, borderWidth: 1.5, borderColor: t.border, backgroundColor: t.card, overflow: 'hidden' }}>
               {[
-                { title: 'Personal Information', sub: 'Edit name, email & preferences', icon: User, screen: 'personal' },
-                { title: 'Health Metrics Profile', sub: 'Calorie targets & fitness goals', icon: Heart, screen: 'health_info' },
-                { title: 'Delivery Addresses', sub: 'Manage saved locations', icon: MapPin, screen: 'addresses' },
-                { title: 'Payments & Balance Statements', sub: 'Add wallet money & see logs', icon: Wallet, screen: 'payments' },
-                { title: 'Theme & Appearance', sub: 'Switch light & dark modes', icon: Sun, screen: 'appearance' }
+                { title: 'Personal Details', sub: 'Name, email, phone number & gender', icon: User, screen: 'personal' },
+                { title: 'Health Info', sub: 'Nutrition goals, calories, allergies', icon: Heart, screen: 'health_info' },
+                { title: 'Saved Addresses', sub: 'Home, work & delivery instructions', icon: MapPin, screen: 'addresses' }
               ].map((item, idx) => (
                 <TouchableOpacity
                   key={idx}
-                  style={[{ flexDirection: 'row', alignItems: 'center', padding: 16 }, idx > 0 && { borderTopWidth: 1, borderTopColor: t.border }]}
+                  style={[{ flexDirection: 'row', alignItems: 'center', padding: 16 }, idx > 0 && { borderTopWidth: 1.5, borderTopColor: t.border }]}
                   onPress={() => go(item.screen as Screen)}
                 >
                   <View style={{ width: 36, height: 36, borderRadius: 12, backgroundColor: B.orangeL, justifyContent: 'center', alignItems: 'center' }}>
@@ -4109,35 +4826,131 @@ export default function App() {
                 </TouchableOpacity>
               ))}
             </View>
-
-            <Text style={{ fontSize: 10, fontWeight: '900', color: t.sub, letterSpacing: 1.5, marginLeft: 24, marginTop: 24, marginBottom: 8 }}>PROMOTIONS & HELP</Text>
-            <View style={{ marginHorizontal: 16, borderRadius: 24, borderWidth: 1, borderColor: t.border, backgroundColor: t.card, overflow: 'hidden' }}>
-              {[
-                { title: 'Refer & Earn Coupon', sub: 'Invite friends, earn ₹100 cash', icon: Gift, screen: 'refer' },
-                { title: 'Help & Support Chat', sub: 'Reach out to live operations support', icon: HelpCircle, screen: 'support' }
-              ].map((item, idx) => (
-                <TouchableOpacity
-                  key={idx}
-                  style={[{ flexDirection: 'row', alignItems: 'center', padding: 16 }, idx > 0 && { borderTopWidth: 1, borderTopColor: t.border }]}
-                  onPress={() => go(item.screen as Screen)}
-                >
-                  <View style={{ width: 36, height: 36, borderRadius: 12, backgroundColor: B.orangeL, justifyContent: 'center', alignItems: 'center' }}>
-                    <item.icon size={16} color={B.orange} />
-                  </View>
-                  <View style={{ flex: 1, marginLeft: 14 }}>
-                    <Text style={{ fontSize: 14, fontWeight: 'bold', color: t.text }}>{item.title}</Text>
-                    <Text style={{ fontSize: 11, color: t.sub, marginTop: 2 }}>{item.sub}</Text>
-                  </View>
-                  <ChevronRight size={16} color={t.sub} />
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            <TouchableOpacity style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 24, paddingVertical: 12 }} onPress={handleLogout}>
-              <LogOut size={16} color="#EF4444" style={{ marginRight: 6 }} />
-              <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#EF4444' }}>Log Out Account</Text>
-            </TouchableOpacity>
           </View>
+
+          {/* Preferences Section */}
+          <View style={{ marginTop: 24 }}>
+            <Text style={{ fontSize: 10, fontWeight: '900', color: t.sub, letterSpacing: 1.5, marginLeft: 24, marginBottom: 8 }}>PREFERENCES</Text>
+            <View style={{ marginHorizontal: 16, borderRadius: 24, borderWidth: 1.5, borderColor: t.border, backgroundColor: t.card, padding: 16 }}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                <View>
+                  <Text style={{ fontSize: 14, fontWeight: 'bold', color: t.text }}>Meal Preference</Text>
+                  <Text style={{ fontSize: 11, color: t.sub, marginTop: 2 }}>{user.foodPref} Preference</Text>
+                </View>
+                {/* Veg/Non-Veg Toggle Selector */}
+                <View style={{ flexDirection: 'row', backgroundColor: t.surface, borderRadius: 12, padding: 3, borderWidth: 1, borderColor: t.border }}>
+                  {['Veg', 'Non-Veg'].map(opt => {
+                    const isSelected = user.foodPref === opt;
+                    return (
+                      <TouchableOpacity
+                        key={opt}
+                        onPress={() => {
+                          setUser(prev => ({ ...prev, foodPref: opt }));
+                          setToast(`Preference updated to: ${opt}`);
+                        }}
+                        style={{
+                          paddingHorizontal: 12,
+                          paddingVertical: 6,
+                          borderRadius: 8,
+                          backgroundColor: isSelected ? B.orange : 'transparent'
+                        }}
+                      >
+                        <Text style={{ fontSize: 10.5, fontWeight: '900', color: isSelected ? '#FFFFFF' : t.text }}>{opt}</Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </View>
+            </View>
+          </View>
+
+          {/* Subscription & Finances Section */}
+          <View style={{ marginTop: 24 }}>
+            <Text style={{ fontSize: 10, fontWeight: '900', color: t.sub, letterSpacing: 1.5, marginLeft: 24, marginBottom: 8 }}>SUBSCRIPTION & FINANCES</Text>
+            <View style={{ marginHorizontal: 16, borderRadius: 24, borderWidth: 1.5, borderColor: t.border, backgroundColor: t.card, overflow: 'hidden' }}>
+              {[
+                { title: 'Subscription Status', sub: 'Monthly Veg Plan · Active', icon: Award, screen: 'plans' },
+                { title: 'Wallet Balance', sub: '₹1,250.00 · View statements & add money', icon: Wallet, screen: 'payments' },
+                { title: 'Rewards & Points', sub: '1,250 pts · Gold Tier perks', icon: Gift, screen: 'rewards' },
+                { title: 'Offers & Coupons', sub: 'Explore dynamic coupons & offers', icon: Tag, screen: 'offers' },
+                { title: 'Referral Program', sub: 'Earn ₹100 per friend', icon: Share2, screen: 'refer' }
+              ].map((item, idx) => (
+                <TouchableOpacity
+                  key={idx}
+                  style={[{ flexDirection: 'row', alignItems: 'center', padding: 16 }, idx > 0 && { borderTopWidth: 1.5, borderTopColor: t.border }]}
+                  onPress={() => go(item.screen as Screen)}
+                >
+                  <View style={{ width: 36, height: 36, borderRadius: 12, backgroundColor: B.orangeL, justifyContent: 'center', alignItems: 'center' }}>
+                    <item.icon size={16} color={B.orange} />
+                  </View>
+                  <View style={{ flex: 1, marginLeft: 14 }}>
+                    <Text style={{ fontSize: 14, fontWeight: 'bold', color: t.text }}>{item.title}</Text>
+                    <Text style={{ fontSize: 11, color: t.sub, marginTop: 2 }}>{item.sub}</Text>
+                  </View>
+                  <ChevronRight size={16} color={t.sub} />
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          {/* App Settings Section */}
+          <View style={{ marginTop: 24 }}>
+            <Text style={{ fontSize: 10, fontWeight: '900', color: t.sub, letterSpacing: 1.5, marginLeft: 24, marginBottom: 8 }}>APP SETTINGS</Text>
+            <View style={{ marginHorizontal: 16, borderRadius: 24, borderWidth: 1.5, borderColor: t.border, backgroundColor: t.card, overflow: 'hidden' }}>
+              {[
+                { title: 'Appearance & Theme', sub: 'Light, Dark & System default', icon: Sun, screen: 'appearance' },
+                { title: 'Notifications', sub: 'Updates, alerts & promo preferences', icon: Bell, screen: 'notifications' }
+              ].map((item, idx) => (
+                <TouchableOpacity
+                  key={idx}
+                  style={[{ flexDirection: 'row', alignItems: 'center', padding: 16 }, idx > 0 && { borderTopWidth: 1.5, borderTopColor: t.border }]}
+                  onPress={() => go(item.screen as Screen)}
+                >
+                  <View style={{ width: 36, height: 36, borderRadius: 12, backgroundColor: B.orangeL, justifyContent: 'center', alignItems: 'center' }}>
+                    <item.icon size={16} color={B.orange} />
+                  </View>
+                  <View style={{ flex: 1, marginLeft: 14 }}>
+                    <Text style={{ fontSize: 14, fontWeight: 'bold', color: t.text }}>{item.title}</Text>
+                    <Text style={{ fontSize: 11, color: t.sub, marginTop: 2 }}>{item.sub}</Text>
+                  </View>
+                  <ChevronRight size={16} color={t.sub} />
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          {/* Help & Support Section */}
+          <View style={{ marginTop: 24 }}>
+            <Text style={{ fontSize: 10, fontWeight: '900', color: t.sub, letterSpacing: 1.5, marginLeft: 24, marginBottom: 8 }}>HELP & SUPPORT</Text>
+            <View style={{ marginHorizontal: 16, borderRadius: 24, borderWidth: 1.5, borderColor: t.border, backgroundColor: t.card, overflow: 'hidden' }}>
+              {[
+                { title: 'Support Centre', sub: 'Live chat, phone call & tickets', icon: HelpCircle, screen: 'support' },
+                { title: 'Frequently Asked Questions', sub: 'Solve issues instantly', icon: Info, action: () => setToast("Opening FAQs Support Centre...") },
+                { title: 'About KOI KOI', sub: 'v4.0.0 · Active', icon: ShieldCheck, action: () => setToast("KOI KOI App version v4.0.0 is active & running.") }
+              ].map((item, idx) => (
+                <TouchableOpacity
+                  key={idx}
+                  style={[{ flexDirection: 'row', alignItems: 'center', padding: 16 }, idx > 0 && { borderTopWidth: 1.5, borderTopColor: t.border }]}
+                  onPress={() => item.action ? item.action() : go(item.screen as Screen)}
+                >
+                  <View style={{ width: 36, height: 36, borderRadius: 12, backgroundColor: B.orangeL, justifyContent: 'center', alignItems: 'center' }}>
+                    <item.icon size={16} color={B.orange} />
+                  </View>
+                  <View style={{ flex: 1, marginLeft: 14 }}>
+                    <Text style={{ fontSize: 14, fontWeight: 'bold', color: t.text }}>{item.title}</Text>
+                    <Text style={{ fontSize: 11, color: t.sub, marginTop: 2 }}>{item.sub}</Text>
+                  </View>
+                  <ChevronRight size={16} color={t.sub} />
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          {/* Logout Button */}
+          <TouchableOpacity style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 32, paddingVertical: 12 }} onPress={handleLogout}>
+            <LogOut size={16} color="#EF4444" style={{ marginRight: 6 }} />
+            <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#EF4444' }}>Logout</Text>
+          </TouchableOpacity>
         </ScrollView>
 
         <BottomTabNav active="profile" />
@@ -4479,6 +5292,29 @@ export default function App() {
             <Wallet size={36} color={B.orange} />
             <Text style={{ fontSize: 24, fontWeight: '900', color: t.text, marginTop: 10 }}>₹1,250.00</Text>
             <Text style={{ fontSize: 12, color: t.muted }}>Available Wallet Balance</Text>
+            
+            <TouchableOpacity 
+              style={{
+                height: 40,
+                width: '100%',
+                borderRadius: 20,
+                overflow: 'hidden',
+                marginTop: 14,
+                shadowColor: B.orange,
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.15,
+                shadowRadius: 8,
+                elevation: 2
+              }}
+              onPress={() => {
+                setToast("Successfully added ₹500.00 to your wallet!");
+              }}
+            >
+              <LinearGradient colors={['#FF852C', '#FD4F1B']} style={{ flex: 1, justifyContent: 'center', alignItems: 'center', flexDirection: 'row', gap: 6 }}>
+                <Plus size={14} color="#FFFFFF" strokeWidth={3} />
+                <Text style={{ color: '#FFFFFF', fontSize: 12.5, fontWeight: '900' }}>Add ₹500.00</Text>
+              </LinearGradient>
+            </TouchableOpacity>
           </View>
 
           {/* Transaction logs */}
@@ -4773,97 +5609,665 @@ export default function App() {
 
   // 23. Manage Plans Screen
   function RenderPlans() {
+    const currentPlanName = "Monthly Subscription";
+    const currentPlanDetails = "Day 3 of 30 · Next: Tomorrow, 12:30 PM";
+    const selectedPlan = PLANS.find(p => p.id === selectedPlanId) || PLANS[2];
+
     return (
-      <SafeAreaView style={[styles.safeArea, { backgroundColor: t.bg }]}>
-        <ScrollView contentContainerStyle={{ paddingBottom: 110 }}>
-          <View style={{ paddingHorizontal: 16, paddingTop: 16 }}>
-            <Text style={[styles.setupTitle, { color: t.text }]}>Active Subscription</Text>
-            <Text style={{ fontSize: 12, color: t.muted }}>Pause, resume, skip or change your plan details below.</Text>
-          </View>
+      <SafeAreaView style={[styles.safeArea, { backgroundColor: 'transparent' }]}>
+        {/* Top Header Bar */}
+        <View style={{ paddingHorizontal: 20, paddingTop: 16, paddingBottom: 12, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderColor: t.border, backgroundColor: t.surface }}>
+          <TouchableOpacity onPress={back} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.card, borderWidth: 1, borderColor: t.border, justifyContent: 'center', alignItems: 'center' }}>
+            <ArrowLeft size={16} color={t.text} />
+          </TouchableOpacity>
+          <Text style={{ fontSize: 16, fontWeight: '900', color: t.text, marginLeft: 16, letterSpacing: 0.5 }}>MY SUBSCRIPTION</Text>
+        </View>
 
-          {/* Current plan banner */}
-          <View style={[styles.subscriptionDetailsCard, { backgroundColor: t.card, borderColor: t.border }]}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-              <Text style={{ fontSize: 16, fontWeight: '900', color: t.text }}>Monthly Subscription</Text>
-              <Text style={[styles.statusBadge, { backgroundColor: paused ? '#F59E0B' : B.green }]}>
-                {paused ? 'PAUSED' : 'ACTIVE'}
-              </Text>
+        <ScrollView contentContainerStyle={{ paddingBottom: selectedPlanId !== 'monthly' ? 220 : 110 }} showsVerticalScrollIndicator={false}>
+          {/* Active subscription card section */}
+          <View style={{ paddingHorizontal: 20, paddingTop: 16 }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Text style={{ fontSize: 13, fontWeight: '900', color: t.text, textTransform: 'uppercase', letterSpacing: 0.5 }}>Current Plan</Text>
+              <View style={{ backgroundColor: paused ? '#F59E0B' : B.green, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 }}>
+                <Text style={{ fontSize: 9, fontWeight: '900', color: '#FFFFFF' }}>{paused ? 'PAUSED' : 'ACTIVE'}</Text>
+              </View>
             </View>
-            <Text style={{ fontSize: 12, color: t.muted, marginTop: 4 }}>Remains: 27 days left in billing cycle</Text>
+            <Text style={{ fontSize: 12, color: t.sub, marginTop: 4, marginBottom: 12 }}>
+              Tap your current active subscription to manage, pause, or reschedule.
+            </Text>
 
-            <View style={[styles.progressBarBG, { backgroundColor: t.surface, marginTop: 12 }]}>
-              <View style={[styles.progressBarFill, { backgroundColor: B.orange, width: '90%' }]} />
-            </View>
-          </View>
-
-          {/* Settings block */}
-          <View style={{ paddingHorizontal: 16, gap: 12, marginTop: 16 }}>
-            {/* Pause Resume button */}
-            <TouchableOpacity
-              style={[styles.managePlanBtn, { backgroundColor: t.card, borderColor: t.border }]}
-              onPress={() => {
-                setPaused(!paused);
-                setToast(paused ? 'Deliveries Resumed!' : 'Deliveries Paused Successfully');
+            <TouchableOpacity 
+              activeOpacity={0.85}
+              onPress={() => setShowManageOptions(!showManageOptions)}
+              style={{
+                backgroundColor: t.card,
+                borderRadius: 24,
+                borderWidth: 1.5,
+                borderColor: t.border,
+                padding: 18,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.02,
+                shadowRadius: 10,
+                elevation: 2
               }}
             >
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <View style={[styles.settingsRowIcon, { backgroundColor: paused ? B.greenL : B.orangeL }]}>
-                  {paused ? <Play size={16} color={B.green} /> : <Pause size={16} color={B.orange} />}
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                <View>
+                  <Text style={{ fontSize: 16, fontWeight: '900', color: t.text }}>{currentPlanName}</Text>
+                  <Text style={{ fontSize: 12, color: t.sub, marginTop: 4 }}>{currentPlanDetails}</Text>
                 </View>
-                <View style={{ marginLeft: 12 }}>
-                  <Text style={{ fontSize: 14, fontWeight: 'bold', color: t.text }}>
-                    {paused ? 'Resume Deliveries' : 'Pause Plan'}
-                  </Text>
-                  <Text style={{ fontSize: 11, color: t.muted }}>
-                    {paused ? 'Unpause to receive food' : 'Temporarily pause deliveries'}
-                  </Text>
-                </View>
+                <ChevronRight size={18} color={t.muted} style={{ transform: [{ rotate: showManageOptions ? '90deg' : '0deg' }] }} />
               </View>
-              <ChevronRight size={16} color={t.muted} />
-            </TouchableOpacity>
 
-            {/* Skip tomorrow */}
-            <TouchableOpacity
-              style={[styles.managePlanBtn, { backgroundColor: t.card, borderColor: t.border }]}
-              onPress={() => {
-                setToast("Tomorrow's delivery skipped! Day credited back.");
-              }}
-            >
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <View style={[styles.settingsRowIcon, { backgroundColor: '#EFF6FF' }]}>
-                  <SkipForward size={16} color="#3B82F6" />
-                </View>
-                <View style={{ marginLeft: 12 }}>
-                  <Text style={{ fontSize: 14, fontWeight: 'bold', color: t.text }}>Skip Tomorrow</Text>
-                  <Text style={{ fontSize: 11, color: t.muted }}>Skip next dabba, credit back cash</Text>
-                </View>
+              {/* Progress bar inside active card */}
+              <View style={[styles.progressBarBG, { backgroundColor: t.surface, marginTop: 14 }]}>
+                <View style={[styles.progressBarFill, { backgroundColor: B.orange, width: '90%' }]} />
               </View>
-              <ChevronRight size={16} color={t.muted} />
             </TouchableOpacity>
+          </View>
 
-            {/* Catalog list */}
-            <Text style={[styles.sectionSubTitle, { color: t.text, marginTop: 24, marginBottom: 8 }]}>Explore Other Tiers</Text>
-            {PLANS.map(p => (
-              <View key={p.id} style={[styles.tierCard, { backgroundColor: t.card, borderColor: t.border }]}>
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Text style={{ fontSize: 15, fontWeight: 'bold', color: t.text }}>{p.name} Plan</Text>
-                  <Text style={{ fontSize: 15, fontWeight: '900', color: p.color }}>{p.price}</Text>
+          {/* Manage Options collapsible panel */}
+          {showManageOptions && (
+            <View style={{ paddingHorizontal: 20, marginTop: 12, gap: 10 }}>
+              {/* Pause Resume button */}
+              <TouchableOpacity
+                style={[styles.managePlanBtn, { backgroundColor: t.card, borderColor: t.border }]}
+                onPress={() => {
+                  setPaused(!paused);
+                  setToast(paused ? 'Deliveries Resumed!' : 'Deliveries Paused Successfully');
+                }}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <View style={[styles.settingsRowIcon, { backgroundColor: paused ? B.greenL : B.orangeL }]}>
+                    {paused ? <Play size={16} color={B.green} /> : <Pause size={16} color={B.orange} />}
+                  </View>
+                  <View style={{ marginLeft: 12 }}>
+                    <Text style={{ fontSize: 13, fontWeight: 'bold', color: t.text }}>
+                      {paused ? 'Resume Deliveries' : 'Pause Plan'}
+                    </Text>
+                    <Text style={{ fontSize: 10.5, color: t.sub, marginTop: 1 }}>
+                      {paused ? 'Unpause to receive food' : 'Temporarily pause deliveries'}
+                    </Text>
+                  </View>
                 </View>
-                <Text style={{ fontSize: 11, color: t.muted, marginTop: 2 }}>{p.sub}</Text>
+                <ChevronRight size={16} color={t.muted} />
+              </TouchableOpacity>
+
+              {/* Skip tomorrow */}
+              <TouchableOpacity
+                style={[styles.managePlanBtn, { backgroundColor: t.card, borderColor: t.border }]}
+                onPress={() => {
+                  setToast("Tomorrow's delivery skipped! Day credited back.");
+                }}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <View style={[styles.settingsRowIcon, { backgroundColor: '#EFF6FF' }]}>
+                    <SkipForward size={16} color="#3B82F6" />
+                  </View>
+                  <View style={{ marginLeft: 12 }}>
+                    <Text style={{ fontSize: 13, fontWeight: 'bold', color: t.text }}>Skip Tomorrow</Text>
+                    <Text style={{ fontSize: 10.5, color: t.sub, marginTop: 1 }}>Skip next dabba, credit back cash</Text>
+                  </View>
+                </View>
+                <ChevronRight size={16} color={t.muted} />
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {/* Select Other Plans Title */}
+          <View style={{ paddingHorizontal: 20, marginTop: 24, marginBottom: 12 }}>
+            <Text style={{ fontSize: 14, fontWeight: '900', color: t.text, textTransform: 'uppercase', letterSpacing: 0.5 }}>Select Other Plans</Text>
+          </View>
+
+          {/* List of other plans */}
+          <View style={{ paddingHorizontal: 20, gap: 12 }}>
+            {PLANS.map(p => {
+              const isSelected = selectedPlanId === p.id;
+              return (
                 <TouchableOpacity
-                  style={[styles.tierCardBtn, { borderColor: p.color }]}
-                  onPress={() => {
-                    setToast(`Switched to ${p.name} Plan!`);
+                  key={p.id}
+                  activeOpacity={0.85}
+                  style={{
+                    backgroundColor: t.card,
+                    borderRadius: 24,
+                    borderWidth: 2,
+                    borderColor: isSelected ? B.orange : t.border,
+                    padding: 16,
+                    position: 'relative',
+                    overflow: 'hidden',
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 4 },
+                    shadowOpacity: isSelected ? 0.04 : 0.01,
+                    shadowRadius: 10,
+                    elevation: 2
                   }}
+                  onPress={() => setSelectedPlanId(p.id)}
                 >
-                  <Text style={{ fontSize: 10, fontWeight: 'bold', color: p.color }}>Activate Plan</Text>
+                  {/* Badge */}
+                  {p.badge ? (
+                    <View style={{
+                      position: 'absolute',
+                      top: 0,
+                      right: 16,
+                      backgroundColor: p.color,
+                      paddingHorizontal: 10,
+                      paddingVertical: 4,
+                      borderBottomLeftRadius: 10,
+                      borderBottomRightRadius: 10
+                    }}>
+                      <Text style={{ fontSize: 8.5, fontWeight: '900', color: '#FFFFFF', letterSpacing: 0.5 }}>{p.badge}</Text>
+                    </View>
+                  ) : null}
+
+                  {/* Plan Main Info */}
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <View style={{ flex: 1, marginRight: 8 }}>
+                      <Text style={{ fontSize: 16, fontWeight: '900', color: t.text }}>{p.name}</Text>
+                      <Text style={{ fontSize: 11, color: t.sub, marginTop: 4 }}>{p.sub}</Text>
+                    </View>
+                    <View style={{ alignItems: 'flex-end' }}>
+                      <Text style={{ fontSize: 18, fontWeight: '900', color: isSelected ? B.orange : t.text }}>{p.price}</Text>
+                      <Text style={{ fontSize: 9.5, color: t.muted, marginTop: 2 }}>{p.unit}</Text>
+                    </View>
+                  </View>
+
+                  <View style={{ height: 1, backgroundColor: t.border, marginVertical: 12 }} />
+
+                  {/* Perks Grid */}
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, rowGap: 8 }}>
+                    {p.perks.map((perk, i) => (
+                      <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, width: '45%' }}>
+                        <Check size={12} color={B.green} strokeWidth={2.5} />
+                        <Text style={{ fontSize: 10.5, color: t.sub }} numberOfLines={1}>{perk}</Text>
+                      </View>
+                    ))}
+                  </View>
                 </TouchableOpacity>
+              );
+            })}
+          </View>
+        </ScrollView>
+
+        {/* Bottom Sticky Action Button */}
+        {selectedPlanId !== 'monthly' && (
+          <View style={{
+            position: 'absolute',
+            bottom: Platform.OS === 'ios' ? 90 : 80,
+            left: 0,
+            right: 0,
+            backgroundColor: t.surface,
+            borderTopWidth: 1.5,
+            borderTopColor: t.border,
+            paddingHorizontal: 20,
+            paddingTop: 12,
+            paddingBottom: Platform.OS === 'ios' ? 28 : 16,
+            zIndex: 10
+          }}>
+            <TouchableOpacity
+              style={{
+                height: 54,
+                borderRadius: 27,
+                overflow: 'hidden',
+                shadowColor: B.orange,
+                shadowOffset: { width: 0, height: 6 },
+                shadowOpacity: 0.2,
+                shadowRadius: 10,
+                elevation: 4
+              }}
+              onPress={() => {
+                go('subscribe_flow');
+              }}
+            >
+              <LinearGradient colors={['#FF852C', '#FD4F1B']} style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                <Text style={{ color: '#FFFFFF', fontSize: 14, fontWeight: '900' }}>
+                  Change to {selectedPlan.name} tier · {selectedPlan.price}
+                </Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        <BottomTabNav active="plans" />
+      </SafeAreaView>
+    );
+  }
+
+  // 24. Subscribe Checkout Screen
+  function RenderSubscribeFlow() {
+    const selectedPlan = PLANS.find(p => p.id === selectedPlanId) || PLANS[2];
+    const planRateNum = getNumericPrice(selectedPlan.price);
+    const depositNum = 299;
+    const discountNum = 100;
+    const totalDueNum = planRateNum + depositNum - discountNum;
+
+    const toggleCustomPref = (pref: string) => {
+      setCheckoutCustomPrefs(prev => 
+        prev.includes(pref) ? prev.filter(p => p !== pref) : [...prev, pref]
+      );
+    };
+
+    return (
+      <SafeAreaView style={[styles.safeArea, { backgroundColor: 'transparent' }]}>
+        {/* Top Header Bar */}
+        <View style={{ paddingHorizontal: 20, paddingTop: 16, paddingBottom: 12, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderColor: t.border, backgroundColor: t.surface }}>
+          <TouchableOpacity onPress={back} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.card, borderWidth: 1, borderColor: t.border, justifyContent: 'center', alignItems: 'center' }}>
+            <ArrowLeft size={16} color={t.text} />
+          </TouchableOpacity>
+          <Text style={{ fontSize: 16, fontWeight: '900', color: t.text, marginLeft: 16, letterSpacing: 0.5 }}>SUBSCRIBE CHECKOUT</Text>
+        </View>
+
+        <ScrollView contentContainerStyle={{ paddingBottom: 220 }} showsVerticalScrollIndicator={false}>
+          {/* Plan Header Card */}
+          <View style={{ paddingHorizontal: 20, paddingTop: 20 }}>
+            <View style={{ backgroundColor: t.card, borderRadius: 24, padding: 20, borderWidth: 1.5, borderColor: t.border }}>
+              <Text style={{ fontSize: 11, fontWeight: '900', color: B.orange, textTransform: 'uppercase', letterSpacing: 1 }}>Selected Plan</Text>
+              <Text style={{ fontSize: 20, fontWeight: '900', color: t.text, marginTop: 4 }}>{selectedPlan.name} Subscription</Text>
+              <Text style={{ fontSize: 12.5, color: t.sub, marginTop: 2 }}>{selectedPlan.sub}</Text>
+            </View>
+          </View>
+
+          {/* 1. Meal Preference */}
+          <View style={{ paddingHorizontal: 20, marginTop: 24 }}>
+            <Text style={{ fontSize: 14, fontWeight: '900', color: t.text, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 12 }}>Meal Preference</Text>
+            <View style={{ flexDirection: 'row', gap: 12 }}>
+              {['Veg', 'Non-Veg'].map(pref => {
+                const isSelected = checkoutMealPref === pref;
+                return (
+                  <TouchableOpacity
+                    key={pref}
+                    activeOpacity={0.8}
+                    style={{
+                      flex: 1,
+                      height: 50,
+                      borderRadius: 16,
+                      borderWidth: 2,
+                      borderColor: isSelected ? B.orange : t.border,
+                      backgroundColor: isSelected ? B.orangeL : t.card,
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      flexDirection: 'row',
+                      gap: 6
+                    }}
+                    onPress={() => setCheckoutMealPref(pref as 'Veg' | 'Non-Veg')}
+                  >
+                    <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: pref === 'Veg' ? B.green : '#EF4444' }} />
+                    <Text style={{ fontSize: 14, fontWeight: '800', color: isSelected ? B.orange : t.text }}>{pref}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+
+          {/* 2. Dabba Frequency */}
+          <View style={{ paddingHorizontal: 20, marginTop: 24 }}>
+            <Text style={{ fontSize: 14, fontWeight: '900', color: t.text, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 12 }}>Dabba Frequency</Text>
+            <View style={{ gap: 10 }}>
+              {[
+                { id: 'lunch', label: '☀️ Lunch Only' },
+                { id: 'dinner', label: '🌙 Dinner Only' },
+                { id: 'both', label: '☀️🌙 Lunch + Dinner' }
+              ].map(freq => {
+                const isSelected = checkoutFreq === freq.id;
+                return (
+                  <TouchableOpacity
+                    key={freq.id}
+                    activeOpacity={0.8}
+                    style={{
+                      height: 52,
+                      borderRadius: 16,
+                      borderWidth: 2,
+                      borderColor: isSelected ? B.orange : t.border,
+                      backgroundColor: isSelected ? B.orangeL : t.card,
+                      paddingHorizontal: 16,
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'space-between'
+                    }}
+                    onPress={() => setCheckoutFreq(freq.id as any)}
+                  >
+                    <Text style={{ fontSize: 14, fontWeight: '800', color: isSelected ? B.orange : t.text }}>{freq.label}</Text>
+                    <View style={{
+                      width: 18,
+                      height: 18,
+                      borderRadius: 9,
+                      borderWidth: 2,
+                      borderColor: isSelected ? B.orange : t.muted,
+                      justifyContent: 'center',
+                      alignItems: 'center'
+                    }}>
+                      {isSelected && <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: B.orange }} />}
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+
+          {/* 3. Custom Preferences */}
+          <View style={{ paddingHorizontal: 20, marginTop: 24 }}>
+            <Text style={{ fontSize: 14, fontWeight: '900', color: t.text, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 12 }}>Custom Preferences</Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+              {['Mild Spicy', 'Medium Spicy', 'Low Carb', 'High Protein', 'No Dairy'].map(pref => {
+                const isSelected = checkoutCustomPrefs.includes(pref);
+                return (
+                  <TouchableOpacity
+                    key={pref}
+                    activeOpacity={0.8}
+                    style={{
+                      paddingHorizontal: 16,
+                      paddingVertical: 10,
+                      borderRadius: 16,
+                      borderWidth: 1.5,
+                      borderColor: isSelected ? B.orange : t.border,
+                      backgroundColor: isSelected ? B.orangeL : t.card,
+                    }}
+                    onPress={() => toggleCustomPref(pref)}
+                  >
+                    <Text style={{ fontSize: 12, fontWeight: '800', color: isSelected ? B.orange : t.text }}>{pref}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+
+          {/* 4. Delivery Start Date */}
+          <View style={{ paddingHorizontal: 20, marginTop: 24 }}>
+            <Text style={{ fontSize: 14, fontWeight: '900', color: t.text, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 12 }}>Delivery Start Date</Text>
+            <View style={{ flexDirection: 'row', gap: 12 }}>
+              {/* Tomorrow */}
+              <TouchableOpacity
+                activeOpacity={0.8}
+                style={{
+                  flex: 1,
+                  padding: 14,
+                  borderRadius: 16,
+                  borderWidth: 2,
+                  borderColor: checkoutStartDate === 'tomorrow' ? B.orange : t.border,
+                  backgroundColor: checkoutStartDate === 'tomorrow' ? B.orangeL : t.card,
+                }}
+                onPress={() => setCheckoutStartDate('tomorrow')}
+              >
+                <Text style={{ fontSize: 14, fontWeight: '900', color: checkoutStartDate === 'tomorrow' ? B.orange : t.text }}>Tomorrow</Text>
+                <Text style={{ fontSize: 11, color: t.sub, marginTop: 2 }}>Starts at 12:30 PM</Text>
+              </TouchableOpacity>
+
+              {/* Custom Date */}
+              <TouchableOpacity
+                activeOpacity={0.8}
+                style={{
+                  flex: 1,
+                  padding: 14,
+                  borderRadius: 16,
+                  borderWidth: 2,
+                  borderColor: checkoutStartDate === 'custom' ? B.orange : t.border,
+                  backgroundColor: checkoutStartDate === 'custom' ? B.orangeL : t.card,
+                }}
+                onPress={() => setCheckoutStartDate('custom')}
+              >
+                <Text style={{ fontSize: 14, fontWeight: '900', color: checkoutStartDate === 'custom' ? B.orange : t.text }}>Custom Date</Text>
+                <Text style={{ fontSize: 11, color: t.sub, marginTop: 2 }}>Select calendar slot</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* 5. Pricing Details Card */}
+          <View style={{ paddingHorizontal: 20, marginTop: 28 }}>
+            <View style={{ backgroundColor: t.card, borderRadius: 24, borderWidth: 1.5, borderColor: t.border, padding: 18 }}>
+              {/* Plan Rate */}
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Text style={{ fontSize: 13, fontWeight: 'bold', color: t.sub }}>Plan Rate ({selectedPlan.name})</Text>
+                <Text style={{ fontSize: 14, fontWeight: '900', color: t.text }}>{selectedPlan.price}</Text>
               </View>
-            ))}
+
+              {/* Deposit */}
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 10 }}>
+                <Text style={{ fontSize: 13, fontWeight: 'bold', color: t.sub }}>Steel Dabba Deposit (Refundable)</Text>
+                <Text style={{ fontSize: 14, fontWeight: '900', color: t.text }}>₹299</Text>
+              </View>
+
+              {/* Discount */}
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 10 }}>
+                <Text style={{ fontSize: 13, fontWeight: 'bold', color: t.sub }}>Monsoon Discount</Text>
+                <Text style={{ fontSize: 14, fontWeight: '900', color: B.green }}>−₹100</Text>
+              </View>
+
+              <View style={{ height: 1, backgroundColor: t.border, marginVertical: 14 }} />
+
+              {/* Total Due */}
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Text style={{ fontSize: 15, fontWeight: '900', color: t.text }}>Total Due</Text>
+                <Text style={{ fontSize: 20, fontWeight: '900', color: B.orange }}>₹{totalDueNum.toLocaleString('en-IN')}</Text>
+              </View>
+            </View>
+          </View>
+
+          {/* Pay & Activate Subscription button at the bottom of scroll content */}
+          <View style={{
+            paddingHorizontal: 20,
+            paddingTop: 24,
+            paddingBottom: 40,
+            marginTop: 20
+          }}>
+            <TouchableOpacity
+              style={{
+                height: 54,
+                borderRadius: 27,
+                overflow: 'hidden',
+                shadowColor: B.orange,
+                shadowOffset: { width: 0, height: 6 },
+                shadowOpacity: 0.2,
+                shadowRadius: 10,
+                elevation: 4
+              }}
+              onPress={() => {
+                setToast(`${selectedPlan.name} Subscription Activated Successfully!`);
+                go('home');
+              }}
+            >
+              <LinearGradient colors={['#FF852C', '#FD4F1B']} style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                <Text style={{ color: '#FFFFFF', fontSize: 15, fontWeight: '900' }}>Pay & Activate Subscription</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+            <Text style={{ fontSize: 9.5, color: t.muted, textAlign: 'center', marginTop: 8 }}>
+              Security SSL Encrypted · Refund of Deposit is instant on cancellation
+            </Text>
           </View>
         </ScrollView>
 
         <BottomTabNav active="plans" />
+      </SafeAreaView>
+    );
+  }
+
+  // 25. Request Tour Scheduling Screen
+  function RenderTourBooking() {
+    return (
+      <SafeAreaView style={[styles.safeArea, { backgroundColor: 'transparent' }]}>
+        {/* Top Header Bar */}
+        <View style={{ paddingHorizontal: 20, paddingTop: 16, paddingBottom: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderBottomWidth: 1, borderColor: t.border, backgroundColor: t.surface }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <TouchableOpacity onPress={back} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.card, borderWidth: 1, borderColor: t.border, justifyContent: 'center', alignItems: 'center' }}>
+              <ArrowLeft size={16} color={t.text} />
+            </TouchableOpacity>
+            <Text style={{ fontSize: 16, fontWeight: '900', color: t.text, marginLeft: 16, letterSpacing: 0.5 }}>Request Tour Scheduling</Text>
+          </View>
+          <TouchableOpacity onPress={back}>
+            <Text style={{ fontSize: 13, fontWeight: 'bold', color: B.orange }}>Cancel</Text>
+          </TouchableOpacity>
+        </View>
+
+        <ScrollView contentContainerStyle={{ paddingBottom: 120 }} showsVerticalScrollIndicator={false}>
+          {/* Preferred Date */}
+          <View style={{ paddingHorizontal: 20, paddingTop: 20 }}>
+            <Text style={{ fontSize: 14, fontWeight: '900', color: t.text, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 }}>Preferred Date</Text>
+            <View style={{
+              height: 56,
+              borderRadius: 18,
+              borderWidth: 1.5,
+              borderColor: t.border,
+              backgroundColor: t.card,
+              paddingHorizontal: 16,
+              justifyContent: 'center'
+            }}>
+              <TextInput
+                style={{ fontSize: 14.5, color: t.text, fontWeight: '600' }}
+                value={tourDate}
+                onChangeText={setTourDate}
+                placeholder="dd-mm-yyyy"
+                placeholderTextColor={t.muted}
+              />
+            </View>
+          </View>
+
+          {/* Preferred Time Slot */}
+          <View style={{ paddingHorizontal: 20, marginTop: 24 }}>
+            <Text style={{ fontSize: 14, fontWeight: '900', color: t.text, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 12 }}>Preferred Time Slot</Text>
+            <View style={{ flexDirection: 'row', gap: 10 }}>
+              {['10:00 AM', '11:30 AM', '4:00 PM'].map(slot => {
+                const isSelected = tourTimeSlot === slot;
+                return (
+                  <TouchableOpacity
+                    key={slot}
+                    activeOpacity={0.8}
+                    style={{
+                      flex: 1,
+                      height: 50,
+                      borderRadius: 16,
+                      borderWidth: 2,
+                      borderColor: isSelected ? B.orange : t.border,
+                      backgroundColor: isSelected ? B.orangeL : t.card,
+                      justifyContent: 'center',
+                      alignItems: 'center'
+                    }}
+                    onPress={() => setTourTimeSlot(slot)}
+                  >
+                    <Text style={{ fontSize: 13.5, fontWeight: '800', color: isSelected ? B.orange : t.text }}>{slot}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+
+          {/* Number of Visitors */}
+          <View style={{ paddingHorizontal: 20, marginTop: 24 }}>
+            <Text style={{ fontSize: 14, fontWeight: '900', color: t.text, textTransform: 'uppercase', letterSpacing: 0.5 }}>Number of Visitors</Text>
+            <Text style={{ fontSize: 11, color: t.sub, marginTop: 2, marginBottom: 12 }}>(Max 4 per tour)</Text>
+            
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
+              {/* Minus */}
+              <TouchableOpacity
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 22,
+                  backgroundColor: t.card,
+                  borderWidth: 1.5,
+                  borderColor: t.border,
+                  justifyContent: 'center',
+                  alignItems: 'center'
+                }}
+                onPress={() => setTourVisitors(prev => Math.max(1, prev - 1))}
+              >
+                <Text style={{ fontSize: 20, fontWeight: '900', color: t.text }}>-</Text>
+              </TouchableOpacity>
+
+              <Text style={{ fontSize: 18, fontWeight: '900', color: t.text, minWidth: 24, textAlign: 'center' }}>{tourVisitors}</Text>
+
+              {/* Plus */}
+              <TouchableOpacity
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 22,
+                  backgroundColor: t.card,
+                  borderWidth: 1.5,
+                  borderColor: t.border,
+                  justifyContent: 'center',
+                  alignItems: 'center'
+                }}
+                onPress={() => setTourVisitors(prev => Math.min(4, prev + 1))}
+              >
+                <Text style={{ fontSize: 20, fontWeight: '900', color: t.text }}>+</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Visitor Contact Name */}
+          <View style={{ paddingHorizontal: 20, marginTop: 24 }}>
+            <Text style={{ fontSize: 14, fontWeight: '900', color: t.text, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 }}>Visitor Contact Name</Text>
+            <View style={{
+              height: 56,
+              borderRadius: 18,
+              borderWidth: 1.5,
+              borderColor: t.border,
+              backgroundColor: t.card,
+              paddingHorizontal: 16,
+              justifyContent: 'center'
+            }}>
+              <TextInput
+                style={{ fontSize: 14.5, color: t.text, fontWeight: '600' }}
+                value={tourContactName}
+                onChangeText={setTourContactName}
+                placeholder="Enter Full Name"
+                placeholderTextColor={t.muted}
+              />
+            </View>
+          </View>
+
+          {/* Contact Number */}
+          <View style={{ paddingHorizontal: 20, marginTop: 24 }}>
+            <Text style={{ fontSize: 14, fontWeight: '900', color: t.text, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 }}>Contact Number</Text>
+            <View style={{
+              height: 56,
+              borderRadius: 18,
+              borderWidth: 1.5,
+              borderColor: t.border,
+              backgroundColor: t.card,
+              paddingHorizontal: 16,
+              justifyContent: 'center'
+            }}>
+              <TextInput
+                style={{ fontSize: 14.5, color: t.text, fontWeight: '600' }}
+                value={tourContactPhone}
+                onChangeText={setTourContactPhone}
+                placeholder="+91 98765 43210"
+                placeholderTextColor={t.muted}
+                keyboardType="phone-pad"
+              />
+            </View>
+          </View>
+
+          {/* Confirm Tour Request Button */}
+          <View style={{ paddingHorizontal: 20, marginTop: 32 }}>
+            <TouchableOpacity
+              style={{
+                height: 54,
+                borderRadius: 27,
+                overflow: 'hidden',
+                shadowColor: B.orange,
+                shadowOffset: { width: 0, height: 6 },
+                shadowOpacity: 0.2,
+                shadowRadius: 10,
+                elevation: 4
+              }}
+              onPress={() => {
+                if (!tourContactName.trim()) {
+                  setToast("Please enter a contact name");
+                  return;
+                }
+                setToast("Tour Request Confirmed successfully!");
+                back();
+              }}
+            >
+              <LinearGradient colors={['#FF852C', '#FD4F1B']} style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                <Text style={{ color: '#FFFFFF', fontSize: 15, fontWeight: '900' }}>Confirm Tour Request</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+
+        <BottomTabNav active="kitchen" />
       </SafeAreaView>
     );
   }
@@ -4930,6 +6334,12 @@ export default function App() {
             return RenderRefer();
           case 'plans':
             return RenderPlans();
+          case 'subscribe_flow':
+            return RenderSubscribeFlow();
+          case 'tour_booking':
+            return RenderTourBooking();
+          case 'animation_demo':
+            return <FluidAnimationsDemo onBack={back} />;
           default:
             return RenderHome();
         }

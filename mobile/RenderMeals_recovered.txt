@@ -1,0 +1,816 @@
+  // 8. Meals Screen (Daily Menu & Customized Setup)
+  function RenderMeals() {
+    const filteredMeals = mealsList.filter(m => {
+      let matchesType = true;
+      if (selectedFilter === 'Veg') matchesType = m.type === 'veg';
+      else if (selectedFilter === 'Non-Veg') matchesType = m.type === 'non-veg';
+      else if (selectedFilter === 'Egg') matchesType = m.type === 'egg';
+
+      let matchesCat = true;
+      if (selectedCategory !== 'All Menu' && selectedCategory !== 'All Categories') {
+        matchesCat = m.categories.includes(selectedCategory);
+      }
+
+      return matchesType && matchesCat;
+    });
+
+    const activeMeal = filteredMeals[activeMealIndex] || filteredMeals[0] || MEALS[0];
+    const prevMeal = activeMealIndex > 0 ? filteredMeals[activeMealIndex - 1] : filteredMeals[filteredMeals.length - 1];
+    const nextMeal = activeMealIndex < filteredMeals.length - 1 ? filteredMeals[activeMealIndex + 1] : filteredMeals[0];
+
+    // Compute customized calories based on active meal + selected ingredients additions
+    const customizedCalorieOutput = useMemo(() => {
+      let base = activeMeal.cal;
+      // Extract active meal ingredient keys
+      const ingredients = [
+        activeMeal.ingredients.rice,
+        activeMeal.ingredients.dal,
+        ...(activeMeal.ingredients.veg || []),
+        ...(activeMeal.ingredients.spices || []),
+        ...(activeMeal.ingredients.dairy || []),
+        activeMeal.ingredients.flour,
+        activeMeal.ingredients.meat
+      ].filter(Boolean) as string[];
+
+      ingredients.forEach(name => {
+        const qty = ingredientQuantities[name] ?? 1;
+        base += (qty - 1) * 45; // 45 kcal delta per quantity step
+      });
+      return base;
+    }, [activeMeal, ingredientQuantities]);
+
+    const rotateInterpolated = plateRotate.interpolate({
+      inputRange: [-0.8, 0, 0.8],
+      outputRange: ['-30deg', '0deg', '30deg']
+    });
+
+    // Swiping responder gesture for the circular plate carousel spotlight
+    const handleResponderGrant = (evt: any) => {
+      touchStartRef.current = evt.nativeEvent.pageX || (evt.nativeEvent.touches && evt.nativeEvent.touches[0] ? evt.nativeEvent.touches[0].pageX : 0);
+      
+      // Idle breathing reset & spring compress feedback on touch down
+      Animated.spring(plateScale, {
+        toValue: 0.95,
+        friction: 4,
+        useNativeDriver: false
+      }).start();
+    };
+
+    const handleResponderRelease = (evt: any) => {
+      const currentX = evt.nativeEvent.pageX || (evt.nativeEvent.changedTouches && evt.nativeEvent.changedTouches[0] ? evt.nativeEvent.changedTouches[0].pageX : 0);
+      const dx = currentX - touchStartRef.current;
+      
+      if (Math.abs(dx) > 45) {
+        if (dx > 0) {
+          // Swipe right (prev plate)
+          setActiveMealIndex(prev => prev > 0 ? prev - 1 : filteredMeals.length - 1);
+        } else {
+          // Swipe left (next plate)
+          setActiveMealIndex(prev => prev < filteredMeals.length - 1 ? prev + 1 : 0);
+        }
+      } else {
+        // Return active plate to original scale
+        Animated.spring(plateScale, {
+          toValue: 1,
+          friction: 6,
+          useNativeDriver: false
+        }).start();
+      }
+    };
+
+    const categoryList = ['All Menu', 'Chef Special', 'Healthy Diet', 'Traditional thali', 'Quick Bites'];
+
+    // Interpolations linking bottom sheet scroll/drag with centerpiece food plate styling
+    const plateScaleFromSheet = sheetY.interpolate({
+      inputRange: [80, SCREEN_HEIGHT * 0.52, SCREEN_HEIGHT - 120],
+      outputRange: [0.55, 0.82, 1.0],
+      extrapolate: 'clamp'
+    });
+
+    const plateTranslateYFromSheet = sheetY.interpolate({
+      inputRange: [80, SCREEN_HEIGHT - 120],
+      outputRange: [-55, 0],
+      extrapolate: 'clamp'
+    });
+
+    const plateOpacityFromSheet = sheetY.interpolate({
+      inputRange: [80, 180, SCREEN_HEIGHT - 120],
+      outputRange: [0.2, 0.9, 1.0],
+      extrapolate: 'clamp'
+    });
+
+    // Bottom sheet content fade levels depending on offset position
+    const halfExpandedOpacity = sheetY.interpolate({
+      inputRange: [SCREEN_HEIGHT * 0.52, SCREEN_HEIGHT - 120 - 45, SCREEN_HEIGHT - 120],
+      outputRange: [1, 0.25, 0],
+      extrapolate: 'clamp'
+    });
+
+    const expandedOpacity = sheetY.interpolate({
+      inputRange: [80, SCREEN_HEIGHT * 0.52 - 45, SCREEN_HEIGHT * 0.52],
+      outputRange: [1, 0.25, 0],
+      extrapolate: 'clamp'
+    });
+
+    // Morph layout fades for recipes vs customization workspaces
+    const recipesOpacity = customizeTabAnim.interpolate({
+      inputRange: [0, 1],
+      outputRange: [1, 0]
+    });
+
+    const customizeOpacity = customizeTabAnim.interpolate({
+      inputRange: [0, 1],
+      outputRange: [0, 1]
+    });
+
+    // Extract dynamic ingredients of the active meal
+    const activeIngredients = useMemo(() => {
+      return [
+        activeMeal.ingredients.rice && { name: activeMeal.ingredients.rice, type: 'Rice' },
+        activeMeal.ingredients.dal && { name: activeMeal.ingredients.dal, type: 'Dal' },
+        activeMeal.ingredients.flour && { name: activeMeal.ingredients.flour, type: 'Wheat' },
+        activeMeal.ingredients.meat && { name: activeMeal.ingredients.meat, type: 'Protein' },
+        ...(activeMeal.ingredients.veg || []).map(v => ({ name: v, type: 'Veg' })),
+        ...(activeMeal.ingredients.spices || []).map(s => ({ name: s, type: 'Spices' })),
+        ...(activeMeal.ingredients.dairy || []).map(d => ({ name: d, type: 'Dairy' }))
+      ].filter(Boolean) as { name: string; type: string }[];
+    }, [activeMeal]);
+
+    return (
+      <SafeAreaView style={[styles.safeArea, { backgroundColor: t.bg }]}>
+        {/* Fixed Background Glow & Spotlight Elements */}
+        <Animated.View 
+          pointerEvents="none"
+          style={{
+            position: 'absolute',
+            top: 220,
+            alignSelf: 'center',
+            width: 230,
+            height: 230,
+            borderRadius: 115,
+            backgroundColor: B.orange,
+            opacity: Animated.multiply(
+              isDark ? 0.08 : 0.04,
+              plateOpacityFromSheet
+            ),
+            transform: [
+              { scale: Animated.multiply(plateScaleFromSheet, 1.1) },
+              { translateY: plateTranslateYFromSheet }
+            ],
+            zIndex: 1
+          }} 
+        />
+
+        {/* Top Header Bar */}
+        <View style={{ paddingHorizontal: 20, paddingTop: 16, paddingBottom: 8, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', zIndex: 10 }}>
+          <View>
+            <Text style={{ fontSize: 24, fontWeight: '900', color: t.text, letterSpacing: -0.5 }}>Koi Koi Dabba</Text>
+            <Text style={{ fontSize: 11, color: t.sub, marginTop: 2 }}>Premium food menu & customization</Text>
+          </View>
+          <TouchableOpacity onPress={() => go('notifications')} style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: t.card, borderWidth: 1.5, borderColor: t.border, justifyContent: 'center', alignItems: 'center' }}>
+            <Bell size={18} color={t.text} />
+          </TouchableOpacity>
+        </View>
+
+        {/* Recipes | Customize top toggle tabs */}
+        <View style={{ 
+          flexDirection: 'row', 
+          justifyContent: 'center', 
+          alignItems: 'center', 
+          marginVertical: 12,
+          paddingHorizontal: 20,
+          zIndex: 10
+        }}>
+          <View style={{ 
+            flexDirection: 'row', 
+            backgroundColor: t.card, 
+            borderRadius: 25, 
+            padding: 4, 
+            borderWidth: 1.5, 
+            borderColor: t.border,
+            width: '80%'
+          }}>
+            <TouchableOpacity 
+              onPress={() => setMenuActiveTab('recipes')}
+              style={{ 
+                flex: 1, 
+                paddingVertical: 10, 
+                borderRadius: 20, 
+                backgroundColor: menuActiveTab === 'recipes' ? B.orange : 'transparent',
+                alignItems: 'center'
+              }}
+            >
+              <Text style={{ fontSize: 13, fontWeight: '900', color: menuActiveTab === 'recipes' ? '#FFFFFF' : t.sub }}>Recipes</Text>
+            </TouchableOpacity>
+            
+            <View style={{ width: 1, height: 20, backgroundColor: t.border, alignSelf: 'center' }} />
+            
+            <TouchableOpacity 
+              onPress={() => setMenuActiveTab('customize')}
+              style={{ 
+                flex: 1, 
+                paddingVertical: 10, 
+                borderRadius: 20, 
+                backgroundColor: menuActiveTab === 'customize' ? B.orange : 'transparent',
+                alignItems: 'center'
+              }}
+            >
+              <Text style={{ fontSize: 13, fontWeight: '900', color: menuActiveTab === 'customize' ? '#FFFFFF' : t.sub }}>Customize</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Recipes Workspace Content (Filters and Carousel) */}
+        <Animated.View style={{ flex: 1, opacity: recipesOpacity, zIndex: menuActiveTab === 'recipes' ? 20 : 1 }}>
+          {/* Categories Filters Row */}
+          <View style={{ flexDirection: 'row', paddingHorizontal: 20, marginTop: 4, gap: 8 }}>
+            {['All', 'Veg', 'Non-Veg', 'Egg'].map(f => {
+              const isSelected = selectedFilter === f;
+              return (
+                <TouchableOpacity
+                  key={f}
+                  style={{
+                    paddingHorizontal: 16,
+                    paddingVertical: 8,
+                    borderRadius: 14,
+                    borderWidth: 1.5,
+                    borderColor: isSelected ? B.orange : t.border,
+                    backgroundColor: isSelected ? B.orangeL : t.card
+                  }}
+                  onPress={() => setSelectedFilter(f)}
+                >
+                  <Text style={{ fontSize: 11, fontWeight: '900', color: isSelected ? B.orange : t.text }}>
+                    {f}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
+          {/* Horizontal Food Categories Carousel */}
+          <View style={{ marginTop: 12 }}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, gap: 8 }}>
+              {categoryList.map(cat => {
+                const isSelected = selectedCategory === cat || (cat === 'All Menu' && selectedCategory === 'All Categories');
+                return (
+                  <TouchableOpacity
+                    key={cat}
+                    style={{
+                      paddingHorizontal: 16,
+                      paddingVertical: 8,
+                      borderRadius: 20,
+                      borderWidth: 1.5,
+                      borderColor: isSelected ? B.orange : t.border,
+                      backgroundColor: isSelected ? B.orange : t.card
+                    }}
+                    onPress={() => setSelectedCategory(cat === 'All Menu' ? 'All Categories' : cat)}
+                  >
+                    <Text style={{ fontSize: 11, fontWeight: '900', color: isSelected ? '#FFFFFF' : t.sub }}>
+                      {cat}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
+
+          {filteredMeals.length > 0 ? (
+            <View style={{ marginTop: 24, alignItems: 'center' }}>
+              {/* Swipe-enabled Spotlight Carousel Container */}
+              <View 
+                onStartShouldSetResponder={() => true}
+                onMoveShouldSetResponder={() => true}
+                onResponderGrant={handleResponderGrant}
+                onResponderRelease={handleResponderRelease}
+                style={{ height: 230, width: '100%', flexDirection: 'row', justifyContent: 'center', alignItems: 'center', position: 'relative', overflow: 'hidden' }}
+              >
+                {/* Previous Plate (Left Peek) */}
+                {filteredMeals.length > 1 && (
+                  <View 
+                    pointerEvents="none"
+                    style={{
+                      position: 'absolute',
+                      left: -50,
+                      opacity: 0.35,
+                      zIndex: 2,
+                      transform: [{ scale: 0.8 }]
+                    }}
+                  >
+                    <Image 
+                      source={{ uri: prevMeal.img }} 
+                      style={{ width: 110, height: 110, borderRadius: 55, borderWidth: 3, borderColor: t.border }} 
+                    />
+                  </View>
+                )}
+
+                {/* Active Spotlight Plate (Spring physics & scroll translation bound) */}
+                <Animated.View 
+                  pointerEvents="none"
+                  style={{
+                    width: 190,
+                    height: 190,
+                    borderRadius: 95,
+                    zIndex: 10,
+                    elevation: 8,
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 8 },
+                    shadowOpacity: 0.18,
+                    shadowRadius: 12,
+                    borderWidth: 4,
+                    borderColor: t.border,
+                    overflow: 'hidden',
+                    transform: [
+                      { scale: Animated.multiply(plateScale, plateScaleFromSheet) },
+                      { rotate: rotateInterpolated },
+                      { translateY: plateTranslateYFromSheet }
+                    ],
+                    opacity: Animated.multiply(plateFade, plateOpacityFromSheet)
+                  }}
+                >
+                  <Image source={{ uri: activeMeal.img }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+                </Animated.View>
+
+                {/* Next Plate (Right Peek) */}
+                {filteredMeals.length > 1 && (
+                  <View 
+                    pointerEvents="none"
+                    style={{
+                      position: 'absolute',
+                      right: -50,
+                      opacity: 0.35,
+                      zIndex: 2,
+                      transform: [{ scale: 0.8 }]
+                    }}
+                  >
+                    <Image 
+                      source={{ uri: nextMeal.img }} 
+                      style={{ width: 110, height: 110, borderRadius: 55, borderWidth: 3, borderColor: t.border }} 
+                    />
+                  </View>
+                )}
+              </View>
+
+              {/* Swiper Indicator Dots */}
+              {filteredMeals.length > 1 && (
+                <Animated.View style={{ flexDirection: 'row', gap: 6, marginTop: 8, opacity: plateOpacityFromSheet }}>
+                  {filteredMeals.map((_, i) => (
+                    <View 
+                      key={i} 
+                      style={{ 
+                        width: activeMealIndex === i ? 20 : 6, 
+                        height: 6, 
+                        borderRadius: 3, 
+                        backgroundColor: activeMealIndex === i ? B.orange : t.muted 
+                      }} 
+                    />
+                  ))}
+                </Animated.View>
+              )}
+            </View>
+          ) : (
+            <View style={{ paddingVertical: 80, alignItems: 'center', justifyContent: 'center' }}>
+              <Text style={{ fontSize: 15, color: t.text, fontWeight: 'bold' }}>No Dabbas Found</Text>
+              <Text style={{ fontSize: 12, color: t.muted, marginTop: 4 }}>Try clearing selected filters</Text>
+            </View>
+          )}
+        </Animated.View>
+
+        {/* Draggable iOS-Style Snapping Bottom Sheet */}
+        <Animated.View 
+          {...sheetPanResponder.panHandlers}
+          style={{
+            position: 'absolute',
+            left: 0,
+            right: 0,
+            top: 0,
+            bottom: 0,
+            transform: [{ translateY: sheetY }],
+            backgroundColor: t.card,
+            borderTopLeftRadius: 36,
+            borderTopRightRadius: 36,
+            borderWidth: 1.5,
+            borderColor: t.border,
+            zIndex: 100,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: -8 },
+            shadowOpacity: 0.08,
+            shadowRadius: 16,
+            elevation: 10
+          }}
+        >
+          {/* Draggable dragbar handle area */}
+          <View style={{ width: '100%', alignItems: 'center', paddingVertical: 14 }}>
+            <View style={{ width: 44, height: 5, borderRadius: 2.5, backgroundColor: t.muted }} />
+          </View>
+
+          {/* Morph container matching active toggle: Recipes or Customize */}
+          <View style={{ flex: 1, width: '100%' }}>
+            
+            {/* Recipes Tab Draggable Contents */}
+            <Animated.View style={{ 
+              position: 'absolute', 
+              top: 0, 
+              left: 0, 
+              right: 0, 
+              bottom: 0, 
+              opacity: recipesOpacity, 
+              zIndex: menuActiveTab === 'recipes' ? 2 : 1 
+            }}>
+              {/* Header Title details (Always visible on sheet collapse) */}
+              <View style={{ paddingHorizontal: 20, alignItems: 'center', pb: 10 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <VegPill veg={activeMeal.type === 'veg'} />
+                  <View style={{ backgroundColor: B.orangeL, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                    <Star size={10} color={B.orange} />
+                    <Text style={{ fontSize: 9, fontWeight: '900', color: B.orange }}>{activeMeal.rating}</Text>
+                  </View>
+                </View>
+                <Text style={{ fontSize: 20, fontWeight: '900', color: t.text, marginTop: 8, textAlign: 'center' }}>
+                  {activeMeal.name.toUpperCase()}
+                </Text>
+              </View>
+
+              <ScrollView 
+                contentContainerStyle={{ paddingBottom: 160 }} 
+                showsVerticalScrollIndicator={false}
+                style={{ flex: 1 }}
+              >
+                {/* Half Expanded Information Details */}
+                <Animated.View style={{ opacity: halfExpandedOpacity, paddingHorizontal: 20, alignItems: 'center' }}>
+                  <Text style={{ fontSize: 13, color: t.sub, marginTop: 4, textAlign: 'center', paddingHorizontal: 16 }}>
+                    {activeMeal.desc}
+                  </Text>
+                  <Text style={{ fontSize: 26, fontWeight: '900', color: B.orange, marginTop: 12 }}>
+                    {activeMeal.price}
+                  </Text>
+
+                  {/* Nutrition statistics card */}
+                  <View style={{ 
+                    flexDirection: 'row', 
+                    backgroundColor: t.bg, 
+                    borderRadius: 20, 
+                    padding: 14, 
+                    marginTop: 16, 
+                    justifyContent: 'space-between', 
+                    alignItems: 'center',
+                    borderWidth: 1.5,
+                    borderColor: t.border,
+                    width: '100%'
+                  }}>
+                    <View style={{ alignItems: 'center', flex: 1 }}>
+                      <Text style={{ fontSize: 13, fontWeight: '900', color: t.text }}>{activeMeal.cal} kcal</Text>
+                      <Text style={{ fontSize: 9, color: t.muted, marginTop: 2 }}>Calories</Text>
+                    </View>
+                    <View style={{ width: 1.5, height: 20, backgroundColor: t.border }} />
+                    <View style={{ alignItems: 'center', flex: 1 }}>
+                      <Text style={{ fontSize: 13, fontWeight: '900', color: t.text }}>{activeMeal.protein}g</Text>
+                      <Text style={{ fontSize: 9, color: t.muted, marginTop: 2 }}>Protein</Text>
+                    </View>
+                    <View style={{ width: 1.5, height: 20, backgroundColor: t.border }} />
+                    <View style={{ alignItems: 'center', flex: 1 }}>
+                      <Text style={{ fontSize: 13, fontWeight: '900', color: t.text }}>{activeMeal.carbs}g</Text>
+                      <Text style={{ fontSize: 9, color: t.muted, marginTop: 2 }}>Carbs</Text>
+                    </View>
+                    <View style={{ width: 1.5, height: 20, backgroundColor: t.border }} />
+                    <View style={{ alignItems: 'center', flex: 1 }}>
+                      <Text style={{ fontSize: 13, fontWeight: '900', color: t.text }}>{activeMeal.fat}g</Text>
+                      <Text style={{ fontSize: 9, color: t.muted, marginTop: 2 }}>Fats</Text>
+                    </View>
+                  </View>
+
+                  {/* Chef Card badge */}
+                  <View style={{
+                    width: '100%',
+                    backgroundColor: t.bg,
+                    borderRadius: 24,
+                    borderWidth: 1.5,
+                    borderColor: t.border,
+                    padding: 14,
+                    marginTop: 16,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 12
+                  }}>
+                    <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: B.orangeL, justifyContent: 'center', alignItems: 'center', borderWidth: 1.5, borderColor: B.orange }}>
+                      <Text style={{ fontSize: 20 }}>👩‍🍳</Text>
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontSize: 13, fontWeight: '900', color: t.text }}>{activeMeal.chef}</Text>
+                      <Text style={{ fontSize: 10, color: t.sub, marginTop: 2 }}>Central Kitchen Specialist · Verified</Text>
+                    </View>
+                    <View style={{ alignItems: 'flex-end' }}>
+                      <Text style={{ fontSize: 13, fontWeight: '900', color: t.text }}>9.4</Text>
+                      <Text style={{ fontSize: 8, color: t.muted }}>Rating Index</Text>
+                    </View>
+                  </View>
+                </Animated.View>
+
+                {/* Fully Expanded detailed information */}
+                <Animated.View style={{ opacity: expandedOpacity, paddingHorizontal: 20, marginTop: 20 }}>
+                  <Text style={{ fontSize: 15, fontWeight: '900', color: t.text, marginBottom: 8 }}>Plate Ingredients</Text>
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 16 }}>
+                    {activeIngredients.map((item, i) => (
+                      <View key={i} style={{ backgroundColor: t.bg, borderWidth: 1.5, borderColor: t.border, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12, flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                        <Leaf size={10} color={B.green} />
+                        <Text style={{ fontSize: 11, fontWeight: 'bold', color: t.text }}>{item.name}</Text>
+                      </View>
+                    ))}
+                  </View>
+
+                  <Text style={{ fontSize: 15, fontWeight: '900', color: t.text, marginBottom: 8 }}>Kitchen Hygiene & Cooking Style</Text>
+                  <Text style={{ fontSize: 12, color: t.sub, lineHeight: 18, marginBottom: 16 }}>
+                    Prepared at our A+ Certified facility in Jubilee Hills. Cooked claypot style using cold-pressed groundnut oil, Nandini cow ghee, and daily-procured farm veggies. Zero plastic packaging.
+                  </Text>
+
+                  <Text style={{ fontSize: 15, fontWeight: '900', color: t.text, marginBottom: 8 }}>Recent Reviews</Text>
+                  {activeMeal.reviews.map((rev, idx) => (
+                    <View key={idx} style={{ backgroundColor: t.bg, borderWidth: 1.5, borderColor: t.border, padding: 12, borderRadius: 16, marginBottom: 8 }}>
+                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Text style={{ fontSize: 11, fontWeight: 'bold', color: t.text }}>{rev.user}</Text>
+                        <Text style={{ fontSize: 9, color: t.muted }}>{rev.date}</Text>
+                      </View>
+                      <Text style={{ fontSize: 11, color: t.sub, marginTop: 4 }}>"{rev.comment}"</Text>
+                    </View>
+                  ))}
+
+                  {/* Quick Plan Tiers shortcuts */}
+                  <Text style={{ fontSize: 15, fontWeight: '900', color: t.text, marginTop: 12, marginBottom: 8 }}>Subscription Option</Text>
+                  <TouchableOpacity 
+                    onPress={() => go('plans')}
+                    style={{
+                      flexDirection: 'row',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      backgroundColor: B.orangeL,
+                      borderWidth: 1.5,
+                      borderColor: B.orange,
+                      borderRadius: 16,
+                      padding: 14
+                    }}
+                  >
+                    <View>
+                      <Text style={{ fontSize: 13, fontWeight: '900', color: B.orange }}>Weekly / Monthly Gold Plans</Text>
+                      <Text style={{ fontSize: 9, color: t.sub, marginTop: 2 }}>Unlock up to 26% savings and free deliveries</Text>
+                    </View>
+                    <ChevronRight size={18} color={B.orange} />
+                  </TouchableOpacity>
+                </Animated.View>
+              </ScrollView>
+
+              {/* Collapsed Sticky Action Panel at bottom of Recipes sheet */}
+              <View style={{
+                position: 'absolute',
+                bottom: 95,
+                left: 0,
+                right: 0,
+                paddingHorizontal: 20,
+                paddingVertical: 10,
+                borderTopWidth: 1,
+                borderTopColor: t.border,
+                backgroundColor: t.card,
+                flexDirection: 'row',
+                gap: 10,
+                alignItems: 'center'
+              }}>
+                <TouchableOpacity
+                  style={{
+                    flex: 1.2,
+                    height: 50,
+                    borderRadius: 25,
+                    borderWidth: 1.5,
+                    borderColor: t.border,
+                    backgroundColor: t.bg,
+                    justifyContent: 'center',
+                    alignItems: 'center'
+                  }}
+                  onPress={() => {
+                    setSelectedMealId(activeMeal.id);
+                    go('meal_detail');
+                  }}
+                >
+                  <Text style={{ fontSize: 13, fontWeight: '900', color: t.text }}>Full Recipe</Text>
+                </TouchableOpacity>
+
+                <Animated.View style={{ flex: 2, transform: [{ scale: addButtonScale }] }}>
+                  <TouchableOpacity
+                    style={{
+                      height: 50,
+                      borderRadius: 25,
+                      overflow: 'hidden',
+                      shadowColor: B.orange,
+                      shadowOffset: { width: 0, height: 4 },
+                      shadowOpacity: 0.15,
+                      shadowRadius: 8,
+                      elevation: 3
+                    }}
+                    onPress={() => triggerAddDabbaSuccess(activeMeal)}
+                  >
+                    <LinearGradient colors={['#FF852C', '#FD4F1B']} style={{ flex: 1, justifyContent: 'center', alignItems: 'center', flexDirection: 'row', gap: 6 }}>
+                      <Plus size={16} color="#FFFFFF" />
+                      <Text style={{ color: '#FFFFFF', fontSize: 13, fontWeight: '900' }}>Add to Dabba</Text>
+                    </LinearGradient>
+                  </TouchableOpacity>
+                </Animated.View>
+              </View>
+            </Animated.View>
+
+            {/* Customize Tab Workspace Contents */}
+            <Animated.View style={{ 
+              position: 'absolute', 
+              top: 0, 
+              left: 0, 
+              right: 0, 
+              bottom: 0, 
+              opacity: customizeOpacity,
+              zIndex: menuActiveTab === 'customize' ? 2 : 1
+            }}>
+              <ScrollView contentContainerStyle={{ paddingBottom: 150 }} showsVerticalScrollIndicator={false}>
+                {/* Targets Budget Widget */}
+                <View style={{ paddingHorizontal: 20 }}>
+                  <View style={{ 
+                    backgroundColor: t.bg,
+                    borderRadius: 24,
+                    borderWidth: 1.5,
+                    borderColor: t.border,
+                    padding: 16,
+                    alignItems: 'center'
+                  }}>
+                    <Text style={{ fontSize: 11, fontWeight: '900', color: B.orange, letterSpacing: 0.5 }}>YOUR ADJUSTED DAILY CALORIE TARGET</Text>
+                    <Text style={{ fontSize: 32, fontWeight: '900', color: t.text, marginTop: 6 }}>{customizedCalorieOutput} kcal</Text>
+                    <Text style={{ fontSize: 10, color: t.sub, marginTop: 4, textAlign: 'center' }}>
+                      Updates dynamically based on selected customizations (+45 kcal per extra portion).
+                    </Text>
+
+                    <View style={{ height: 1.5, width: '100%', backgroundColor: t.border, marginVertical: 12 }} />
+
+                    {/* Macronutrient Budgets Progress Bars */}
+                    <View style={{ width: '100%', gap: 8 }}>
+                      <View>
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 2 }}>
+                          <Text style={{ fontSize: 10, fontWeight: 'bold', color: t.text }}>Protein Target</Text>
+                          <Text style={{ fontSize: 10, fontWeight: 'bold', color: B.orange }}>{Math.round(customizedCalorieOutput * 0.15)}g</Text>
+                        </View>
+                        <View style={{ height: 6, borderRadius: 3, backgroundColor: t.border, overflow: 'hidden' }}>
+                          <View style={{ width: '65%', height: '100%', backgroundColor: B.orange, borderRadius: 3 }} />
+                        </View>
+                      </View>
+                      <View>
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 2 }}>
+                          <Text style={{ fontSize: 10, fontWeight: 'bold', color: t.text }}>Carbs Target</Text>
+                          <Text style={{ fontSize: 10, fontWeight: 'bold', color: B.green }}>{Math.round(customizedCalorieOutput * 0.5 / 4)}g</Text>
+                        </View>
+                        <View style={{ height: 6, borderRadius: 3, backgroundColor: t.border, overflow: 'hidden' }}>
+                          <View style={{ width: '50%', height: '100%', backgroundColor: B.green, borderRadius: 3 }} />
+                        </View>
+                      </View>
+                      <View>
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 2 }}>
+                          <Text style={{ fontSize: 10, fontWeight: 'bold', color: t.text }}>Fats Target</Text>
+                          <Text style={{ fontSize: 10, fontWeight: 'bold', color: B.secondary }}>{Math.round(customizedCalorieOutput * 0.3 / 9)}g</Text>
+                        </View>
+                        <View style={{ height: 6, borderRadius: 3, backgroundColor: t.border, overflow: 'hidden' }}>
+                          <View style={{ width: '40%', height: '100%', backgroundColor: B.secondary, borderRadius: 3 }} />
+                        </View>
+                      </View>
+                    </View>
+                  </View>
+                </View>
+
+                {/* Custom Spice profile */}
+                <View style={{ paddingHorizontal: 20, marginTop: 18 }}>
+                  <Text style={{ fontSize: 14, fontWeight: '900', color: t.text, marginBottom: 8 }}>Spice Level Tolerance</Text>
+                  <View style={{ flexDirection: 'row', gap: 6 }}>
+                    {['🌶 Mild', '🌶🌶 Medium', '🌶🌶🌶 Spicy'].map(level => {
+                      const cleanName = level.split(' ').slice(1).join(' ');
+                      const isSelected = user.spiceLevel === cleanName || (user.spiceLevel === 'Medium' && cleanName === 'Medium');
+                      return (
+                        <TouchableOpacity
+                          key={level}
+                          style={{
+                            paddingHorizontal: 12,
+                            paddingVertical: 8,
+                            borderRadius: 12,
+                            borderWidth: 1.5,
+                            borderColor: isSelected ? B.orange : t.border,
+                            backgroundColor: isSelected ? B.orangeL : t.bg,
+                            flex: 1,
+                            alignItems: 'center'
+                          }}
+                          onPress={() => {
+                            setUser(prev => ({ ...prev, spiceLevel: cleanName }));
+                            setToast(`Spice preference: ${cleanName}`);
+                          }}
+                        >
+                          <Text style={{ fontSize: 11, fontWeight: 'bold', color: isSelected ? B.orange : t.text }}>{level}</Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                </View>
+
+                {/* Horizontal Card List for Custom Ingredients */}
+                <View style={{ marginTop: 20 }}>
+                  <Text style={{ fontSize: 14, fontWeight: '900', color: t.text, marginLeft: 20, marginBottom: 10 }}>Dabba Ingredients customizer</Text>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, gap: 10 }}>
+                    {activeIngredients.map((item, idx) => {
+                      const qty = ingredientQuantities[item.name] ?? 1;
+                      let label = 'Normal';
+                      if (qty === 0) label = 'Removed';
+                      else if (qty === 2) label = 'Extra';
+                      else if (qty === 3) label = 'Double';
+                      
+                      return (
+                        <View
+                          key={idx}
+                          style={{
+                            width: 140,
+                            backgroundColor: t.bg,
+                            borderRadius: 20,
+                            borderWidth: 1.5,
+                            borderColor: t.border,
+                            padding: 12,
+                            alignItems: 'center',
+                            justifyContent: 'space-between'
+                          }}
+                        >
+                          <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: B.orangeL, justifyContent: 'center', alignItems: 'center', marginBottom: 6 }}>
+                            <Leaf size={14} color={B.orange} />
+                          </View>
+                          
+                          <Text style={{ fontSize: 12, fontWeight: '900', color: t.text, textAlign: 'center' }} numberOfLines={1}>
+                            {item.name}
+                          </Text>
+                          <Text style={{ fontSize: 9, color: qty === 0 ? '#EF4444' : B.orange, fontWeight: 'bold', marginTop: 2 }}>
+                            {label}
+                          </Text>
+
+                          {/* Plus / Minus modifiers buttons */}
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 10 }}>
+                            <TouchableOpacity
+                              onPress={() => {
+                                setIngredientQuantities(prev => ({
+                                  ...prev,
+                                  [item.name]: Math.max(0, qty - 1)
+                                }));
+                              }}
+                              style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: t.card, borderWidth: 1, borderColor: t.border, justifyContent: 'center', alignItems: 'center' }}
+                            >
+                              <Text style={{ fontSize: 14, fontWeight: '900', color: t.text }}>-</Text>
+                            </TouchableOpacity>
+                            <Text style={{ fontSize: 13, fontWeight: '900', color: t.text }}>{qty}</Text>
+                            <TouchableOpacity
+                              onPress={() => {
+                                setIngredientQuantities(prev => ({
+                                  ...prev,
+                                  [item.name]: Math.min(3, qty + 1)
+                                }));
+                              }}
+                              style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: t.card, borderWidth: 1, borderColor: t.border, justifyContent: 'center', alignItems: 'center' }}
+                            >
+                              <Text style={{ fontSize: 14, fontWeight: '900', color: t.text }}>+</Text>
+                            </TouchableOpacity>
+                          </View>
+                        </View>
+                      );
+                    })}
+                  </ScrollView>
+                </View>
+
+                {/* Subscriptions Options inside Customize Workspace */}
+                <View style={{ paddingHorizontal: 20, marginTop: 20 }}>
+                  <Text style={{ fontSize: 14, fontWeight: '900', color: t.text, marginBottom: 10 }}>Subscribe Plan Pricing</Text>
+                  <View style={{ gap: 8 }}>
+                    {PLANS.slice(0, 3).map(plan => (
+                      <TouchableOpacity
+                        key={plan.id}
+                        onPress={() => go('subscribe_flow')}
+                        style={{
+                          backgroundColor: t.bg,
+                          borderWidth: 1.5,
+                          borderColor: t.border,
+                          borderRadius: 16,
+                          padding: 12,
+                          flexDirection: 'row',
+                          justifyContent: 'space-between',
+                          alignItems: 'center'
+                        }}
+                      >
+                        <View>
+                          <Text style={{ fontSize: 12, fontWeight: 'bold', color: t.text }}>{plan.name} Package</Text>
+                          <Text style={{ fontSize: 9, color: t.sub, marginTop: 2 }}>{plan.sub}</Text>
+                        </View>
+                        <Text style={{ fontSize: 14, fontWeight: '900', color: B.orange }}>{plan.price}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+              </ScrollView>
+            </Animated.View>
+
+          </View>
+        </Animated.View>
+
+        <BottomTabNav active="meals" />
+      </SafeAreaView>
+    );
+  }
