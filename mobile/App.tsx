@@ -19,7 +19,7 @@ import {
   Share
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import Svg, { Circle, Path, Rect } from 'react-native-svg';
+import Svg, { Circle, Path, Rect, Ellipse, Defs, LinearGradient as SvgLinearGradient, Stop } from 'react-native-svg';
 import {
   Home as HomeIcon,
   UtensilsCrossed,
@@ -405,6 +405,13 @@ const PLANS = [
   { id: 'corporate', name: 'Corporate', badge: '', price: '₹8,999', unit: '/month', sub: 'For 5+ employees', color: '#8B5CF6', perks: ['Bulk pricing', 'Office delivery', 'Invoice & GST'] },
 ];
 
+const MOCK_MAP_LOCATIONS = [
+  { id: 1, name: 'Jubilee Hills Road', house: 'Plot 42', landmark: 'Near Metro Station', pincode: '500033', label: 'Jubilee Hills, Hyderabad', x: 25, y: 35 },
+  { id: 2, name: 'Indiranagar 100ft Road', house: 'Villa 15', landmark: 'Opposite Metro Pillar 114', pincode: '560038', label: 'Indiranagar, Bengaluru', x: 75, y: 30 },
+  { id: 3, name: 'Gachibowli High Street', house: 'Flat 304, Cyber Heights', landmark: 'Beside DLF IT Park', pincode: '500032', label: 'Gachibowli, Hyderabad', x: 30, y: 70 },
+  { id: 4, name: 'HSR 27th Main', house: 'Suite 101, Prestige Court', landmark: 'Behind Shell Fuel Station', pincode: '560102', label: 'HSR Layout, Bengaluru', x: 70, y: 75 },
+];
+
 // ─── UI Helpers ─────────────────────────────────────────────────────────────
 
 function PulsingDot({ color, size = 8 }: { color: string; size?: number }) {
@@ -526,7 +533,18 @@ export default function App() {
     weight: '',
     goal: 'Healthy Living',
     address: '',
-    addressLabel: 'Home'
+    addressLabel: 'Home',
+    dob: '',
+    gender: 'Male',
+    houseNo: '',
+    street: '',
+    landmark: '',
+    pincode: '',
+    activityLevel: 'Lightly Active',
+    healthGoal: 'Healthy Lifestyle',
+    spiceLevel: 'Medium',
+    favCuisines: ['South Indian', 'North Indian'] as string[],
+    allergies: 'None'
   });
   const [subscribed, setSubscribed] = useState(true);
   const [paused, setPaused] = useState(false);
@@ -543,6 +561,11 @@ export default function App() {
   const [selectedFilter, setSelectedFilter] = useState('All');
   const [selectedCategory, setSelectedCategory] = useState('All Categories');
   const [selectedCam, setSelectedCam] = useState(1);
+
+  // Location Map States
+  const [showLocationPermission, setShowLocationPermission] = useState(false);
+  const [showMapSelection, setShowMapSelection] = useState(false);
+  const [selectedMapPinIdx, setSelectedMapPinIdx] = useState(0);
 
   const calorieCalc = useMemo(() => {
     const w = parseFloat(user.weight) || 70;
@@ -611,6 +634,10 @@ export default function App() {
   const obBtnSlideY = useRef(new Animated.Value(20)).current;
   const obBtnFade = useRef(new Animated.Value(0)).current;
   const obFloatAnim = useRef(new Animated.Value(0)).current;
+  
+  const cardFloat1 = useRef(new Animated.Value(0)).current;
+  const cardFloat2 = useRef(new Animated.Value(0)).current;
+  const cardFloat3 = useRef(new Animated.Value(0)).current;
 
   const authFade = useRef(new Animated.Value(0)).current;
   const authSlideY = useRef(new Animated.Value(45)).current;
@@ -662,6 +689,10 @@ export default function App() {
       obBtnSlideY.setValue(20);
       obBtnFade.setValue(0);
       obFloatAnim.setValue(0);
+      
+      cardFloat1.setValue(0);
+      cardFloat2.setValue(0);
+      cardFloat3.setValue(0);
 
       Animated.parallel([
         Animated.timing(obFade, {
@@ -722,8 +753,8 @@ export default function App() {
         ]),
       ]).start();
 
-      // Trigger continuous float animation loop
-      Animated.loop(
+      // Trigger continuous float animation loops
+      const floatLoop = Animated.loop(
         Animated.sequence([
           Animated.timing(obFloatAnim, {
             toValue: 1,
@@ -736,7 +767,31 @@ export default function App() {
             useNativeDriver: true,
           }),
         ])
-      ).start();
+      );
+      floatLoop.start();
+
+      const loop1 = Animated.loop(
+        Animated.sequence([
+          Animated.timing(cardFloat1, { toValue: 1, duration: 2200, useNativeDriver: true }),
+          Animated.timing(cardFloat1, { toValue: 0, duration: 2200, useNativeDriver: true }),
+        ])
+      );
+      const loop2 = Animated.loop(
+        Animated.sequence([
+          Animated.timing(cardFloat2, { toValue: 1, duration: 2600, useNativeDriver: true }),
+          Animated.timing(cardFloat2, { toValue: 0, duration: 2600, useNativeDriver: true }),
+        ])
+      );
+      const loop3 = Animated.loop(
+        Animated.sequence([
+          Animated.timing(cardFloat3, { toValue: 1, duration: 2400, useNativeDriver: true }),
+          Animated.timing(cardFloat3, { toValue: 0, duration: 2400, useNativeDriver: true }),
+        ])
+      );
+
+      loop1.start();
+      loop2.start();
+      loop3.start();
 
       // Autoplay timer: auto-advance every 4.5 seconds
       let nextScreen: Screen = 'ob1';
@@ -748,7 +803,13 @@ export default function App() {
         go(nextScreen);
       }, 4500);
 
-      return () => clearTimeout(timer);
+      return () => {
+        clearTimeout(timer);
+        floatLoop.stop();
+        loop1.stop();
+        loop2.stop();
+        loop3.stop();
+      };
     }
   }, [currentScreen]);
 
@@ -838,114 +899,675 @@ export default function App() {
 
   function BoyIllustrationSvg() {
     return (
-      <Svg width={120} height={120} viewBox="0 0 100 100">
-        <Circle cx={50} cy={35} r={14} fill="#E5C298" />
-        <Path d="M36 32 C36 20, 64 20, 64 32 C64 32, 50 24, 36 32 Z" fill="#4A3728" />
-        <Path d="M47 40 Q50 43 53 40" fill="none" stroke="#4A3728" strokeWidth={2} strokeLinecap="round" />
-        <Circle cx={45} cy={34} r={2} fill="#4A3728" />
-        <Circle cx={55} cy={34} r={2} fill="#4A3728" />
-        <Path d="M35 55 L65 55 L60 85 L40 85 Z" fill="#E67E22" />
-        <Path d="M35 55 L22 60 L18 68" fill="none" stroke="#E5C298" strokeWidth={5} strokeLinecap="round" />
-        <Rect x={10} y={66} width={14} height={12} rx={2} fill="#BDC3C7" />
-        <Path d="M12 66 L12 60 L22 60" fill="none" stroke="#7F8C8D" strokeWidth={2} />
-        <Path d="M14 55 Q16 57 14 59" fill="none" stroke="#BDC3C7" strokeWidth={1} />
-        <Path d="M65 55 L78 60 L82 70" fill="none" stroke="#E5C298" strokeWidth={5} strokeLinecap="round" />
-        <Rect x={76} y={70} width={12} height={15} rx={2} fill="#D35400" />
-        <Path d="M78 70 L78 65 L86 65 L86 70" fill="none" stroke="#A04000" strokeWidth={2} />
-        <Rect x={42} y={85} width={6} height={12} rx={2} fill="#2C3E50" />
-        <Rect x={52} y={85} width={6} height={12} rx={2} fill="#2C3E50" />
+      <Svg width={250} height={250} viewBox="0 0 100 100">
+        {/* Soft circular background glow */}
+        <Circle cx={50} cy={50} r={41} fill="#FFF4EA" opacity={0.9} />
+        
+        {/* Outer decorative sketch rings */}
+        <Circle cx={50} cy={50} r={45} fill="none" stroke="#FD5F20" strokeWidth={0.5} strokeDasharray="3 3" opacity={0.6} />
+        <Circle cx={50} cy={50} r={43} fill="none" stroke="#312019" strokeWidth={0.3} opacity={0.3} />
+
+        {/* Legs */}
+        <Rect x={45} y={66} width={4} height={12} rx={1} fill="#5C4535" stroke="#312019" strokeWidth={1.2} />
+        <Rect x={51} y={66} width={4} height={12} rx={1} fill="#5C4535" stroke="#312019" strokeWidth={1.2} />
+        
+        {/* Torso/Shirt */}
+        <Path
+          d="M 38 48 C 38 48, 50 44, 62 48 L 60 66 C 60 68, 40 68, 40 66 Z"
+          fill="#FD6E20"
+          stroke="#312019"
+          strokeWidth={1.5}
+          strokeLinejoin="round"
+        />
+
+        {/* Neck */}
+        <Rect x={47} y={43} width={6} height={6} fill="#E8C39E" stroke="#312019" strokeWidth={1.2} />
+
+        {/* Head */}
+        <Circle cx={50} cy={35} r={10} fill="#E8C39E" stroke="#312019" strokeWidth={1.5} />
+        
+        {/* Hair sketch */}
+        <Path
+          d="M 39 33 C 39 23, 61 23, 61 33 C 58 29, 42 29, 39 33 Z"
+          fill="#423026"
+          stroke="#312019"
+          strokeWidth={1.5}
+        />
+
+        {/* Eyes & Smile */}
+        <Circle cx={47} cy={34} r={1} fill="#312019" />
+        <Circle cx={53} cy={34} r={1} fill="#312019" />
+        <Path d="M 48 38 C 49 39.5, 51 39.5, 52 38" stroke="#312019" strokeWidth={1.2} strokeLinecap="round" fill="none" />
+
+        {/* Left Arm holding Tiffin */}
+        <Path d="M 40 48 L 30 48 L 30 54" fill="none" stroke="#E8C39E" strokeWidth={4.5} strokeLinecap="round" />
+        <Path d="M 40 48 L 30 48 L 30 54" fill="none" stroke="#312019" strokeWidth={1.2} strokeLinecap="round" />
+        
+        {/* Sketched Tiffin stack */}
+        <Rect x={24} y={54} width={12} height={10} rx={2} fill="#B0B0B0" stroke="#312019" strokeWidth={1.2} />
+        <Path d="M 24 59 L 36 59" stroke="#312019" strokeWidth={1} />
+        {/* Tiffin handle */}
+        <Path d="M 26 54 C 26 48, 34 48, 34 54" fill="none" stroke="#312019" strokeWidth={1} />
+        {/* Tiffin Steam */}
+        <Path d="M 28 46 Q 29 44, 28 42" fill="none" stroke="#FD5F20" strokeWidth={0.8} />
+        <Path d="M 32 46 Q 33 44, 32 42" fill="none" stroke="#FD5F20" strokeWidth={0.8} />
+
+        {/* Right Arm holding Delivery Bag */}
+        <Path d="M 60 48 L 70 48 L 70 54" fill="none" stroke="#E8C39E" strokeWidth={4.5} strokeLinecap="round" />
+        <Path d="M 60 48 L 70 48 L 70 54" fill="none" stroke="#312019" strokeWidth={1.2} strokeLinecap="round" />
+        
+        {/* Sketched Delivery Bag */}
+        <Path d="M 65 54 L 75 54 L 73 66 L 67 66 Z" fill="#E2A25B" stroke="#312019" strokeWidth={1.2} strokeLinejoin="round" />
+        <Path d="M 67 54 C 67 50, 73 50, 73 54" fill="none" stroke="#312019" strokeWidth={1} />
+
       </Svg>
     );
   }
 
   function DabbasIllustrationSvg() {
     return (
-      <Svg width={120} height={120} viewBox="0 0 100 100">
-        <Rect x={28} y={62} width={44} height={16} rx={3} fill="#95A5A6" />
-        <Rect x={28} y={62} width={44} height={3} fill="#BDC3C7" />
+      <Svg width={250} height={250} viewBox="0 0 100 100">
+        {/* Soft circular background glow */}
+        <Circle cx={50} cy={50} r={41} fill="#FFF4EA" opacity={0.9} />
         
-        <Rect x={30} y={47} width={40} height={14} rx={3} fill="#BDC3C7" />
-        <Rect x={30} y={47} width={40} height={3} fill="#ECF0F1" />
+        {/* Outer decorative sketch rings */}
+        <Circle cx={50} cy={50} r={45} fill="none" stroke="#FD5F20" strokeWidth={0.5} strokeDasharray="3 3" opacity={0.6} />
+        <Circle cx={50} cy={50} r={43} fill="none" stroke="#312019" strokeWidth={0.3} opacity={0.3} />
+
+        {/* Steam sketch */}
+        <Path d="M 44 20 Q 46 16, 44 12" fill="none" stroke="#FD6E20" strokeWidth={1} strokeLinecap="round" />
+        <Path d="M 50 18 Q 52 14, 50 10" fill="none" stroke="#FD6E20" strokeWidth={1} strokeLinecap="round" />
+        <Path d="M 56 20 Q 58 16, 56 12" fill="none" stroke="#FD6E20" strokeWidth={1} strokeLinecap="round" />
+
+        {/* Stacked Dabbas */}
+        {/* Bottom Dabba */}
+        <Rect x={26} y={64} width={48} height={14} rx={3} fill="#BDC3C7" stroke="#312019" strokeWidth={1.5} />
+        <Path d="M 26 67 L 74 67" stroke="#312019" strokeWidth={1} />
         
-        <Rect x={32} y={32} width={36} height={14} rx={3} fill="#95A5A6" />
-        <Rect x={32} y={32} width={36} height={3} fill="#BDC3C7" />
-        
+        {/* Middle Dabba */}
+        <Rect x={28} y={49} width={44} height={13} rx={3} fill="#DCDCDC" stroke="#312019" strokeWidth={1.5} />
+        <Path d="M 28 52 L 72 52" stroke="#312019" strokeWidth={1} />
+
+        {/* Top Dabba */}
+        <Rect x={30} y={34} width={40} height={13} rx={3} fill="#BDC3C7" stroke="#312019" strokeWidth={1.5} />
+        <Path d="M 30 37 L 70 37" stroke="#312019" strokeWidth={1} />
+        <Ellipse cx={50} cy={40} rx={4} ry={2} fill="#FD5F20" />
+
+        {/* Carrier Frame */}
         <Path
-          d="M50 20 L50 26 M30 32 L30 76 M70 32 L70 76 M30 76 L70 76"
+          d="M 50 20 L 50 34"
           fill="none"
-          stroke="#7F8C8D"
-          strokeWidth={3}
+          stroke="#312019"
+          strokeWidth={1.5}
+        />
+        <Path
+          d="M 28 34 L 28 78 C 28 80, 72 80, 72 78 L 72 34"
+          fill="none"
+          stroke="#312019"
+          strokeWidth={1.5}
           strokeLinecap="round"
         />
         <Path
-          d="M42 32 C42 27, 58 27, 58 32"
+          d="M 40 34 C 40 25, 60 25, 60 34"
           fill="none"
-          stroke="#7F8C8D"
-          strokeWidth={3.5}
+          stroke="#312019"
+          strokeWidth={1.8}
           strokeLinecap="round"
         />
-        <Circle cx={42} cy={22} r={2} fill="#E67E22" />
-        <Circle cx={50} cy={20} r={2} fill="#2ECC71" />
-        <Circle cx={58} cy={22} r={2} fill="#F1C40F" />
       </Svg>
     );
   }
 
   function FamilyIllustrationSvg() {
     return (
-      <Svg width={120} height={120} viewBox="0 0 100 100">
-        <Circle cx={34} cy={38} r={9} fill="#E5C298" />
-        <Path d="M26 34 C26 28, 42 28, 42 34 Z" fill="#1A1A1A" />
-        <Circle cx={31} cy={37} r={1} fill="#1A1A1A" />
-        <Circle cx={37} cy={37} r={1} fill="#1A1A1A" />
-        <Path d="M32 42 Q34 44 36 42" fill="none" stroke="#1A1A1A" strokeWidth={1} />
-        <Path d="M22 55 C22 47, 46 47, 46 55 Z" fill="#2980B9" />
+      <Svg width={250} height={250} viewBox="0 0 100 100">
+        {/* Soft circular background glow */}
+        <Circle cx={50} cy={50} r={41} fill="#FFF4EA" opacity={0.9} />
+        
+        {/* Outer decorative sketch rings */}
+        <Circle cx={50} cy={50} r={45} fill="none" stroke="#FD5F20" strokeWidth={0.5} strokeDasharray="3 3" opacity={0.6} />
+        <Circle cx={50} cy={50} r={43} fill="none" stroke="#312019" strokeWidth={0.3} opacity={0.3} />
 
-        <Circle cx={66} cy={38} r={9} fill="#E5C298" />
-        <Path d="M58 34 C58 24, 74 24, 74 34 Z" fill="#4A3728" />
-        <Path d="M57 36 L57 46 M75 36 L75 46" fill="none" stroke="#4A3728" strokeWidth={3} strokeLinecap="round" />
-        <Circle cx={63} cy={37} r={1} fill="#1A1A1A" />
-        <Circle cx={69} cy={37} r={1} fill="#1A1A1A" />
-        <Path d="M64 42 Q66 44 68 42" fill="none" stroke="#1A1A1A" strokeWidth={1} />
-        <Path d="M54 55 C54 47, 78 47, 78 55 Z" fill="#E91E63" />
+        {/* Dad sketch (left) */}
+        <Circle cx={34} cy={38} r={8} fill="#E8C39E" stroke="#312019" strokeWidth={1.5} />
+        <Path d="M 26 34 C 26 28, 42 28, 42 34 Z" fill="#423026" stroke="#312019" strokeWidth={1.5} />
+        <Circle cx={31} cy={37} r={0.8} fill="#312019" />
+        <Circle cx={37} cy={37} r={0.8} fill="#312019" />
+        <Path d="M 32 41 C 33 42, 35 42, 36 41" stroke="#312019" strokeWidth={1} strokeLinecap="round" fill="none" />
+        <Path d="M 22 56 C 22 47, 46 47, 46 56 Z" fill="#3A75C4" stroke="#312019" strokeWidth={1.5} />
 
-        <Circle cx={50} cy={44} r={7} fill="#E5C298" />
-        <Path d="M44 41 C44 35, 56 35, 56 41 Z" fill="#D35400" />
-        <Circle cx={48} cy={43} r={1} fill="#1A1A1A" />
-        <Circle cx={52} cy={43} r={1} fill="#1A1A1A" />
-        <Path d="M49 47 Q50 48 51 47" fill="none" stroke="#1A1A1A" strokeWidth={1} />
-        <Path d="M40 58 C40 52, 60 52, 60 58 Z" fill="#2ECC71" />
+        {/* Mom sketch (right) */}
+        <Circle cx={66} cy={38} r={8} fill="#E8C39E" stroke="#312019" strokeWidth={1.5} />
+        <Path d="M 58 34 C 58 24, 74 24, 74 34 Z" fill="#5C4535" stroke="#312019" strokeWidth={1.5} />
+        <Circle cx={63} cy={37} r={0.8} fill="#312019" />
+        <Circle cx={69} cy={37} r={0.8} fill="#312019" />
+        <Path d="M 64 41 C 65 42, 67 42, 68 41" stroke="#312019" strokeWidth={1} strokeLinecap="round" fill="none" />
+        <Path d="M 54 56 C 54 47, 78 47, 78 56 Z" fill="#E65893" stroke="#312019" strokeWidth={1.5} />
 
-        <Rect x={15} y={55} width={70} height={5} rx={2.5} fill="#D35400" />
-        <Rect x={22} y={60} width={5} height={12} fill="#A04000" />
-        <Rect x={73} y={60} width={5} height={12} fill="#A04000" />
+        {/* Child sketch (center) */}
+        <Circle cx={50} cy={44} r={6} fill="#E8C39E" stroke="#312019" strokeWidth={1.5} />
+        <Path d="M 44 41 C 44 36, 56 36, 56 41 Z" fill="#FD852C" stroke="#312019" strokeWidth={1.5} />
+        <Circle cx={48} cy={43} r={0.7} fill="#312019" />
+        <Circle cx={52} cy={43} r={0.7} fill="#312019" />
+        <Path d="M 49 46.5 C 49.5 47, 50.5 47, 51 46.5" stroke="#312019" strokeWidth={1} strokeLinecap="round" fill="none" />
+        <Path d="M 41 58 C 41 52, 59 52, 59 58 Z" fill="#52B36D" stroke="#312019" strokeWidth={1.5} />
+
+        {/* Wooden table sketch */}
+        <Rect x={12} y={56} width={76} height={6} rx={2} fill="#E2A25B" stroke="#312019" strokeWidth={1.5} />
+        {/* Legs */}
+        <Rect x={20} y={62} width={5} height={14} fill="#C68E5B" stroke="#312019" strokeWidth={1.2} />
+        <Rect x={75} y={62} width={5} height={14} fill="#C68E5B" stroke="#312019" strokeWidth={1.2} />
+
+        {/* Plate / Cup sketch on table */}
+        <Path d="M 44 56 C 44 54, 56 54, 56 56 Z" fill="#FFFFFF" stroke="#312019" strokeWidth={1.2} />
       </Svg>
     );
   }
 
-  // 1. Splash Screen
   function RenderSplash() {
     return (
-      <SafeAreaView style={[styles.safeArea, { backgroundColor: 'transparent' }]}>
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 24 }}>
-          <Animated.View style={{ 
-            alignItems: 'center', 
-            opacity: splashFade,
-            transform: [
-              { scale: splashScale },
-              { translateY: splashTranslateY }
-            ]
-          }}>
-            <SplashLogoSvg />
-            <Text style={{ fontSize: 38, fontWeight: '900', color: t.text, marginTop: 16, letterSpacing: -0.5 }}>
-              KOI KOI <Text style={{ color: B.orange }}>DABBA</Text>
-            </Text>
-            <Text style={{ fontSize: 14, color: B.orange, fontStyle: 'italic', marginTop: 6, fontWeight: '600' }}>
-              Home-cooked meals, made with love.
-            </Text>
-          </Animated.View>
-        </View>
-      </SafeAreaView>
+      <View style={{ flex: 1, backgroundColor: '#FFFDF9', alignItems: 'center', justifyContent: 'center' }}>
+        <LinearGradient
+          colors={['#FED6B3', '#FFFDF9', '#FFF1E5']}
+          locations={[0, 0.45, 1.0]}
+          style={{ width: '100%', height: '100%', flex: 1, alignItems: 'center' }}
+        >
+          <View style={{ width: '100%', maxWidth: 450, height: '100%', flex: 1, paddingTop: Platform.OS === 'ios' ? 60 : 40, justifyContent: 'space-between', position: 'relative' }}>
+            
+            {/* ─── BACKGROUND LINE ART SKETCHES ─── */}
+            
+            {/* Top-right delicate flower line art sketch */}
+            <View style={{ position: 'absolute', top: 40, right: -10, opacity: 0.08 }} pointerEvents="none">
+              <Svg width={160} height={160} viewBox="0 0 100 100" fill="none" stroke="#FD5F20" strokeWidth={0.8}>
+                <Circle cx={50} cy={50} r={6} />
+                <Path d="M 50 44 C 40 25, 60 25, 50 44 Z" />
+                <Path d="M 50 56 C 40 75, 60 75, 50 56 Z" />
+                <Path d="M 44 50 C 25 40, 25 60, 44 50 Z" />
+                <Path d="M 56 50 C 75 40, 75 60, 56 50 Z" />
+                <Path d="M 45 45 C 30 30, 45 15, 45 45 Z" />
+                <Path d="M 55 55 C 70 70, 55 85, 55 55 Z" />
+                <Path d="M 55 45 C 70 30, 85 45, 55 45 Z" />
+                <Path d="M 45 55 C 30 70, 15 55, 45 55 Z" />
+              </Svg>
+            </View>
+
+            {/* Middle-left leaf outline sketch */}
+            <View style={{ position: 'absolute', top: 260, left: -20, opacity: 0.05, transform: [{ rotate: '45deg' }] }} pointerEvents="none">
+              <Svg width={130} height={130} viewBox="0 0 100 100" fill="none" stroke="#FD5F20" strokeWidth={0.8}>
+                <Path d="M 10 90 Q 50 50, 90 10" />
+                <Path d="M 50 50 Q 75 25, 90 40" />
+                <Path d="M 30 70 Q 50 55, 60 65" />
+                <Path d="M 10 90 C 25 70, 40 75, 50 50 C 65 30, 70 25, 90 10" />
+              </Svg>
+            </View>
+
+            {/* ─── ATMOSPHERIC LUSH FOLIAGE & FLOATING ELEMENTS ─── */}
+            
+            {/* Top-left high-fidelity lush leaf branch */}
+            <View style={{ position: 'absolute', top: 0, left: -20, opacity: 0.85 }} pointerEvents="none">
+              <Svg width={160} height={200} viewBox="0 0 100 100" fill="none">
+                {/* Curved branch stem */}
+                <Path
+                  d="M 0 -10 C 15 15, 30 30, 45 50"
+                  stroke="#607D3B"
+                  strokeWidth={3}
+                  strokeLinecap="round"
+                />
+                {/* Lush stacked leaves with organic green gradients */}
+                <Path d="M 5 8 C 15 2, 22 8, 18 18 C 10 18, 6 12, 5 8 Z" fill="#5A8833" />
+                <Path d="M 5 8 Q 12 11 18 18" stroke="#37551D" strokeWidth={0.8} />
+
+                <Path d="M 12 22 C 26 18, 28 26, 21 34 C 13 32, 10 27, 12 22 Z" fill="#7CA54E" />
+                <Path d="M 12 22 Q 18 26 21 34" stroke="#4C682E" strokeWidth={0.8} />
+
+                <Path d="M 24 15 C 33 8, 38 15, 34 24 C 27 24, 23 20, 24 15 Z" fill="#66943C" />
+                <Path d="M 24 15 Q 29 18 34 24" stroke="#3D5B23" strokeWidth={0.8} />
+
+                <Path d="M 30 34 C 44 32, 45 40, 37 47 C 29 45, 27 40, 30 34 Z" fill="#88B856" />
+                <Path d="M 30 34 Q 34 39 37 47" stroke="#547732" strokeWidth={0.8} />
+
+                <Path d="M 40 46 C 50 48, 48 56, 40 60 C 35 56, 36 51, 40 46 Z" fill="#75A449" />
+                <Path d="M 40 46 Q 41 52 40 60" stroke="#46662B" strokeWidth={0.8} />
+
+                {/* Additional overlay leaves */}
+                <Path d="M 1 18 C -3 10, 5 8, 8 13 C 5 16, 2 19, 1 18 Z" fill="#4B7229" />
+                <Path d="M 16 35 C 22 28, 28 32, 25 38 C 19 40, 16 38, 16 35 Z" fill="#8BB95C" />
+                <Path d="M 28 48 C 34 42, 38 45, 36 51 C 30 53, 28 51, 28 48 Z" fill="#5A8833" />
+              </Svg>
+            </View>
+
+            {/* Scattered Floating leaf (Top right near logo, with soft drop-shadow) */}
+            <View style={{ 
+              position: 'absolute', 
+              top: 220, 
+              right: 35, 
+              opacity: 0.7, 
+              transform: [{ rotate: '45deg' }],
+              shadowColor: '#000',
+              shadowOffset: { width: 1, height: 2 },
+              shadowOpacity: 0.12,
+              shadowRadius: 3,
+              elevation: 2
+            }} pointerEvents="none">
+              <Svg width={18} height={18} viewBox="0 0 20 20" fill="none">
+                <Path d="M2 18 C6 10, 14 12, 18 2 C10 10, 10 14, 2 18 Z" fill="#7FA457" />
+              </Svg>
+            </View>
+
+            {/* Scattered Floating leaf (Middle left near food, with soft drop-shadow) */}
+            <View style={{ 
+              position: 'absolute', 
+              top: 280, 
+              left: 15, 
+              opacity: 0.65, 
+              transform: [{ rotate: '-45deg' }],
+              shadowColor: '#000',
+              shadowOffset: { width: 1, height: 2 },
+              shadowOpacity: 0.12,
+              shadowRadius: 3,
+              elevation: 2
+            }} pointerEvents="none">
+              <Svg width={19} height={19} viewBox="0 0 20 20" fill="none">
+                <Path d="M2 18 C6 10, 14 12, 18 2 C10 10, 10 14, 2 18 Z" fill="#6A8E49" />
+              </Svg>
+            </View>
+
+            {/* Scattered Floating leaf (Bottom left) */}
+            <View style={{ position: 'absolute', top: 490, left: 35, opacity: 0.6, transform: [{ rotate: '120deg' }] }} pointerEvents="none">
+              <Svg width={22} height={22} viewBox="0 0 20 20" fill="none">
+                <Path d="M2 18 C6 10, 14 12, 18 2 C10 10, 10 14, 2 18 Z" fill="#7FA457" />
+              </Svg>
+            </View>
+
+            {/* Floating spice coriander seeds (with 3D drop-shadow effects) */}
+            <View style={{ 
+              position: 'absolute', 
+              top: 220, 
+              left: 30, 
+              opacity: 0.75,
+              shadowColor: '#000',
+              shadowOffset: { width: 1, height: 1.5 },
+              shadowOpacity: 0.1,
+              shadowRadius: 2,
+              elevation: 1
+            }} pointerEvents="none">
+              <Svg width={8} height={8} viewBox="0 0 10 10">
+                <Ellipse cx={5} cy={5} rx={3} ry={4} fill="#C69E7C" transform="rotate(30 5 5)" />
+              </Svg>
+            </View>
+            <View style={{ 
+              position: 'absolute', 
+              top: 380, 
+              left: 50, 
+              opacity: 0.8,
+              shadowColor: '#000',
+              shadowOffset: { width: 1, height: 1.5 },
+              shadowOpacity: 0.1,
+              shadowRadius: 2,
+              elevation: 1
+            }} pointerEvents="none">
+              <Svg width={9} height={9} viewBox="0 0 10 10">
+                <Ellipse cx={5} cy={5} rx={3.5} ry={4.5} fill="#B08661" transform="rotate(-40 5 5)" />
+              </Svg>
+            </View>
+            <View style={{ 
+              position: 'absolute', 
+              top: 420, 
+              right: 180, 
+              opacity: 0.8,
+              shadowColor: '#000',
+              shadowOffset: { width: 1, height: 1.5 },
+              shadowOpacity: 0.1,
+              shadowRadius: 2,
+              elevation: 1
+            }} pointerEvents="none">
+              <Svg width={7} height={7} viewBox="0 0 10 10">
+                <Ellipse cx={5} cy={5} rx={2.8} ry={3.8} fill="#C69E7C" transform="rotate(15 5 5)" />
+              </Svg>
+            </View>
+
+            {/* ─── HEADER (Logo & Brand Title) ─── */}
+            <Animated.View style={{ 
+              alignItems: 'center', 
+              marginTop: 20,
+              paddingHorizontal: 24,
+              opacity: splashFade,
+              transform: [
+                { scale: splashScale },
+                { translateY: splashTranslateY }
+              ]
+            }}>
+              {/* Orange Squircle Logo matching the mockup precisely */}
+              <View style={{
+                width: 90,
+                height: 90,
+                borderRadius: 28,
+                backgroundColor: '#FD5F20',
+                justifyContent: 'center',
+                alignItems: 'center',
+                shadowColor: '#FD5F20',
+                shadowOffset: { width: 0, height: 10 },
+                shadowOpacity: 0.3,
+                shadowRadius: 14,
+                elevation: 6,
+                marginBottom: 16
+              }}>
+                {/* White Stacked Dabba Icon with thicker outline strokes */}
+                <Svg width={54} height={54} viewBox="0 0 100 100" fill="none">
+                  {/* Top handle */}
+                  <Path
+                    d="M 32 32 C 32 15, 68 15, 68 32"
+                    stroke="#FFFFFF"
+                    strokeWidth={6.5}
+                    strokeLinecap="round"
+                  />
+                  {/* Outer Frame carrier sides */}
+                  <Path
+                    d="M 28 32 L 28 78 C 28 82, 32 84, 36 84 L 64 84 C 68 84, 72 82, 72 78 L 72 32"
+                    stroke="#FFFFFF"
+                    strokeWidth={6.5}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  {/* 3 Stacked boxes inside */}
+                  <Rect x={34} y={35} width={32} height={12} rx={4} fill="#FFFFFF" />
+                  <Rect x={34} y={50} width={32} height={12} rx={4} fill="#FFFFFF" />
+                  <Rect x={34} y={65} width={32} height={12} rx={4} fill="#FFFFFF" />
+                  
+                  {/* Central carrying strap */}
+                  <Path
+                    d="M 50 32 L 50 82"
+                    stroke="#FD5F20"
+                    strokeWidth={4.5}
+                  />
+                  
+                  {/* Tiny heart on top right */}
+                  <Path
+                    d="M 80 22 C 80 22, 77.5 20, 77.5 18.5 C 77.5 17.3, 78.5 16.6, 79.4 16.6 C 79.8 16.6, 80 17, 80 17 C 80 17, 80.2 16.6, 80.6 16.6 C 81.5 16.6, 82.5 17.3, 82.5 18.5 C 82.5 22, 80 22, 80 22 Z"
+                    fill="#FFFFFF"
+                  />
+                </Svg>
+              </View>
+
+              {/* KOI KOI Title text */}
+              <Text style={{ fontSize: 14, fontWeight: '900', color: '#FD5F20', letterSpacing: 6, marginBottom: 2 }}>
+                KOI KOI
+              </Text>
+              
+              {/* DABBA main title */}
+              <Text style={{ fontSize: 54, fontWeight: '900', color: '#312019', letterSpacing: 1 }}>
+                DABBA
+              </Text>
+
+              {/* Divider Ornament with Heart */}
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 8 }}>
+                <View style={{ width: 22, height: 1.2, backgroundColor: '#FD5F20', opacity: 0.4 }} />
+                <Heart size={11} color="#FD5F20" fill="#FD5F20" style={{ marginHorizontal: 10 }} />
+                <View style={{ width: 22, height: 1.2, backgroundColor: '#FD5F20', opacity: 0.4 }} />
+              </View>
+
+              {/* Tagline */}
+              <Text style={{ fontSize: 16.5, color: '#5A4A41', fontWeight: '600', textAlign: 'center' }}>
+                Home-Style Meals.
+              </Text>
+              <Text style={{ fontSize: 16.5, color: '#FD5F20', fontWeight: '700', textAlign: 'center', marginTop: 1 }}>
+                Delivered Daily.
+              </Text>
+            </Animated.View>
+
+            {/* ─── CENTERPIECE IMAGE CARD FRAME (with overlapping leaves) ─── */}
+            <Animated.View style={{
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginVertical: 12,
+              opacity: splashFade,
+              transform: [{ scale: splashScale }],
+              width: '100%',
+              paddingHorizontal: 24,
+              position: 'relative',
+            }}>
+              {/* Card Container Frame */}
+              <View style={{
+                width: '100%',
+                height: 290,
+                borderRadius: 24,
+                backgroundColor: '#FFFFFF',
+                borderWidth: 2,
+                borderColor: '#FFFFFF',
+                overflow: 'hidden',
+                shadowColor: '#7A6455',
+                shadowOffset: { width: 0, height: 12 },
+                shadowOpacity: 0.16,
+                shadowRadius: 16,
+                elevation: 8,
+              }}>
+                <Image
+                  source={require('./assets/splash_food.png')}
+                  style={{ width: '100%', height: '100%' }}
+                  resizeMode="cover"
+                />
+              </View>
+
+              {/* Overlapping Leaf SVGs to give a premium 3D layered look */}
+              
+              {/* Top-right leaf branch overlapping the card border */}
+              <View style={{ position: 'absolute', top: -14, right: 12, zIndex: 10 }} pointerEvents="none">
+                <Svg width={46} height={46} viewBox="0 0 24 24" fill="none">
+                  {/* Stem */}
+                  <Path d="M2 22 C10 18, 15 15, 20 6" stroke="#607D3B" strokeWidth={1.8} strokeLinecap="round" />
+                  {/* Top leaf */}
+                  <Path
+                    d="M20 6 C22 2, 17 2, 13 6 C13 6, 17 8, 20 6 Z"
+                    fill="#7CA54E"
+                  />
+                  <Path d="M13 6 Q16.5 6 20 6" stroke="#3D522B" strokeWidth={0.5} />
+                  {/* Side leaf */}
+                  <Path
+                    d="M11 12 C14 9, 12 6, 8 9 C8 9, 9 12, 11 12 Z"
+                    fill="#5A8833"
+                  />
+                </Svg>
+              </View>
+
+              {/* Bottom-left leaf overlapping the card border */}
+              <View style={{ position: 'absolute', bottom: -12, left: 14, zIndex: 10, transform: [{ rotate: '-80deg' }] }} pointerEvents="none">
+                <Svg width={38} height={38} viewBox="0 0 24 24" fill="none">
+                  {/* Stem */}
+                  <Path d="M22 2 C14 6, 9 9, 4 18" stroke="#607D3B" strokeWidth={1.8} strokeLinecap="round" />
+                  {/* Tip leaf */}
+                  <Path
+                    d="M4 18 C2 22, 7 22, 11 18 C11 18, 7 16, 4 18 Z"
+                    fill="#88B856"
+                  />
+                  <Path d="M11 18 Q7.5 18 4 18" stroke="#546E3A" strokeWidth={0.5} />
+                  {/* Side leaf */}
+                  <Path
+                    d="M13 12 C10 15, 12 18, 16 15 C16 15, 15 12, 13 12 Z"
+                    fill="#75A449"
+                  />
+                </Svg>
+              </View>
+            </Animated.View>
+
+            {/* ─── BOTTOM HIGHLIGHTS (4 Pillars) ─── */}
+            <Animated.View style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'flex-start',
+              paddingHorizontal: 24,
+              marginBottom: 110, // Leave space for footer wave
+              opacity: splashFade,
+            }}>
+              {/* Homemade with Love */}
+              <View style={{ flex: 1, alignItems: 'center' }}>
+                <View style={{
+                  width: 56,
+                  height: 56,
+                  borderRadius: 28,
+                  backgroundColor: '#FFFFFF',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  shadowColor: '#A05020',
+                  shadowOffset: { width: 0, height: 6 },
+                  shadowOpacity: 0.1,
+                  shadowRadius: 8,
+                  elevation: 4,
+                  borderWidth: 1,
+                  borderColor: '#FFEFE5'
+                }}>
+                  {/* Filled orange organic leaf pointing up-left */}
+                  <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
+                    <Path
+                      d="M21 3 C11.5 3, 5.5 9, 3 17 C4.5 19.5, 9.5 21, 14.5 18 C18.5 15, 20.5 8, 21 3 Z"
+                      fill="#FD5F20"
+                    />
+                    <Path
+                      d="M3 17 C7.5 14, 14.5 10, 21 3"
+                      stroke="#FFFFFF"
+                      strokeWidth={1.5}
+                      strokeLinecap="round"
+                    />
+                  </Svg>
+                </View>
+                <Text style={{ fontSize: 9.5, fontWeight: '700', color: '#4A3C34', textAlign: 'center', lineHeight: 13, marginTop: 8 }}>
+                  {"Homemade\nwith Love"}
+                </Text>
+              </View>
+
+              {/* Fresh & Hygienic */}
+              <View style={{ flex: 1, alignItems: 'center' }}>
+                <View style={{
+                  width: 56,
+                  height: 56,
+                  borderRadius: 28,
+                  backgroundColor: '#FFFFFF',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  shadowColor: '#A05020',
+                  shadowOffset: { width: 0, height: 6 },
+                  shadowOpacity: 0.1,
+                  shadowRadius: 8,
+                  elevation: 4,
+                  borderWidth: 1,
+                  borderColor: '#FFEFE5'
+                }}>
+                  {/* Symmetrical 4-leaf flower/clover sprout SVG */}
+                  <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
+                    <Circle cx={12} cy={8} r={3.5} fill="#FD5F20" />
+                    <Circle cx={12} cy={16} r={3.5} fill="#FD5F20" />
+                    <Circle cx={8} cy={12} r={3.5} fill="#FD5F20" />
+                    <Circle cx={16} cy={12} r={3.5} fill="#FD5F20" />
+                    <Circle cx={12} cy={12} r={1.5} fill="#FFFFFF" />
+                  </Svg>
+                </View>
+                <Text style={{ fontSize: 9.5, fontWeight: '700', color: '#4A3C34', textAlign: 'center', lineHeight: 13, marginTop: 8 }}>
+                  {"Fresh &\nHygienic"}
+                </Text>
+              </View>
+
+              {/* Steel Dabbas No Plastic */}
+              <View style={{ flex: 1, alignItems: 'center' }}>
+                <View style={{
+                  width: 56,
+                  height: 56,
+                  borderRadius: 28,
+                  backgroundColor: '#FFFFFF',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  shadowColor: '#A05020',
+                  shadowOffset: { width: 0, height: 6 },
+                  shadowOpacity: 0.1,
+                  shadowRadius: 8,
+                  elevation: 4,
+                  borderWidth: 1,
+                  borderColor: '#FFEFE5'
+                }}>
+                  {/* Clean stacked 3 tiffin dabbas SVG */}
+                  <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
+                    {/* Top carrying strap handle */}
+                    <Path
+                      d="M 8 6 C 8 3, 16 3, 16 6"
+                      stroke="#FD5F20"
+                      strokeWidth={1.5}
+                      strokeLinecap="round"
+                      fill="none"
+                    />
+                    {/* Stack of 3 containers */}
+                    <Rect x={6} y={6} width={12} height={4} rx={1.2} fill="#FD5F20" />
+                    <Rect x={6} y={11} width={12} height={4} rx={1.2} fill="#FD5F20" />
+                    <Rect x={6} y={16} width={12} height={4} rx={1.2} fill="#FD5F20" />
+                    {/* Central carrying strap */}
+                    <Path
+                      d="M 12 4 L 12 20"
+                      stroke="#FD5F20"
+                      strokeWidth={1.2}
+                      strokeLinecap="round"
+                      opacity={0.8}
+                    />
+                  </Svg>
+                </View>
+                <Text style={{ fontSize: 9.5, fontWeight: '700', color: '#4A3C34', textAlign: 'center', lineHeight: 13, marginTop: 8 }}>
+                  {"Steel Dabbas\nNo Plastic"}
+                </Text>
+              </View>
+
+              {/* Healthy Everyday */}
+              <View style={{ flex: 1, alignItems: 'center' }}>
+                <View style={{
+                  width: 56,
+                  height: 56,
+                  borderRadius: 28,
+                  backgroundColor: '#FFFFFF',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  shadowColor: '#A05020',
+                  shadowOffset: { width: 0, height: 6 },
+                  shadowOpacity: 0.1,
+                  shadowRadius: 8,
+                  elevation: 4,
+                  borderWidth: 1,
+                  borderColor: '#FFEFE5'
+                }}>
+                  <Heart size={20} color="#FD5F20" strokeWidth={2.2} />
+                </View>
+                <Text style={{ fontSize: 9.5, fontWeight: '700', color: '#4A3C34', textAlign: 'center', lineHeight: 13, marginTop: 8 }}>
+                  {"Healthy\nEveryday"}
+                </Text>
+              </View>
+            </Animated.View>
+
+            {/* ─── BOTTOM WAVE FOOTER WITH RICH THREE-STOP GRADIENT & LEAF SKETCH ─── */}
+            <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 110, overflow: 'hidden' }} pointerEvents="none">
+              <Svg width="100%" height={110} viewBox="0 0 400 110" preserveAspectRatio="none">
+                <Defs>
+                  <SvgLinearGradient id="orangeGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <Stop offset="0%" stopColor="#FF852C" />
+                    <Stop offset="50%" stopColor="#FD4F1B" />
+                    <Stop offset="100%" stopColor="#DE3500" />
+                  </SvgLinearGradient>
+                </Defs>
+                <Path
+                  d="M0 55 C 120 85, 280 75, 400 42 L 400 110 L 0 110 Z"
+                  fill="url(#orangeGrad)"
+                />
+              </Svg>
+              {/* Elegant white outline leaf branch sketch positioned absolutely */}
+              <View style={{ position: 'absolute', bottom: 12, right: 18 }}>
+                <Svg width={40} height={40} viewBox="0 0 40 40" fill="none" stroke="rgba(255, 255, 255, 0.45)" strokeWidth={1.5}>
+                  {/* Stem */}
+                  <Path d="M5 35 Q 20 20, 32 10" />
+                  {/* Leaf 1 (top right) */}
+                  <Path d="M 32 10 C 35 4, 30 2, 24 8 C 24 14, 28 16, 32 10 Z" />
+                  {/* Leaf 2 (middle left) */}
+                  <Path d="M 18 22 C 10 24, 8 20, 14 14 C 18 14, 20 18, 18 22 Z" />
+                  {/* Leaf 3 (middle right) */}
+                  <Path d="M 22 18 C 28 12, 30 14, 26 20 C 22 22, 20 20, 22 18 Z" />
+                </Svg>
+              </View>
+            </View>
+          </View>
+        </LinearGradient>
+      </View>
     );
   }
 
@@ -953,47 +1575,43 @@ export default function App() {
   // 2. Onboarding Screen Shell
   function RenderOnboarding({ step }: { step: number }) {
     let title = '';
-    let desc = '';
+    let descComponent: React.ReactNode = null;
     let btnText = '';
     let SvgIllustration = BoyIllustrationSvg;
-    let chips: string[] = [];
-    let topHeader = '';
-    let sender = '';
-    let message = '';
 
     if (step === 1) {
-      topHeader = "Mom's Cooking Is Calling!";
-      title = "Healthy Home-Style Meals";
-      desc = "Cooked fresh daily and delivered warm. Low salt, low oil, pure home comfort.";
+      title = "Healthy\nHome-Style Meals";
+      descComponent = (
+        <Text>
+          Freshly prepared lunch and dinner cooked every day — <Text style={{ color: '#FD5F20', fontWeight: '800' }}>delivered warm</Text> to your doorstep.
+        </Text>
+      );
       btnText = "Get Started";
       SvgIllustration = BoyIllustrationSvg;
-      chips = ["🍲 Daily Rotation", "👩‍🍳 Homestyle Recipes", "🧂 Low Salt & Oil"];
-      sender = "Mom 👩‍🍳";
-      message = "Beta, I packed your favorite Dabba today! Cooked with fresh ingredients and very little oil. Enjoy it warm! ❤️";
     } else if (step === 2) {
-      topHeader = "Hygienic & Safe!";
-      title = "Steel Dabbas, Zero Plastic";
-      desc = "Reusable food-grade steel containers, thermally washed and sealed with love.";
+      title = "Fresh Food.\nSteel Dabbas.";
+      descComponent = (
+        <Text>
+          Hygienic meals in reusable steel containers. Zero plastic, maximum freshness, right on time every day.
+        </Text>
+      );
       btnText = "Continue";
       SvgIllustration = DabbasIllustrationSvg;
-      chips = ["🩺 Food-Grade Steel", "♻️ Eco-Friendly", "🧼 Thermal Sanitized"];
-      sender = "Wellness Coach 🩺";
-      message = "Your food is packed in sanitized stainless steel dabbas. Zero plastic contact, zero toxins. Good for you & the earth! 🌿";
     } else {
-      topHeader = "Flexible & Stress-Free!";
-      title = "Subscribe Once. Eat Every Day.";
-      desc = "Set your schedule. Pause, skip, or resume with a single tap whenever you travel.";
+      title = "Subscribe Once.\nEat Every Day.";
+      descComponent = (
+        <Text>
+          Choose your plan and relax. Pause, skip or resume anytime — complete flexibility, zero stress.
+        </Text>
+      );
       btnText = "Let's Begin";
       SvgIllustration = FamilyIllustrationSvg;
-      chips = ["⏸️ Pause / Skip Anytime", "📅 Custom Portions", "🚫 No Lock-ins"];
-      sender = "Office Bestie 💼";
-      message = "Oh, you don't need to order lunch everyday? So jealous of your auto-pilot Koi Koi subscription! ⏸️";
     }
 
     const handleNext = () => {
       if (step === 1) go('ob2');
       else if (step === 2) go('ob3');
-      else go('home'); // Go directly to home - no login friction
+      else go('auth'); // Go to auth screen for login/signup
     };
 
     const floatY = obFloatAnim.interpolate({
@@ -1001,167 +1619,413 @@ export default function App() {
       outputRange: [0, -12]
     });
 
+    const cardY1 = cardFloat1.interpolate({
+      inputRange: [0, 1],
+      outputRange: [0, -12]
+    });
+    const cardY2 = cardFloat2.interpolate({
+      inputRange: [0, 1],
+      outputRange: [0, -8]
+    });
+    const cardY3 = cardFloat3.interpolate({
+      inputRange: [0, 1],
+      outputRange: [0, -14]
+    });
+
+    // Floating Cards data for each step (Title + Icon below it)
+    let card1Data = { label: '', icon: null as React.ReactNode, top: 0, left: -25 };
+    let card2Data = { label: '', icon: null as React.ReactNode, top: 45, right: -25 };
+    let card3Data = { label: '', icon: null as React.ReactNode, bottom: -10, left: 10 };
+
+    if (step === 1) {
+      card1Data.label = "Daily Rotation";
+      card1Data.icon = <Calendar size={18} color="#FD5F20" strokeWidth={2.5} />;
+      
+      card2Data.label = "Low Salt & Oil";
+      card2Data.icon = <Heart size={18} color="#FD5F20" strokeWidth={2.5} />;
+
+      card3Data.label = "Homestyle Cooking";
+      card3Data.icon = <ChefHat size={18} color="#FD5F20" strokeWidth={2.5} />;
+    } else if (step === 2) {
+      card1Data.label = "Food-Grade Steel";
+      card1Data.icon = <ShieldCheck size={18} color="#FD5F20" strokeWidth={2.5} />;
+
+      card2Data.label = "Thermal Sanitized";
+      card2Data.icon = <Sparkles size={18} color="#FD5F20" strokeWidth={2.5} />;
+
+      card3Data.label = "Zero Plastic";
+      card3Data.icon = <Leaf size={18} color="#FD5F20" strokeWidth={2.5} />;
+    } else {
+      card1Data.label = "Pause Anytime";
+      card1Data.icon = <Pause size={18} color="#FD5F20" strokeWidth={2.5} />;
+
+      card2Data.label = "Custom Portions";
+      card2Data.icon = <Sparkles size={18} color="#FD5F20" strokeWidth={2.5} />;
+
+      card3Data.label = "No Lock-ins";
+      card3Data.icon = <Lock size={18} color="#FD5F20" strokeWidth={2.5} />;
+    }
+
     return (
-      <SafeAreaView style={[styles.safeArea, { backgroundColor: t.bg }]}>
-        <View style={{ flex: 1, paddingHorizontal: 24, justifyContent: 'space-between', paddingVertical: 20 }}>
+      <View style={{ flex: 1, backgroundColor: '#FFFDF9', alignItems: 'center', justifyContent: 'center' }}>
+        <LinearGradient
+          colors={['#FED6B3', '#FFFDF9', '#FFF1E5']}
+          locations={[0, 0.45, 1.0]}
+          style={{ width: '100%', height: '100%', flex: 1 }}
+        >
+          {/* ─── ATMOSPHERIC DECORATIONS (Floating Leaves & Spices) ─── */}
           
-          {/* Top Title Layer */}
-          <View style={{ alignItems: 'center', marginTop: 10 }}>
-            <Animated.Text style={{ 
-              fontSize: 28, 
-              fontWeight: '900', 
-              color: B.orange, 
-              textAlign: 'center', 
-              lineHeight: 34,
-              opacity: obTitleFade,
-              transform: [{ translateY: obTitleSlideY }]
-            }}>
-              {topHeader}
-            </Animated.Text>
+          {/* Top-left high-fidelity lush leaf branch */}
+          <View style={{ position: 'absolute', top: 0, left: -20, opacity: 0.85 }} pointerEvents="none">
+            <Svg width={160} height={200} viewBox="0 0 100 100" fill="none">
+              <Path
+                d="M 0 -10 C 15 15, 30 30, 45 50"
+                stroke="#607D3B"
+                strokeWidth={3}
+                strokeLinecap="round"
+              />
+              <Path d="M 5 8 C 15 2, 22 8, 18 18 C 10 18, 6 12, 5 8 Z" fill="#5A8833" />
+              <Path d="M 5 8 Q 12 11 18 18" stroke="#37551D" strokeWidth={0.8} />
+              <Path d="M 12 22 C 26 18, 28 26, 21 34 C 13 32, 10 27, 12 22 Z" fill="#7CA54E" />
+              <Path d="M 12 22 Q 18 26 21 34" stroke="#4C682E" strokeWidth={0.8} />
+              <Path d="M 24 15 C 33 8, 38 15, 34 24 C 27 24, 23 20, 24 15 Z" fill="#66943C" />
+              <Path d="M 24 15 Q 29 18 34 24" stroke="#3D5B23" strokeWidth={0.8} />
+              <Path d="M 30 34 C 44 32, 45 40, 37 47 C 29 45, 27 40, 30 34 Z" fill="#88B856" />
+              <Path d="M 30 34 Q 34 39 37 47" stroke="#547732" strokeWidth={0.8} />
+              <Path d="M 40 46 C 50 48, 48 56, 40 60 C 35 56, 36 51, 40 46 Z" fill="#75A449" />
+              <Path d="M 40 46 Q 41 52 40 60" stroke="#46662B" strokeWidth={0.8} />
+              <Path d="M 1 18 C -3 10, 5 8, 8 13 C 5 16, 2 19, 1 18 Z" fill="#4B7229" />
+              <Path d="M 16 35 C 22 28, 28 32, 25 38 C 19 40, 16 38, 16 35 Z" fill="#8BB95C" />
+              <Path d="M 28 48 C 34 42, 38 45, 36 51 C 30 53, 28 51, 28 48 Z" fill="#5A8833" />
+            </Svg>
           </View>
 
-          <Animated.View style={{ 
-            flex: 1, 
-            justifyContent: 'center', 
-            alignItems: 'center', 
-            opacity: obFade,
-            transform: [
-              { translateY: obSlideY },
-              { scale: obScale }
-            ]
-          }}>
-            {/* 3D Overlapping Phone Mockup + Food Illustration Frame */}
-            <View style={{ 
-              width: 270, 
-              height: 200, 
-              borderRadius: 30, 
-              borderWidth: 2, 
-              borderColor: t.border, 
-              padding: 14, 
-              backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
-              position: 'relative',
-              justifyContent: 'flex-start',
-              alignItems: 'center',
-              marginBottom: 60, // Space for the sticking-out illustration
-            }}>
-              {/* Message Push Notification Bubble */}
-              <View style={{
-                width: '100%',
-                backgroundColor: t.card,
-                borderRadius: 16,
-                borderWidth: 1,
-                borderColor: t.border,
-                padding: 12,
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 4 },
-                shadowOpacity: 0.05,
-                shadowRadius: 8,
-                elevation: 2,
-              }}>
-                {/* Header: App Info */}
-                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                    <View style={{ width: 18, height: 18, borderRadius: 5, backgroundColor: B.orange, justifyContent: 'center', alignItems: 'center' }}>
-                      <Text style={{ fontSize: 9, color: '#FFF' }}>💬</Text>
-                    </View>
-                    <Text style={{ fontSize: 10, fontWeight: '900', color: t.sub, letterSpacing: 0.5 }}>MESSAGES</Text>
-                  </View>
-                  <Text style={{ fontSize: 9, color: t.sub }}>now</Text>
-                </View>
+          {/* Top-right flower sketch */}
+          <View style={{ position: 'absolute', top: 40, right: -10, opacity: 0.08 }} pointerEvents="none">
+            <Svg width={160} height={160} viewBox="0 0 100 100" fill="none" stroke="#FD5F20" strokeWidth={0.8}>
+              <Circle cx={50} cy={50} r={6} />
+              <Path d="M 50 44 C 40 25, 60 25, 50 44 Z" />
+              <Path d="M 50 56 C 40 75, 60 75, 50 56 Z" />
+              <Path d="M 44 50 C 25 40, 25 60, 44 50 Z" />
+              <Path d="M 56 50 C 75 40, 75 60, 56 50 Z" />
+              <Path d="M 45 45 C 30 30, 45 15, 45 45 Z" />
+              <Path d="M 55 55 C 70 70, 55 85, 55 55 Z" />
+              <Path d="M 55 45 C 70 30, 85 45, 55 45 Z" />
+              <Path d="M 45 55 C 30 70, 15 55, 45 55 Z" />
+            </Svg>
+          </View>
 
-                {/* Sender & Body text */}
-                <Text style={{ fontSize: 12, fontWeight: '900', color: t.text, marginBottom: 2 }}>{sender}</Text>
-                <Text style={{ fontSize: 10, color: t.sub, lineHeight: 14 }}>{message}</Text>
+          {/* Floating leaves and seeds with shadows */}
+          <View style={{ 
+            position: 'absolute', 
+            top: 220, 
+            right: 35, 
+            opacity: 0.65, 
+            transform: [{ rotate: '45deg' }],
+            shadowColor: '#000',
+            shadowOffset: { width: 1, height: 2 },
+            shadowOpacity: 0.12,
+            shadowRadius: 3,
+            elevation: 2
+          }} pointerEvents="none">
+            <Svg width={18} height={18} viewBox="0 0 20 20" fill="none">
+              <Path d="M2 18 C6 10, 14 12, 18 2 C10 10, 10 14, 2 18 Z" fill="#7FA457" />
+            </Svg>
+          </View>
+
+          <View style={{ 
+            position: 'absolute', 
+            top: 400, 
+            right: 55, 
+            opacity: 0.55, 
+            transform: [{ rotate: '-30deg' }],
+            shadowColor: '#000',
+            shadowOffset: { width: 1, height: 2 },
+            shadowOpacity: 0.12,
+            shadowRadius: 3,
+            elevation: 2
+          }} pointerEvents="none">
+            <Svg width={20} height={20} viewBox="0 0 20 20" fill="none">
+              <Path d="M2 18 C6 10, 14 12, 18 2 C10 10, 10 14, 2 18 Z" fill="#6A8E49" />
+            </Svg>
+          </View>
+
+          <View style={{ 
+            position: 'absolute', 
+            top: 220, 
+            left: 30, 
+            opacity: 0.75,
+            shadowColor: '#000',
+            shadowOffset: { width: 1, height: 1.5 },
+            shadowOpacity: 0.1,
+            shadowRadius: 2,
+            elevation: 1
+          }} pointerEvents="none">
+            <Svg width={8} height={8} viewBox="0 0 10 10">
+              <Ellipse cx={5} cy={5} rx={3} ry={4} fill="#C69E7C" transform="rotate(30 5 5)" />
+            </Svg>
+          </View>
+
+          {/* Subtle sketched rolling pin outline on the middle-left */}
+          <View style={{ position: 'absolute', top: '35%', left: 12, opacity: 0.08 }} pointerEvents="none">
+            <Svg width={40} height={120} viewBox="0 0 20 60" fill="none" stroke="#FD5F20" strokeWidth={1}>
+              {/* Rolling pin sketch */}
+              <Path d="M10 2 L10 10 M8 10 L12 10 L12 50 L8 50 Z M10 50 L10 58" />
+            </Svg>
+          </View>
+
+          {/* Subtle sketched cooking pot outline on the middle-right */}
+          <View style={{ position: 'absolute', top: '30%', right: 12, opacity: 0.08 }} pointerEvents="none">
+            <Svg width={65} height={65} viewBox="0 0 40 40" fill="none" stroke="#FD5F20" strokeWidth={1}>
+              {/* Pot sketch */}
+              <Path d="M 6 18 L 34 18 L 32 32 C 32 34, 8 34, 8 32 Z" />
+              <Path d="M 4 18 C 4 18, 20 12, 36 18" />
+              <Path d="M 20 12 L 20 9" />
+              <Circle cx={20} cy={8} r={1.5} />
+              <Path d="M 4 22 L 2 22 C 1 22, 1 20, 2 20 L 4 20" />
+              <Path d="M 36 22 L 38 22 C 39 22, 39 20, 38 20 L 36 20" />
+            </Svg>
+          </View>
+
+          <SafeAreaView style={{ flex: 1 }}>
+            <View style={{ flex: 1, paddingHorizontal: 24, justifyContent: 'space-between', paddingTop: 10, paddingBottom: 105, position: 'relative' }}>
+              
+              {/* Top Row: Skip button aligned to top-right */}
+              <View style={{ flexDirection: 'row', justifyContent: 'flex-end', width: '100%' }}>
+                <TouchableOpacity onPress={() => go('home')} style={{ paddingHorizontal: 4, paddingVertical: 4 }}>
+                  <Text style={{ fontSize: 16, fontWeight: '700', color: '#FD5F20' }}>Skip</Text>
+                </TouchableOpacity>
               </View>
 
-              {/* Overlapping Floating Illustration */}
+              {/* Middle Section: Centered Sketched Illustration with float loop animation and absolute highlight cards */}
               <Animated.View style={{ 
-                position: 'absolute',
-                bottom: -45, 
-                width: 120, 
-                height: 120, 
-                borderRadius: 60, 
-                backgroundColor: step === 1 ? '#FFEEDB' : step === 2 ? '#E8F5E9' : '#FFF9C4', 
-                borderWidth: 2, 
-                borderColor: step === 1 ? '#FFD0A1' : step === 2 ? '#A5D6A7' : '#FFF59D', 
+                flex: 1.5,
                 justifyContent: 'center', 
                 alignItems: 'center', 
-                shadowColor: '#000', 
-                shadowOffset: { width: 0, height: 8 }, 
-                shadowOpacity: 0.1, 
-                shadowRadius: 10, 
-                elevation: 5,
+                opacity: obFade,
                 transform: [
-                  { scale: obIllusScale },
-                  { translateY: floatY }
-                ]
+                  { translateY: floatY },
+                  { scale: obScale }
+                ],
+                marginVertical: 20,
+                position: 'relative',
+                width: 280,
+                height: 280,
+                alignSelf: 'center',
               }}>
                 <SvgIllustration />
+
+                {/* Floating Card 1 */}
+                <Animated.View style={{
+                  position: 'absolute',
+                  top: card1Data.top,
+                  left: card1Data.left,
+                  backgroundColor: '#FFFFFF',
+                  borderWidth: 1.5,
+                  borderColor: '#FFEEDB',
+                  borderRadius: 16,
+                  paddingHorizontal: 12,
+                  paddingVertical: 8,
+                  alignItems: 'center',
+                  gap: 6,
+                  shadowColor: '#A05020',
+                  shadowOffset: { width: 0, height: 6 },
+                  shadowOpacity: 0.08,
+                  shadowRadius: 8,
+                  elevation: 4,
+                  transform: [{ translateY: cardY1 }],
+                }}>
+                  <Text style={{ fontSize: 10, fontWeight: '900', color: '#13352C', letterSpacing: 0.2 }}>{card1Data.label}</Text>
+                  {card1Data.icon}
+                </Animated.View>
+
+                {/* Floating Card 2 */}
+                <Animated.View style={{
+                  position: 'absolute',
+                  top: card2Data.top,
+                  right: card2Data.right,
+                  backgroundColor: '#FFFFFF',
+                  borderWidth: 1.5,
+                  borderColor: '#FFEEDB',
+                  borderRadius: 16,
+                  paddingHorizontal: 12,
+                  paddingVertical: 8,
+                  alignItems: 'center',
+                  gap: 6,
+                  shadowColor: '#A05020',
+                  shadowOffset: { width: 0, height: 6 },
+                  shadowOpacity: 0.08,
+                  shadowRadius: 8,
+                  elevation: 4,
+                  transform: [{ translateY: cardY2 }],
+                }}>
+                  <Text style={{ fontSize: 10, fontWeight: '900', color: '#13352C', letterSpacing: 0.2 }}>{card2Data.label}</Text>
+                  {card2Data.icon}
+                </Animated.View>
+
+                {/* Floating Card 3 */}
+                <Animated.View style={{
+                  position: 'absolute',
+                  bottom: card3Data.bottom,
+                  left: card3Data.left,
+                  backgroundColor: '#FFFFFF',
+                  borderWidth: 1.5,
+                  borderColor: '#FFEEDB',
+                  borderRadius: 16,
+                  paddingHorizontal: 12,
+                  paddingVertical: 8,
+                  alignItems: 'center',
+                  gap: 6,
+                  shadowColor: '#A05020',
+                  shadowOffset: { width: 0, height: 6 },
+                  shadowOpacity: 0.08,
+                  shadowRadius: 8,
+                  elevation: 4,
+                  transform: [{ translateY: cardY3 }],
+                }}>
+                  <Text style={{ fontSize: 10, fontWeight: '900', color: '#13352C', letterSpacing: 0.2 }}>{card3Data.label}</Text>
+                  {card3Data.icon}
+                </Animated.View>
               </Animated.View>
+
+              {/* Tagline details - Left Aligned, Premium Serif Title, Dark Green/Slate color */}
+              <View style={{ width: '100%', alignItems: 'flex-start', paddingHorizontal: 4, marginVertical: 15, gap: 12 }}>
+                {/* Indicator Dots - Left Aligned */}
+                <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center', marginBottom: 4 }}>
+                  {[1, 2, 3].map(i => {
+                    const isActive = i === step;
+                    return (
+                      <View
+                        key={i}
+                        style={{
+                          width: isActive ? 24 : 8,
+                          height: 8,
+                          borderRadius: 4,
+                          backgroundColor: isActive ? '#0C3327' : '#D0DCD8',
+                        }}
+                      />
+                    );
+                  })}
+                </View>
+
+                {/* Title */}
+                <Animated.Text style={{ 
+                  fontSize: Platform.OS === 'ios' ? 38 : 35, 
+                  fontWeight: '900', 
+                  fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',
+                  color: '#13352C', 
+                  lineHeight: Platform.OS === 'ios' ? 44 : 41,
+                  opacity: obTitleFade,
+                  transform: [{ translateY: obTitleSlideY }],
+                  textAlign: 'left',
+                }}>
+                  {title}
+                </Animated.Text>
+                
+                {/* Description */}
+                <Animated.Text style={{ 
+                  fontSize: 16, 
+                  color: '#5A6A64', 
+                  lineHeight: 24,
+                  fontWeight: '500',
+                  opacity: obDescFade,
+                  transform: [{ translateY: obDescSlideY }],
+                  textAlign: 'left',
+                  marginTop: 2,
+                }}>
+                  {descComponent}
+                </Animated.Text>
+              </View>
+
+              {/* Constant Bottom Layer (Primary Action Button only) */}
+              <View style={{ gap: 12, marginTop: 10, zIndex: 20 }}>
+                {/* Primary Action Button - Premium orange solid button with soft shadow */}
+                <TouchableOpacity 
+                  style={[styles.authBtn, {
+                    backgroundColor: '#DF7E2C',
+                    shadowColor: '#DF7E2C',
+                    shadowOffset: { width: 0, height: 6 },
+                    shadowOpacity: 0.25,
+                    shadowRadius: 10,
+                    elevation: 5,
+                    height: 56,
+                    borderRadius: 28,
+                  }]} 
+                  onPress={handleNext}
+                >
+                  <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 6 }}>
+                    <Text style={[styles.obBtnText, { fontSize: 16.5, fontWeight: '800' }]}>
+                      {btnText}{step === 1 ? '   →' : ''}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              </View>
+
             </View>
+          </SafeAreaView>
 
-            {/* Tagline details */}
-            <View style={{ alignItems: 'center', paddingHorizontal: 10, gap: 4 }}>
-              <Animated.Text style={{ 
-                fontSize: 18, 
-                fontWeight: '800', 
-                color: t.text, 
-                textAlign: 'center', 
-                lineHeight: 24,
-                opacity: obTitleFade,
-                transform: [{ translateY: obTitleSlideY }]
-              }}>
-                {title}
-              </Animated.Text>
-              
-              <Animated.Text style={{ 
-                fontSize: 12, 
-                color: t.sub, 
-                textAlign: 'center', 
-                lineHeight: 16,
-                opacity: obDescFade,
-                transform: [{ translateY: obDescSlideY }]
-              }}>
-                {desc}
-              </Animated.Text>
+          {/* ─── BOTTOM WAVE FOOTER WITH RICH THREE-STOP GRADIENT & LEAF SKETCH ─── */}
+          <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 120, overflow: 'hidden' }} pointerEvents="none">
+            <Svg width="100%" height={120} viewBox="0 0 400 120" preserveAspectRatio="none">
+              <Defs>
+                <SvgLinearGradient id="orangeGradOnboarding" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <Stop offset="0%" stopColor="#FF852C" />
+                  <Stop offset="50%" stopColor="#FD4F1B" />
+                  <Stop offset="100%" stopColor="#DE3500" />
+                </SvgLinearGradient>
+              </Defs>
+              <Path
+                d="M0 60 C 120 90, 280 80, 400 45 L 400 120 L 0 120 Z"
+                fill="url(#orangeGradOnboarding)"
+              />
+            </Svg>
+            {/* Elegant white outline leaf branch sketch positioned absolutely */}
+            <View style={{ position: 'absolute', bottom: 12, right: 18 }}>
+              <Svg width={40} height={40} viewBox="0 0 40 40" fill="none" stroke="rgba(255, 255, 255, 0.45)" strokeWidth={1.5}>
+                {/* Stem */}
+                <Path d="M5 35 Q 20 20, 32 10" />
+                {/* Leaf 1 (top right) */}
+                <Path d="M 32 10 C 35 4, 30 2, 24 8 C 24 14, 28 16, 32 10 Z" />
+                {/* Leaf 2 (middle left) */}
+                <Path d="M 18 22 C 10 24, 8 20, 14 14 C 18 14, 20 18, 18 22 Z" />
+                {/* Leaf 3 (middle right) */}
+                <Path d="M 22 18 C 28 12, 30 14, 26 20 C 22 22, 20 20, 22 18 Z" />
+              </Svg>
             </View>
-          </Animated.View>
-
-          {/* Constant Bottom Layer (Indicator dots & Buttons) */}
-          <View style={{ gap: 12, marginTop: 16 }}>
-            {/* Indicator Dots */}
-            <View style={{ flexDirection: 'row', gap: 8, justifyContent: 'center', marginVertical: 4 }}>
-              {[1, 2, 3].map(i => {
-                const isActive = i === step;
-                return (
-                  <View
-                    key={i}
-                    style={{
-                      width: isActive ? 24 : 8,
-                      height: 8,
-                      borderRadius: 4,
-                      backgroundColor: isActive ? B.orange : t.border
-                    }}
-                  />
-                );
-              })}
-            </View>
-
-            {/* Primary Action Button */}
-            <TouchableOpacity style={styles.authBtn} onPress={handleNext}>
-              <LinearGradient colors={[B.orange, B.secondary]} style={styles.obBtnGradient}>
-                <Text style={styles.obBtnText}>{btnText}</Text>
-              </LinearGradient>
-            </TouchableOpacity>
-
-            {/* Secondary Option: Skip & Browse */}
-            <TouchableOpacity onPress={() => go('home')} style={{ paddingVertical: 4 }}>
-              <Text style={{ fontSize: 13, fontWeight: '700', color: B.orange, textAlign: 'center', textDecorationLine: 'underline' }}>Just Browse</Text>
-            </TouchableOpacity>
           </View>
+        </LinearGradient>
+      </View>
+    );
+  }
 
-        </View>
-      </SafeAreaView>
+  function GoogleLogoSvg() {
+    return (
+      <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
+        <Path
+          d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+          fill="#4285F4"
+        />
+        <Path
+          d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+          fill="#34A853"
+        />
+        <Path
+          d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22c-.08-.26-.14-.54-.14-.83z"
+          fill="#FBBC05"
+        />
+        <Path
+          d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+          fill="#EA4335"
+        />
+      </Svg>
+    );
+  }
+
+  function AppleLogoSvg() {
+    return (
+      <Svg width={24} height={24} viewBox="0 0 24 24" fill="#000000">
+        <Path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 4.17c.66-.81 1.11-1.93.99-3.06-.96.04-2.13.64-2.82 1.45-.6.69-1.12 1.84-.98 2.94.1.08.21.12.28.12.9 0 2.03-.65 2.53-1.45" />
+      </Svg>
     );
   }
 
@@ -1179,364 +2043,1348 @@ export default function App() {
     const handleVerifyOtp = () => {
       if (otpCode === '123456' || otpCode.length === 6) {
         setToast('Verification Successful!');
-        go('setup1');
+        const REGISTERED_NUMBERS = ['9876543210', '9999999999', '9000000000', '8888888888'];
+        if (REGISTERED_NUMBERS.includes(mobileNumber)) {
+          // Setup pre-registered profile
+          setUser(prev => ({
+            ...prev,
+            phone: '+91 ' + mobileNumber,
+            name: 'Bhargav',
+            email: 'bhargav@koikoi.in',
+            address: 'Plot 42, Jubilee Hills',
+            height: '178',
+            weight: '74',
+            goal: 'Healthy Living',
+          }));
+          go('home');
+        } else {
+          // Setup brand new profile, starting registration flow
+          setUser(prev => ({ 
+            ...prev, 
+            phone: '+91 ' + mobileNumber,
+            name: '',
+            email: '',
+            address: '',
+            height: '',
+            weight: '',
+          }));
+          go('setup1');
+        }
       } else {
         setToast('Incorrect OTP. Try 123456');
       }
     };
 
     return (
-      <SafeAreaView style={[styles.safeArea, { backgroundColor: 'transparent' }]}>
-        <View style={{ flex: 1, paddingHorizontal: 24, justifyContent: 'center' }}>
-          <Animated.View style={{ 
-            backgroundColor: t.card, 
-            borderRadius: 28, 
-            borderWidth: 1, 
-            borderColor: t.border, 
-            padding: 24, 
-            shadowColor: '#000', 
-            shadowOffset: { width: 0, height: 12 }, 
-            shadowOpacity: 0.04, 
-            shadowRadius: 20, 
-            elevation: 4,
-            opacity: authFade,
-            transform: [
-              { translateY: authSlideY }
-            ]
-          }}>
-            {!otpSent ? (
-              <View>
-                <Text style={{ fontSize: 24, fontWeight: '900', color: t.text, lineHeight: 30 }}>Welcome to{'\n'}Koi Koi Dabba</Text>
-                <Text style={{ fontSize: 13, color: t.sub, marginTop: 8, lineHeight: 18 }}>Enter your phone number to proceed with verification</Text>
-
-                <View style={{ flexDirection: 'row', height: 56, borderRadius: 18, borderWidth: 1, borderColor: t.border, backgroundColor: t.input, alignItems: 'center', paddingHorizontal: 16, marginTop: 24 }}>
-                  <Text style={{ fontSize: 15, fontWeight: 'bold', color: t.text, marginRight: 10 }}>+91</Text>
-                  <TextInput
-                    style={{ flex: 1, fontSize: 15, fontWeight: 'bold', color: t.text, height: '100%' }}
-                    placeholder="Mobile Number"
-                    placeholderTextColor={t.muted}
-                    keyboardType="numeric"
-                    maxLength={10}
-                    value={mobileNumber}
-                    onChangeText={setMobileNumber}
-                  />
-                </View>
-
-                <TouchableOpacity style={[styles.authBtn, { marginTop: 20 }]} onPress={handleSendOtp}>
-                  <LinearGradient colors={[B.orange, B.secondary]} style={styles.obBtnGradient}>
-                    <Text style={styles.obBtnText}>Send OTP Code</Text>
-                  </LinearGradient>
-                </TouchableOpacity>
-
-                <Text style={{ textAlign: 'center', fontSize: 10, fontWeight: '900', color: t.muted, marginVertical: 20, letterSpacing: 1.5 }}>OR CONTINUE WITH</Text>
-
-                <View style={{ flexDirection: 'row', gap: 12 }}>
-                  <TouchableOpacity style={{ flex: 1, height: 48, borderRadius: 14, borderWidth: 1, borderColor: t.border, backgroundColor: t.card, justifyContent: 'center', alignItems: 'center' }}>
-                    <Text style={{ fontSize: 14, color: t.text, fontWeight: 'bold' }}>Google</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={{ flex: 1, height: 48, borderRadius: 14, borderWidth: 1, borderColor: t.border, backgroundColor: t.card, justifyContent: 'center', alignItems: 'center' }}>
-                    <Text style={{ fontSize: 14, color: t.text, fontWeight: 'bold' }}>Apple</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            ) : (
-              <View>
-                <TouchableOpacity onPress={() => setOtpSent(false)} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 16 }}>
-                  <ArrowLeft size={16} color={t.text} />
-                  <Text style={{ fontSize: 13, color: t.sub, fontWeight: '600' }}>Change Number</Text>
-                </TouchableOpacity>
-
-                <Text style={{ fontSize: 24, fontWeight: '900', color: t.text }}>OTP Verification</Text>
-                <Text style={{ fontSize: 13, color: t.sub, marginTop: 8 }}>
-                  We sent a 6-digit code to <Text style={{ color: B.orange, fontWeight: 'bold' }}>+91 {mobileNumber}</Text>
+      <View style={{ flex: 1, backgroundColor: '#FFFDF9', alignItems: 'center', justifyContent: 'center' }}>
+        <LinearGradient
+          colors={['#FED6B3', '#FFFDF9', '#FFF1E5']}
+          locations={[0, 0.45, 1.0]}
+          style={{ width: '100%', height: '100%', flex: 1 }}
+        >
+          <SafeAreaView style={{ flex: 1 }}>
+            <View style={{ flex: 1, paddingHorizontal: 24, justifyContent: 'center', alignItems: 'center' }}>
+              
+              {/* Optional Demo Top Header */}
+              <View style={{
+                position: 'absolute',
+                top: Platform.OS === 'ios' ? 50 : 20,
+                backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                borderWidth: 1.5,
+                borderColor: '#FFEEDB',
+                borderRadius: 20,
+                paddingHorizontal: 16,
+                paddingVertical: 10,
+                alignSelf: 'center',
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 8,
+                shadowColor: '#A05020',
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.05,
+                shadowRadius: 6,
+                elevation: 3,
+                zIndex: 100
+              }}>
+                <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#DF7E2C' }} />
+                <Text style={{ fontSize: 11, fontWeight: '900', color: '#13352C', letterSpacing: 0.5 }}>
+                  DEMO SIMULATOR & TESTING SUITE
                 </Text>
-
-                <TextInput
-                  style={{ height: 56, borderRadius: 18, borderWidth: 1, borderColor: t.border, backgroundColor: t.input, fontSize: 18, fontWeight: 'bold', color: t.text, textAlign: 'center', marginTop: 24, letterSpacing: 4 }}
-                  placeholder="6-Digit Code"
-                  placeholderTextColor={t.muted}
-                  keyboardType="numeric"
-                  maxLength={6}
-                  value={otpCode}
-                  onChangeText={setOtpCode}
-                />
-
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 }}>
-                  {otpCountdown > 0 ? (
-                    <Text style={{ fontSize: 11, color: t.sub }}>
-                      Resend code in <Text style={{ color: B.orange, fontWeight: 'bold' }}>{otpCountdown}s</Text>
-                    </Text>
-                  ) : (
-                    <TouchableOpacity onPress={() => setOtpCountdown(30)}>
-                      <Text style={{ fontSize: 11, color: B.orange, fontWeight: 'bold' }}>Resend Code</Text>
-                    </TouchableOpacity>
-                  )}
-                  <Text style={{ fontSize: 9, color: t.muted, fontWeight: 'bold' }}>DEMO CODE: 123456</Text>
-                </View>
-
-                <TouchableOpacity style={[styles.authBtn, { marginTop: 20 }]} onPress={handleVerifyOtp}>
-                  <LinearGradient colors={[B.orange, B.secondary]} style={styles.obBtnGradient}>
-                    <ShieldCheck size={16} color="#FFFFFF" style={{ marginRight: 8 }} />
-                    <Text style={styles.obBtnText}>Verify & Login</Text>
-                  </LinearGradient>
-                </TouchableOpacity>
               </View>
-            )}
-          </Animated.View>
-        </View>
-      </SafeAreaView>
+
+              <Animated.View style={{ 
+                width: '100%',
+                maxWidth: 380,
+                backgroundColor: 'rgba(255, 255, 255, 0.85)',
+                borderRadius: 32, 
+                borderWidth: 1.5, 
+                borderColor: '#FFEEDB', 
+                padding: 24, 
+                shadowColor: '#A05020', 
+                shadowOffset: { width: 0, height: 12 }, 
+                shadowOpacity: 0.1, 
+                shadowRadius: 20, 
+                elevation: 6,
+                opacity: authFade,
+                transform: [{ translateY: authSlideY }]
+              }}>
+                {!otpSent ? (
+                  <View style={{ alignItems: 'center' }}>
+                    {/* Top Package Icon Squircle */}
+                    <View style={{
+                      width: 64,
+                      height: 64,
+                      borderRadius: 22,
+                      backgroundColor: '#DF7E2C',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      marginBottom: 16,
+                      shadowColor: '#DF7E2C',
+                      shadowOffset: { width: 0, height: 4 },
+                      shadowOpacity: 0.2,
+                      shadowRadius: 8,
+                    }}>
+                      <Package size={32} color="#FFFFFF" />
+                    </View>
+
+                    {/* Titles */}
+                    <Text style={{ fontSize: 24, fontWeight: '900', color: '#13352C', textAlign: 'center', lineHeight: 28 }}>
+                      Welcome to <Text style={{ color: '#DF7E2C' }}>KOI KOI{'\n'}DABBA</Text>
+                    </Text>
+                    <Text style={{ fontSize: 13, color: '#5A6A64', marginTop: 8, textAlign: 'center', lineHeight: 18 }}>
+                      Taste the comfort of pure home-cooked goodness
+                    </Text>
+
+                    {/* Mobile Number Input Block */}
+                    <View style={{ width: '100%', marginTop: 24, alignItems: 'flex-start' }}>
+                      <Text style={{ fontSize: 10, fontWeight: '900', color: '#DF7E2C', letterSpacing: 1.2, marginBottom: 8 }}>
+                        MOBILE NUMBER
+                      </Text>
+                      
+                      <View style={{
+                        flexDirection: 'row',
+                        height: 56,
+                        borderRadius: 18,
+                        borderWidth: 1.5,
+                        borderColor: '#FFEEDB',
+                        backgroundColor: '#FFFFFF',
+                        alignItems: 'center',
+                        paddingHorizontal: 16,
+                        width: '100%'
+                      }}>
+                        <Text style={{ fontSize: 14, fontWeight: '900', color: '#13352C' }}>IN  +91</Text>
+                        <View style={{ width: 1, height: 24, backgroundColor: '#FFEEDB', marginHorizontal: 12 }} />
+                        <TextInput
+                          style={{ flex: 1, fontSize: 15, fontWeight: '700', color: '#13352C', height: '100%' }}
+                          placeholder="Enter 10-digit number"
+                          placeholderTextColor="#A0B0AA"
+                          keyboardType="numeric"
+                          maxLength={10}
+                          value={mobileNumber}
+                          onChangeText={setMobileNumber}
+                        />
+                      </View>
+                    </View>
+
+                    {/* Continue Button */}
+                    <TouchableOpacity 
+                      style={{
+                        width: '100%',
+                        height: 56,
+                        borderRadius: 28,
+                        marginTop: 20,
+                        overflow: 'hidden',
+                        shadowColor: '#DF7E2C',
+                        shadowOffset: { width: 0, height: 6 },
+                        shadowOpacity: 0.25,
+                        shadowRadius: 10,
+                        elevation: 5,
+                      }} 
+                      onPress={handleSendOtp}
+                    >
+                      <LinearGradient colors={['#FF852C', '#FD4F1B']} style={{ flex: 1, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 6 }}>
+                        <Text style={{ color: '#FFFFFF', fontSize: 16.5, fontWeight: '800' }}>Continue</Text>
+                        <ChevronRight size={18} color="#FFFFFF" strokeWidth={2.5} />
+                      </LinearGradient>
+                    </TouchableOpacity>
+
+                    {/* OR divider */}
+                    <Text style={{ textAlign: 'center', fontSize: 10, fontWeight: '900', color: '#90A09A', marginVertical: 20, letterSpacing: 1.5 }}>
+                      OR
+                    </Text>
+
+                    {/* Social Row */}
+                    <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 16, width: '100%', marginTop: 8 }}>
+                      <TouchableOpacity style={{
+                        width: 76,
+                        height: 76,
+                        borderRadius: 22,
+                        borderWidth: 1.5,
+                        borderColor: '#FFEEDB',
+                        backgroundColor: '#FFFFFF',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        shadowColor: '#A05020',
+                        shadowOffset: { width: 0, height: 4 },
+                        shadowOpacity: 0.08,
+                        shadowRadius: 8,
+                        elevation: 2
+                      }}>
+                        <GoogleLogoSvg />
+                      </TouchableOpacity>
+                      <TouchableOpacity style={{
+                        width: 76,
+                        height: 76,
+                        borderRadius: 22,
+                        borderWidth: 1.5,
+                        borderColor: '#FFEEDB',
+                        backgroundColor: '#FFFFFF',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        shadowColor: '#A05020',
+                        shadowOffset: { width: 0, height: 4 },
+                        shadowOpacity: 0.08,
+                        shadowRadius: 8,
+                        elevation: 2
+                      }}>
+                        <AppleLogoSvg />
+                      </TouchableOpacity>
+                    </View>
+
+                    {/* Under text */}
+                    <Text style={{ fontSize: 10, color: '#7A8A83', marginTop: 24, textAlign: 'center', lineHeight: 14 }}>
+                      By continuing, you agree to our{'\n'}
+                      <Text style={{ textDecorationLine: 'underline', color: '#DF7E2C' }}>Terms of Service</Text> & <Text style={{ textDecorationLine: 'underline', color: '#DF7E2C' }}>Privacy Policy</Text>
+                    </Text>
+                  </View>
+                ) : (
+                  <View>
+                    <TouchableOpacity onPress={() => setOtpSent(false)} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 16 }}>
+                      <ArrowLeft size={16} color="#13352C" />
+                      <Text style={{ fontSize: 13, color: '#5A6A64', fontWeight: '600' }}>Change Number</Text>
+                    </TouchableOpacity>
+
+                    <Text style={{ fontSize: 24, fontWeight: '900', color: '#13352C' }}>OTP Verification</Text>
+                    <Text style={{ fontSize: 13, color: '#5A6A64', marginTop: 8 }}>
+                      We sent a 6-digit code to <Text style={{ color: '#DF7E2C', fontWeight: 'bold' }}>+91 {mobileNumber}</Text>
+                    </Text>
+
+                    <TextInput
+                      style={{ height: 56, borderRadius: 18, borderWidth: 1.5, borderColor: '#FFEEDB', backgroundColor: '#FFFFFF', fontSize: 18, fontWeight: 'bold', color: '#13352C', textAlign: 'center', marginTop: 24, letterSpacing: 4 }}
+                      placeholder="6-Digit Code"
+                      placeholderTextColor="#A0B0AA"
+                      keyboardType="numeric"
+                      maxLength={6}
+                      value={otpCode}
+                      onChangeText={setOtpCode}
+                    />
+
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 }}>
+                      {otpCountdown > 0 ? (
+                        <Text style={{ fontSize: 11, color: '#5A6A64' }}>
+                          Resend code in <Text style={{ color: '#DF7E2C', fontWeight: 'bold' }}>{otpCountdown}s</Text>
+                        </Text>
+                      ) : (
+                        <TouchableOpacity onPress={() => setOtpCountdown(30)}>
+                          <Text style={{ fontSize: 11, color: '#DF7E2C', fontWeight: 'bold' }}>Resend Code</Text>
+                        </TouchableOpacity>
+                      )}
+                      <Text style={{ fontSize: 9, color: '#90A09A', fontWeight: 'bold' }}>DEMO CODE: 123456</Text>
+                    </View>
+
+                    <TouchableOpacity 
+                      style={{
+                        width: '100%',
+                        height: 56,
+                        borderRadius: 28,
+                        marginTop: 20,
+                        overflow: 'hidden',
+                        shadowColor: '#DF7E2C',
+                        shadowOffset: { width: 0, height: 6 },
+                        shadowOpacity: 0.25,
+                        shadowRadius: 10,
+                        elevation: 5,
+                      }} 
+                      onPress={handleVerifyOtp}
+                    >
+                      <LinearGradient colors={['#FF852C', '#FD4F1B']} style={{ flex: 1, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 6 }}>
+                        <ShieldCheck size={16} color="#FFFFFF" />
+                        <Text style={{ color: '#FFFFFF', fontSize: 16.5, fontWeight: '800' }}>Verify & Login</Text>
+                      </LinearGradient>
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </Animated.View>
+            </View>
+          </SafeAreaView>
+        </LinearGradient>
+      </View>
     );
   }
 
-  // 4. Setup 1: Profile Details
+  // 4. Setup 1: Profile Details (Step 1 of 3)
   function RenderSetup1() {
     return (
-      <SafeAreaView style={[styles.safeArea, { backgroundColor: 'transparent' }]}>
-        <View style={{ flex: 1, paddingHorizontal: 24, justifyContent: 'center' }}>
-          <View style={{ backgroundColor: t.card, borderRadius: 28, borderWidth: 1, borderColor: t.border, padding: 24, shadowColor: '#000', shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.04, shadowRadius: 20, elevation: 4 }}>
-            <ScrollView showsVerticalScrollIndicator={false}>
-              <Text style={{ fontSize: 10, fontWeight: '900', color: B.orange, letterSpacing: 1.5 }}>STEP 1 OF 3</Text>
-              <Text style={{ fontSize: 24, fontWeight: '900', color: t.text, marginTop: 4 }}>Personal Profile</Text>
-              <Text style={{ fontSize: 13, color: t.sub, marginTop: 4 }}>Let us know a little more about yourself.</Text>
-
-              <View style={{ gap: 16, marginTop: 20 }}>
-                <View>
-                  <Text style={{ fontSize: 12, fontWeight: 'bold', color: t.text, marginBottom: 6 }}>Full Name</Text>
-                  <TextInput
-                    style={{ height: 56, borderRadius: 18, borderWidth: 1, borderColor: t.border, backgroundColor: t.input, paddingHorizontal: 16, fontSize: 14, color: t.text, fontWeight: '600' }}
-                    value={user.name}
-                    onChangeText={val => setUser(prev => ({ ...prev, name: val }))}
-                    placeholder="e.g. Bhargav"
-                    placeholderTextColor={t.muted}
-                  />
-                </View>
-
-                <View>
-                  <Text style={{ fontSize: 12, fontWeight: 'bold', color: t.text, marginBottom: 6 }}>Email Address</Text>
-                  <TextInput
-                    style={{ height: 56, borderRadius: 18, borderWidth: 1, borderColor: t.border, backgroundColor: t.input, paddingHorizontal: 16, fontSize: 14, color: t.text, fontWeight: '600' }}
-                    value={user.email}
-                    onChangeText={val => setUser(prev => ({ ...prev, email: val }))}
-                    placeholder="e.g. bhargav@koikoi.in"
-                    placeholderTextColor={t.muted}
-                  />
-                </View>
-
-                <View>
-                  <Text style={{ fontSize: 12, fontWeight: 'bold', color: t.text, marginBottom: 6 }}>Dietary Preference</Text>
-                  <View style={{ flexDirection: 'row', gap: 10 }}>
-                    {['Veg', 'Non-Veg', 'Egg'].map(pref => {
-                      const isSelected = user.foodPref === pref;
-                      return (
-                        <TouchableOpacity
-                          key={pref}
-                          style={{
-                            flex: 1,
-                            height: 48,
-                            borderRadius: 14,
-                            borderWidth: 1,
-                            borderColor: isSelected ? B.orange : t.border,
-                            backgroundColor: isSelected ? B.orangeL : t.card,
-                            justifyContent: 'center',
-                            alignItems: 'center'
-                          }}
-                          onPress={() => setUser(prev => ({ ...prev, foodPref: pref }))}
-                        >
-                          <Text style={{ fontSize: 13, fontWeight: 'bold', color: isSelected ? B.orange : t.text }}>
-                            {pref}
-                          </Text>
-                        </TouchableOpacity>
-                      );
-                    })}
+      <View style={{ flex: 1, backgroundColor: '#FFFDF9', alignItems: 'center', justifyContent: 'center' }}>
+        <LinearGradient
+          colors={['#FED6B3', '#FFFDF9', '#FFF1E5']}
+          locations={[0, 0.45, 1.0]}
+          style={{ width: '100%', height: '100%', flex: 1 }}
+        >
+          <SafeAreaView style={{ flex: 1 }}>
+            <View style={{ flex: 1, paddingHorizontal: 24, justifyContent: 'center', alignItems: 'center' }}>
+              
+              <View style={{ 
+                width: '100%',
+                maxWidth: 380,
+                backgroundColor: 'rgba(255, 255, 255, 0.85)',
+                borderRadius: 32, 
+                borderWidth: 1.5, 
+                borderColor: '#FFEEDB', 
+                padding: 24, 
+                shadowColor: '#A05020', 
+                shadowOffset: { width: 0, height: 12 }, 
+                shadowOpacity: 0.1, 
+                shadowRadius: 20, 
+                elevation: 6,
+              }}>
+                <ScrollView showsVerticalScrollIndicator={false}>
+                  {/* Top Progress bar and Back row */}
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                    <TouchableOpacity onPress={back} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: '#FFFFFF', borderWidth: 1.5, borderColor: '#FFEEDB', justifyContent: 'center', alignItems: 'center' }}>
+                      <ArrowLeft size={16} color="#13352C" />
+                    </TouchableOpacity>
+                    <View style={{ alignItems: 'flex-end' }}>
+                      <Text style={{ fontSize: 10, fontWeight: '900', color: '#DF7E2C', letterSpacing: 0.5 }}>STEP 1 OF 3</Text>
+                      <Text style={{ fontSize: 10, color: '#5A6A64', fontWeight: 'bold', marginTop: 1 }}>33% Complete</Text>
+                    </View>
                   </View>
-                </View>
-              </View>
 
-              <TouchableOpacity style={[styles.authBtn, { marginTop: 24 }]} onPress={() => go('setup2')}>
-                <LinearGradient colors={[B.orange, B.secondary]} style={styles.obBtnGradient}>
-                  <Text style={styles.obBtnText}>Continue</Text>
-                </LinearGradient>
-              </TouchableOpacity>
-            </ScrollView>
-          </View>
-        </View>
-      </SafeAreaView>
+                  {/* Progress Line */}
+                  <View style={{ width: '100%', height: 6, backgroundColor: '#FFEEDB', borderRadius: 3, overflow: 'hidden', marginBottom: 20 }}>
+                    <View style={{ width: '33%', height: '100%', backgroundColor: '#DF7E2C', borderRadius: 3 }} />
+                  </View>
+
+                  {/* Title & Subtitle */}
+                  <Text style={{ fontSize: 24, fontWeight: '900', color: '#13352C' }}>Create Your Profile</Text>
+                  <Text style={{ fontSize: 13, color: '#5A6A64', marginTop: 4, lineHeight: 18 }}>
+                    Help us personalize your Koi Koi dabba experience.
+                  </Text>
+
+                  {/* Profile Photo Picker */}
+                  <View style={{ alignItems: 'center', marginVertical: 16 }}>
+                    <TouchableOpacity 
+                      style={{
+                        width: 90,
+                        height: 90,
+                        borderRadius: 45,
+                        backgroundColor: '#FFF1E5',
+                        borderWidth: 2,
+                        borderColor: '#FFEEDB',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        position: 'relative',
+                        shadowColor: '#A05020',
+                        shadowOffset: { width: 0, height: 4 },
+                        shadowOpacity: 0.1,
+                        shadowRadius: 8,
+                        elevation: 3
+                      }}
+                      onPress={() => {
+                        const avatars = ['👩‍🍳', '👨‍🍳', '🥗', '🍲', '🥑', '🥦', '🥕', '🍎', '🥘'];
+                        const curIdx = avatars.indexOf(user.avatar);
+                        const nextIdx = (curIdx + 1) % avatars.length;
+                        setUser(prev => ({ ...prev, avatar: avatars[nextIdx] }));
+                        setToast('Profile Photo updated!');
+                      }}
+                    >
+                      <Text style={{ fontSize: 44 }}>{user.avatar}</Text>
+                      <View style={{
+                        position: 'absolute',
+                        bottom: 0,
+                        right: 0,
+                        backgroundColor: '#DF7E2C',
+                        width: 28,
+                        height: 28,
+                        borderRadius: 14,
+                        borderWidth: 2,
+                        borderColor: '#FFFFFF',
+                        justifyContent: 'center',
+                        alignItems: 'center'
+                      }}>
+                        <Camera size={14} color="#FFFFFF" />
+                      </View>
+                    </TouchableOpacity>
+                    <Text style={{ fontSize: 11, color: '#7A8A83', marginTop: 8, fontWeight: '700', letterSpacing: 0.5 }}>
+                      TAP TO CHANGE PHOTO
+                    </Text>
+                  </View>
+
+                  {/* Inputs */}
+                  <View style={{ gap: 16 }}>
+                    <View>
+                      <Text style={{ fontSize: 10, fontWeight: '900', color: '#DF7E2C', letterSpacing: 1.2, marginBottom: 8 }}>FULL NAME</Text>
+                      <TextInput
+                        style={{ height: 56, borderRadius: 18, borderWidth: 1.5, borderColor: '#FFEEDB', backgroundColor: '#FFFFFF', paddingHorizontal: 16, fontSize: 14, color: '#13352C', fontWeight: '600' }}
+                        value={user.name}
+                        onChangeText={val => setUser(prev => ({ ...prev, name: val }))}
+                        placeholder="Bhargav"
+                        placeholderTextColor="#A0B0AA"
+                      />
+                    </View>
+
+                    <View>
+                      <Text style={{ fontSize: 10, fontWeight: '900', color: '#DF7E2C', letterSpacing: 1.2, marginBottom: 8 }}>MOBILE NUMBER (READ ONLY)</Text>
+                      <View style={{
+                        flexDirection: 'row',
+                        height: 56,
+                        borderRadius: 18,
+                        borderWidth: 1.5,
+                        borderColor: '#FFEEDB',
+                        backgroundColor: '#F5F6F5',
+                        alignItems: 'center',
+                        paddingHorizontal: 16,
+                      }}>
+                        <TextInput
+                          style={{ flex: 1, fontSize: 14, color: '#7A8A83', fontWeight: '600', height: '100%' }}
+                          value={user.phone}
+                          editable={false}
+                        />
+                        <Lock size={16} color="#A0B0AA" />
+                      </View>
+                    </View>
+
+                    <View>
+                      <Text style={{ fontSize: 10, fontWeight: '900', color: '#DF7E2C', letterSpacing: 1.2, marginBottom: 8 }}>EMAIL ADDRESS</Text>
+                      <TextInput
+                        style={{ height: 56, borderRadius: 18, borderWidth: 1.5, borderColor: '#FFEEDB', backgroundColor: '#FFFFFF', paddingHorizontal: 16, fontSize: 14, color: '#13352C', fontWeight: '600' }}
+                        value={user.email}
+                        onChangeText={val => setUser(prev => ({ ...prev, email: val }))}
+                        placeholder="bhargav@koikoi.in"
+                        placeholderTextColor="#A0B0AA"
+                        keyboardType="email-address"
+                      />
+                    </View>
+
+                    <View>
+                      <Text style={{ fontSize: 10, fontWeight: '900', color: '#DF7E2C', letterSpacing: 1.2, marginBottom: 8 }}>DATE OF BIRTH</Text>
+                      <View style={{
+                        flexDirection: 'row',
+                        height: 56,
+                        borderRadius: 18,
+                        borderWidth: 1.5,
+                        borderColor: '#FFEEDB',
+                        backgroundColor: '#FFFFFF',
+                        alignItems: 'center',
+                        paddingHorizontal: 16,
+                      }}>
+                        <TextInput
+                          style={{ flex: 1, fontSize: 14, color: '#13352C', fontWeight: '600', height: '100%' }}
+                          value={user.dob}
+                          onChangeText={val => setUser(prev => ({ ...prev, dob: val }))}
+                          placeholder="e.g. 15/08/1996"
+                          placeholderTextColor="#A0B0AA"
+                          maxLength={10}
+                        />
+                        <Calendar size={18} color="#DF7E2C" />
+                      </View>
+                    </View>
+
+                    <View>
+                      <Text style={{ fontSize: 10, fontWeight: '900', color: '#DF7E2C', letterSpacing: 1.2, marginBottom: 8 }}>GENDER</Text>
+                      <View style={{ flexDirection: 'row', gap: 10 }}>
+                        {['Male', 'Female', 'Other'].map(g => {
+                          const isSelected = user.gender === g;
+                          return (
+                            <TouchableOpacity
+                              key={g}
+                              style={{
+                                flex: 1,
+                                height: 48,
+                                borderRadius: 14,
+                                borderWidth: 1.5,
+                                borderColor: isSelected ? '#DF7E2C' : '#FFEEDB',
+                                backgroundColor: isSelected ? '#FFF4EC' : '#FFFFFF',
+                                justifyContent: 'center',
+                                alignItems: 'center'
+                              }}
+                              onPress={() => setUser(prev => ({ ...prev, gender: g }))}
+                            >
+                              <Text style={{ fontSize: 13, fontWeight: '800', color: isSelected ? '#DF7E2C' : '#13352C' }}>
+                                {g}
+                              </Text>
+                            </TouchableOpacity>
+                          );
+                        })}
+                      </View>
+                    </View>
+                  </View>
+
+                  {/* Continue Button */}
+                  <TouchableOpacity 
+                    style={{
+                      width: '100%',
+                      height: 56,
+                      borderRadius: 28,
+                      marginTop: 28,
+                      overflow: 'hidden',
+                      shadowColor: '#DF7E2C',
+                      shadowOffset: { width: 0, height: 6 },
+                      shadowOpacity: 0.25,
+                      shadowRadius: 10,
+                      elevation: 5,
+                    }} 
+                    onPress={() => {
+                      if (!user.name || !user.email || !user.dob) {
+                        setToast('Please enter all profile details');
+                      } else {
+                        go('setup2');
+                      }
+                    }}
+                  >
+                    <LinearGradient colors={['#FF852C', '#FD4F1B']} style={{ flex: 1, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 6 }}>
+                      <Text style={{ color: '#FFFFFF', fontSize: 16.5, fontWeight: '800' }}>Continue</Text>
+                      <ChevronRight size={18} color="#FFFFFF" strokeWidth={2.5} />
+                    </LinearGradient>
+                  </TouchableOpacity>
+                </ScrollView>
+              </View>
+            </View>
+          </SafeAreaView>
+        </LinearGradient>
+      </View>
     );
   }
 
-  // 5. Setup 2: Address Details
+  // 5. Setup 2: Address Details (Step 2 of 3)
   function RenderSetup2() {
     return (
-      <SafeAreaView style={[styles.safeArea, { backgroundColor: 'transparent' }]}>
-        <View style={{ flex: 1, paddingHorizontal: 24, justifyContent: 'center' }}>
-          <View style={{ backgroundColor: t.card, borderRadius: 28, borderWidth: 1, borderColor: t.border, padding: 24, shadowColor: '#000', shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.04, shadowRadius: 20, elevation: 4 }}>
-            <ScrollView showsVerticalScrollIndicator={false}>
-              <TouchableOpacity onPress={back} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 12 }}>
-                <ArrowLeft size={16} color={t.text} />
-                <Text style={{ fontSize: 13, color: t.sub, fontWeight: '600' }}>Back</Text>
-              </TouchableOpacity>
-
-              <Text style={{ fontSize: 10, fontWeight: '900', color: B.orange, letterSpacing: 1.5 }}>STEP 2 OF 3</Text>
-              <Text style={{ fontSize: 24, fontWeight: '900', color: t.text, marginTop: 4 }}>Delivery Location</Text>
-              <Text style={{ fontSize: 13, color: t.sub, marginTop: 4 }}>Specify where we should drop off your daily dabbas.</Text>
-
-              <View style={{ gap: 16, marginTop: 20 }}>
-                <View>
-                  <Text style={{ fontSize: 12, fontWeight: 'bold', color: t.text, marginBottom: 6 }}>Delivery Address</Text>
-                  <TextInput
-                    style={{ height: 80, borderRadius: 18, borderWidth: 1, borderColor: t.border, backgroundColor: t.input, paddingHorizontal: 16, paddingTop: 12, fontSize: 14, color: t.text, fontWeight: '600', textAlignVertical: 'top' }}
-                    value={user.address}
-                    onChangeText={val => setUser(prev => ({ ...prev, address: val }))}
-                    placeholder="e.g. Villas 45, Green Glen Layout, Bellandur, Bengaluru"
-                    placeholderTextColor={t.muted}
-                    multiline
-                    numberOfLines={3}
-                  />
-                </View>
-
-                <View>
-                  <Text style={{ fontSize: 12, fontWeight: 'bold', color: t.text, marginBottom: 6 }}>Address Type</Text>
-                  <View style={{ flexDirection: 'row', gap: 10 }}>
-                    {['Home', 'Work', 'Other'].map(label => {
-                      const isSelected = user.addressLabel === label;
-                      return (
-                        <TouchableOpacity
-                          key={label}
-                          style={{
-                            flex: 1,
-                            height: 48,
-                            borderRadius: 14,
-                            borderWidth: 1,
-                            borderColor: isSelected ? B.orange : t.border,
-                            backgroundColor: isSelected ? B.orangeL : t.card,
-                            justifyContent: 'center',
-                            alignItems: 'center'
-                          }}
-                          onPress={() => setUser(prev => ({ ...prev, addressLabel: label }))}
-                        >
-                          <Text style={{ fontSize: 13, fontWeight: 'bold', color: isSelected ? B.orange : t.text }}>
-                            {label}
-                          </Text>
-                        </TouchableOpacity>
-                      );
-                    })}
+      <View style={{ flex: 1, backgroundColor: '#FFFDF9', alignItems: 'center', justifyContent: 'center' }}>
+        <LinearGradient
+          colors={['#FED6B3', '#FFFDF9', '#FFF1E5']}
+          locations={[0, 0.45, 1.0]}
+          style={{ width: '100%', height: '100%', flex: 1 }}
+        >
+          <SafeAreaView style={{ flex: 1 }}>
+            <View style={{ flex: 1, paddingHorizontal: 24, justifyContent: 'center', alignItems: 'center' }}>
+              
+              <View style={{ 
+                width: '100%',
+                maxWidth: 380,
+                backgroundColor: 'rgba(255, 255, 255, 0.85)',
+                borderRadius: 32, 
+                borderWidth: 1.5, 
+                borderColor: '#FFEEDB', 
+                padding: 24, 
+                shadowColor: '#A05020', 
+                shadowOffset: { width: 0, height: 12 }, 
+                shadowOpacity: 0.1, 
+                shadowRadius: 20, 
+                elevation: 6,
+              }}>
+                <ScrollView showsVerticalScrollIndicator={false}>
+                  {/* Top Progress bar and Back row */}
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                    <TouchableOpacity onPress={back} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: '#FFFFFF', borderWidth: 1.5, borderColor: '#FFEEDB', justifyContent: 'center', alignItems: 'center' }}>
+                      <ArrowLeft size={16} color="#13352C" />
+                    </TouchableOpacity>
+                    <View style={{ alignItems: 'flex-end' }}>
+                      <Text style={{ fontSize: 10, fontWeight: '900', color: '#DF7E2C', letterSpacing: 0.5 }}>STEP 2 OF 3</Text>
+                      <Text style={{ fontSize: 10, color: '#5A6A64', fontWeight: 'bold', marginTop: 1 }}>67% Complete</Text>
+                    </View>
                   </View>
-                </View>
+
+                  {/* Progress Line */}
+                  <View style={{ width: '100%', height: 6, backgroundColor: '#FFEEDB', borderRadius: 3, overflow: 'hidden', marginBottom: 20 }}>
+                    <View style={{ width: '67%', height: '100%', backgroundColor: '#DF7E2C', borderRadius: 3 }} />
+                  </View>
+
+                  {/* Title & Subtitle */}
+                  <Text style={{ fontSize: 24, fontWeight: '900', color: '#13352C' }}>Delivery Location</Text>
+                  <Text style={{ fontSize: 13, color: '#5A6A64', marginTop: 4, lineHeight: 18 }}>
+                    Specify where we should drop off your daily dabbas.
+                  </Text>
+
+                  {/* Detect Location Button */}
+                  <TouchableOpacity 
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      backgroundColor: '#FFF8F2',
+                      borderWidth: 1.5,
+                      borderColor: '#FFE0CC',
+                      borderRadius: 18,
+                      padding: 14,
+                      marginTop: 20,
+                      justifyContent: 'space-between'
+                    }}
+                    onPress={() => {
+                      setShowLocationPermission(true);
+                    }}
+                  >
+                    <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, gap: 12 }}>
+                      <View style={{
+                        width: 42,
+                        height: 42,
+                        borderRadius: 12,
+                        backgroundColor: '#FFF1E5',
+                        justifyContent: 'center',
+                        alignItems: 'center'
+                      }}>
+                        <Navigation size={20} color="#DF7E2C" />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ fontSize: 13, fontWeight: 'bold', color: '#13352C' }}>Detect Current Location</Text>
+                        <Text style={{ fontSize: 11, color: '#7A8A83', marginTop: 2 }}>Use GPS coordinates to auto-fill address</Text>
+                      </View>
+                    </View>
+                    <ChevronRight size={16} color="#DF7E2C" />
+                  </TouchableOpacity>
+
+                  {/* OR divider */}
+                  <View style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 20 }}>
+                    <View style={{ flex: 1, height: 1, backgroundColor: '#FFEEDB' }} />
+                    <Text style={{ fontSize: 9, fontWeight: '900', color: '#90A09A', marginHorizontal: 12, letterSpacing: 1 }}>
+                      OR ENTER DETAILS MANUALLY
+                    </Text>
+                    <View style={{ flex: 1, height: 1, backgroundColor: '#FFEEDB' }} />
+                  </View>
+
+                  {/* Manual Inputs */}
+                  <View style={{ gap: 16 }}>
+                    <View>
+                      <Text style={{ fontSize: 10, fontWeight: '900', color: '#DF7E2C', letterSpacing: 1.2, marginBottom: 8 }}>HOUSE / FLAT</Text>
+                      <TextInput
+                        style={{ height: 56, borderRadius: 18, borderWidth: 1.5, borderColor: '#FFEEDB', backgroundColor: '#FFFFFF', paddingHorizontal: 16, fontSize: 14, color: '#13352C', fontWeight: '600' }}
+                        value={user.houseNo}
+                        onChangeText={val => setUser(prev => ({ ...prev, houseNo: val }))}
+                        placeholder="Plot 42"
+                        placeholderTextColor="#A0B0AA"
+                      />
+                    </View>
+
+                    <View>
+                      <Text style={{ fontSize: 10, fontWeight: '900', color: '#DF7E2C', letterSpacing: 1.2, marginBottom: 8 }}>APARTMENT / STREET / AREA</Text>
+                      <TextInput
+                        style={{ height: 56, borderRadius: 18, borderWidth: 1.5, borderColor: '#FFEEDB', backgroundColor: '#FFFFFF', paddingHorizontal: 16, fontSize: 14, color: '#13352C', fontWeight: '600' }}
+                        value={user.street}
+                        onChangeText={val => setUser(prev => ({ ...prev, street: val }))}
+                        placeholder="Jubilee Hills Road"
+                        placeholderTextColor="#A0B0AA"
+                      />
+                    </View>
+
+                    <View>
+                      <Text style={{ fontSize: 10, fontWeight: '900', color: '#DF7E2C', letterSpacing: 1.2, marginBottom: 8 }}>LANDMARK (OPTIONAL)</Text>
+                      <TextInput
+                        style={{ height: 56, borderRadius: 18, borderWidth: 1.5, borderColor: '#FFEEDB', backgroundColor: '#FFFFFF', paddingHorizontal: 16, fontSize: 14, color: '#13352C', fontWeight: '600' }}
+                        value={user.landmark}
+                        onChangeText={val => setUser(prev => ({ ...prev, landmark: val }))}
+                        placeholder="Near Metro Station"
+                        placeholderTextColor="#A0B0AA"
+                      />
+                    </View>
+
+                    <View>
+                      <Text style={{ fontSize: 10, fontWeight: '900', color: '#DF7E2C', letterSpacing: 1.2, marginBottom: 8 }}>PINCODE</Text>
+                      <TextInput
+                        style={{ height: 56, borderRadius: 18, borderWidth: 1.5, borderColor: '#FFEEDB', backgroundColor: '#FFFFFF', paddingHorizontal: 16, fontSize: 14, color: '#13352C', fontWeight: '600' }}
+                        value={user.pincode}
+                        onChangeText={val => setUser(prev => ({ ...prev, pincode: val }))}
+                        placeholder="500033"
+                        placeholderTextColor="#A0B0AA"
+                        keyboardType="numeric"
+                        maxLength={6}
+                      />
+                    </View>
+
+                    {/* Address Label Selection */}
+                    <View>
+                      <Text style={{ fontSize: 10, fontWeight: '900', color: '#DF7E2C', letterSpacing: 1.2, marginBottom: 8 }}>SAVE ADDRESS AS</Text>
+                      <View style={{ flexDirection: 'row', gap: 8 }}>
+                        {['Home', 'Work', 'Other'].map(lbl => {
+                          const isSelected = user.addressLabel === lbl;
+                          return (
+                            <TouchableOpacity
+                              key={lbl}
+                              style={{
+                                flex: 1,
+                                height: 44,
+                                borderRadius: 12,
+                                borderWidth: 1.5,
+                                borderColor: isSelected ? '#DF7E2C' : '#FFEEDB',
+                                backgroundColor: isSelected ? '#FFF4EC' : '#FFFFFF',
+                                justifyContent: 'center',
+                                alignItems: 'center'
+                              }}
+                              onPress={() => setUser(prev => ({ ...prev, addressLabel: lbl }))}
+                            >
+                              <Text style={{ fontSize: 12, fontWeight: '800', color: isSelected ? '#DF7E2C' : '#13352C' }}>{lbl}</Text>
+                            </TouchableOpacity>
+                          );
+                        })}
+                      </View>
+                    </View>
+                  </View>
+
+                  {/* Continue Button */}
+                  <TouchableOpacity 
+                    style={{
+                      width: '100%',
+                      height: 56,
+                      borderRadius: 28,
+                      marginTop: 28,
+                      overflow: 'hidden',
+                      shadowColor: '#DF7E2C',
+                      shadowOffset: { width: 0, height: 6 },
+                      shadowOpacity: 0.25,
+                      shadowRadius: 10,
+                      elevation: 5,
+                    }} 
+                    onPress={() => {
+                      if (!user.houseNo || !user.street || !user.pincode) {
+                        setToast('Please enter your house/street details and pincode');
+                      } else {
+                        // Concatenate fields into single address string
+                        const conc = `${user.houseNo}, ${user.street}${user.landmark ? ', ' + user.landmark : ''}${user.pincode ? ' - ' + user.pincode : ''}`;
+                        setUser(prev => ({ ...prev, address: conc }));
+                        go('setup3');
+                      }
+                    }}
+                  >
+                    <LinearGradient colors={['#FF852C', '#FD4F1B']} style={{ flex: 1, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 6 }}>
+                      <Text style={{ color: '#FFFFFF', fontSize: 16.5, fontWeight: '800' }}>Continue</Text>
+                      <ChevronRight size={18} color="#FFFFFF" strokeWidth={2.5} />
+                    </LinearGradient>
+                  </TouchableOpacity>
+                </ScrollView>
+              </View>
+            </View>
+          </SafeAreaView>
+        </LinearGradient>
+
+        {/* Location Permission Request Alert Popup */}
+        {showLocationPermission && (
+          <View style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.45)',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 2000,
+            padding: 24
+          }}>
+            <View style={{
+              width: '100%',
+              maxWidth: 300,
+              backgroundColor: t.card,
+              borderRadius: 20,
+              paddingTop: 24,
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 8 },
+              shadowOpacity: 0.15,
+              shadowRadius: 16,
+              elevation: 8,
+              alignItems: 'center',
+              borderWidth: 1,
+              borderColor: t.border
+            }}>
+              {/* Pulsing map pin badge */}
+              <View style={{ width: 54, height: 54, borderRadius: 27, backgroundColor: B.orangeL, justifyContent: 'center', alignItems: 'center', marginBottom: 14 }}>
+                <MapPin size={24} color={B.orange} />
+              </View>
+              <Text style={{ fontSize: 16, fontWeight: '900', color: t.text, textAlign: 'center', paddingHorizontal: 16 }}>
+                Allow "Koi Koi" to access location?
+              </Text>
+              <Text style={{ fontSize: 12, color: t.sub, textAlign: 'center', marginTop: 8, paddingHorizontal: 20, lineHeight: 16 }}>
+                We use your device location to position the delivery pin on our map for hot dabba drops.
+              </Text>
+              
+              <View style={{ width: '100%', borderTopWidth: 1, borderTopColor: t.border, flexDirection: 'row', marginTop: 24 }}>
+                <TouchableOpacity 
+                  style={{ flex: 1, paddingVertical: 14, borderRightWidth: 1, borderRightColor: t.border, alignItems: 'center' }}
+                  onPress={() => {
+                    setShowLocationPermission(false);
+                    setToast('Permission denied. Please type address details manually.');
+                  }}
+                >
+                  <Text style={{ fontSize: 14, color: '#FF5A5F', fontWeight: 'bold' }}>Don't Allow</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={{ flex: 1, paddingVertical: 14, alignItems: 'center' }}
+                  onPress={() => {
+                    setShowLocationPermission(false);
+                    setShowMapSelection(true);
+                  }}
+                >
+                  <Text style={{ fontSize: 14, color: B.orange, fontWeight: '900' }}>Allow</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        )}
+
+        {/* Fullscreen Interactive Map Pin Picker */}
+        {showMapSelection && (
+          <View style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: t.bg,
+            zIndex: 3000
+          }}>
+            <SafeAreaView style={{ flex: 1 }}>
+              {/* Header Bar */}
+              <View style={{
+                height: 56,
+                flexDirection: 'row',
+                alignItems: 'center',
+                paddingHorizontal: 16,
+                borderBottomWidth: 1,
+                borderBottomColor: t.border,
+                backgroundColor: t.card
+              }}>
+                <TouchableOpacity 
+                  onPress={() => setShowMapSelection(false)} 
+                  style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.surface, borderWidth: 1.5, borderColor: t.border, justifyContent: 'center', alignItems: 'center' }}
+                >
+                  <ArrowLeft size={16} color={t.text} />
+                </TouchableOpacity>
+                <Text style={{ fontSize: 16, fontWeight: '900', color: t.text, marginLeft: 14 }}>Pin Delivery Location</Text>
               </View>
 
-              <TouchableOpacity style={[styles.authBtn, { marginTop: 24 }]} onPress={() => go('setup3')}>
-                <LinearGradient colors={[B.orange, B.secondary]} style={styles.obBtnGradient}>
-                  <Text style={styles.obBtnText}>Continue</Text>
-                </LinearGradient>
-              </TouchableOpacity>
-            </ScrollView>
+              {/* Map Canvas with grids and pins */}
+              <View style={{
+                flex: 1,
+                backgroundColor: isDark ? '#16120E' : '#FFF9F3',
+                margin: 16,
+                borderRadius: 28,
+                borderWidth: 1.5,
+                borderColor: t.border,
+                overflow: 'hidden',
+                position: 'relative'
+              }}>
+                {/* Horizontal Road grid */}
+                <View style={{ position: 'absolute', left: 0, right: 0, top: '40%', height: 32, backgroundColor: isDark ? '#261F1A' : '#F0E5DC', borderTopWidth: 1, borderBottomWidth: 1, borderColor: t.border, justifyContent: 'center', paddingLeft: 16 }}>
+                  <Text style={{ fontSize: 8, fontWeight: 'bold', color: t.muted, letterSpacing: 1 }}>KOIKOI EXPRESS RING ROAD</Text>
+                </View>
+                <View style={{ position: 'absolute', left: 0, right: 0, top: '75%', height: 24, backgroundColor: isDark ? '#261F1A' : '#F0E5DC', borderTopWidth: 1, borderBottomWidth: 1, borderColor: t.border }} />
+
+                {/* Vertical Road Grid */}
+                <View style={{ position: 'absolute', top: 0, bottom: 0, left: '50%', width: 28, backgroundColor: isDark ? '#261F1A' : '#F0E5DC', borderLeftWidth: 1, borderRightWidth: 1, borderColor: t.border, justifyContent: 'center', alignItems: 'center' }}>
+                  <Text style={{ fontSize: 7, fontWeight: 'bold', color: t.muted, letterSpacing: 0.5, transform: [{ rotate: '90deg' }] }}>CHEF AVENUE</Text>
+                </View>
+
+                {/* Indiranagar Green Hub Park */}
+                <View style={{
+                  position: 'absolute',
+                  left: 16,
+                  top: 16,
+                  width: 130,
+                  height: 90,
+                  borderRadius: 16,
+                  backgroundColor: '#3BA76A',
+                  opacity: isDark ? 0.08 : 0.12,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  borderWidth: 1,
+                  borderColor: '#3BA76A'
+                }}>
+                  <Text style={{ fontSize: 9, fontWeight: 'bold', color: '#2E7D32' }}>KOI KOI GREEN PARK</Text>
+                </View>
+
+                {/* Dabba Lake */}
+                <View style={{
+                  position: 'absolute',
+                  right: 16,
+                  bottom: 120,
+                  width: 100,
+                  height: 60,
+                  borderRadius: 30,
+                  backgroundColor: '#3B82F6',
+                  opacity: isDark ? 0.08 : 0.12,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  borderWidth: 1,
+                  borderColor: '#3B82F6'
+                }}>
+                  <Text style={{ fontSize: 9, fontWeight: 'bold', color: '#1D4ED8' }}>DABBA LAKE</Text>
+                </View>
+
+                {/* Grid Fine Cross lines */}
+                <View style={{ position: 'absolute', top: 0, bottom: 0, left: '25%', width: 1, backgroundColor: t.border, opacity: 0.4 }} />
+                <View style={{ position: 'absolute', top: 0, bottom: 0, left: '75%', width: 1, backgroundColor: t.border, opacity: 0.4 }} />
+                <View style={{ position: 'absolute', left: 0, right: 0, top: '20%', height: 1, backgroundColor: t.border, opacity: 0.4 }} />
+                <View style={{ position: 'absolute', left: 0, right: 0, top: '60%', height: 1, backgroundColor: t.border, opacity: 0.4 }} />
+
+                {/* Clickable Map Pins */}
+                {MOCK_MAP_LOCATIONS.map((loc, idx) => {
+                  const active = selectedMapPinIdx === idx;
+                  return (
+                    <TouchableOpacity
+                      key={loc.id}
+                      style={{
+                        position: 'absolute',
+                        left: `${loc.x}%`,
+                        top: `${loc.y}%`,
+                        marginLeft: -20,
+                        marginTop: -20,
+                        width: 40,
+                        height: 40,
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        zIndex: active ? 100 : 10
+                      }}
+                      onPress={() => setSelectedMapPinIdx(idx)}
+                    >
+                      {/* Flashing selected halo ring */}
+                      {active ? (
+                        <View style={{
+                          position: 'absolute',
+                          width: 32,
+                          height: 32,
+                          borderRadius: 16,
+                          backgroundColor: B.orange + '30',
+                          borderWidth: 1.5,
+                          borderColor: B.orange,
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}>
+                          <View style={{
+                            width: 12,
+                            height: 12,
+                            borderRadius: 6,
+                            backgroundColor: B.orange
+                          }} />
+                        </View>
+                      ) : (
+                        <View style={{
+                          width: 14,
+                          height: 14,
+                          borderRadius: 7,
+                          backgroundColor: t.muted,
+                          borderWidth: 1.5,
+                          borderColor: '#FFFFFF'
+                        }} />
+                      )}
+                      
+                      {/* Floating pin indicator icon */}
+                      {active && (
+                        <View style={{ position: 'absolute', top: -16 }}>
+                          <MapPin size={24} color={B.orange} />
+                        </View>
+                      )}
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+
+              {/* Floating address details card at bottom */}
+              <View style={{
+                backgroundColor: t.card,
+                borderTopLeftRadius: 32,
+                borderTopRightRadius: 32,
+                borderWidth: 1,
+                borderColor: t.border,
+                padding: 20,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: -6 },
+                shadowOpacity: 0.08,
+                shadowRadius: 12,
+                elevation: 5
+              }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                  <View style={{ width: 36, height: 36, borderRadius: 12, backgroundColor: B.orangeL, justifyContent: 'center', alignItems: 'center' }}>
+                    <MapPin size={18} color={B.orange} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 11, color: B.orange, fontWeight: '900', letterSpacing: 0.5 }}>PINNED ADDRESS</Text>
+                    <Text style={{ fontSize: 15, fontWeight: 'bold', color: t.text, marginTop: 2 }} numberOfLines={1}>
+                      {MOCK_MAP_LOCATIONS[selectedMapPinIdx].label}
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Subtext info list */}
+                <View style={{
+                  backgroundColor: t.bg,
+                  borderRadius: 16,
+                  padding: 12,
+                  gap: 6,
+                  borderWidth: 1,
+                  borderColor: t.border,
+                  marginBottom: 20
+                }}>
+                  <Text style={{ fontSize: 11, color: t.sub }}><Text style={{ fontWeight: 'bold', color: t.text }}>House/Plot:</Text> {MOCK_MAP_LOCATIONS[selectedMapPinIdx].house}</Text>
+                  <Text style={{ fontSize: 11, color: t.sub }}><Text style={{ fontWeight: 'bold', color: t.text }}>Area/Street:</Text> {MOCK_MAP_LOCATIONS[selectedMapPinIdx].name}</Text>
+                  <Text style={{ fontSize: 11, color: t.sub }}><Text style={{ fontWeight: 'bold', color: t.text }}>Landmark:</Text> {MOCK_MAP_LOCATIONS[selectedMapPinIdx].landmark}</Text>
+                  <Text style={{ fontSize: 11, color: t.sub }}><Text style={{ fontWeight: 'bold', color: t.text }}>Pincode:</Text> {MOCK_MAP_LOCATIONS[selectedMapPinIdx].pincode}</Text>
+                </View>
+
+                {/* Confirm details and continue */}
+                <TouchableOpacity
+                  style={{
+                    height: 54,
+                    borderRadius: 27,
+                    overflow: 'hidden',
+                    shadowColor: B.orange,
+                    shadowOffset: { width: 0, height: 4 },
+                    shadowOpacity: 0.2,
+                    shadowRadius: 8,
+                    elevation: 3
+                  }}
+                  onPress={() => {
+                    const loc = MOCK_MAP_LOCATIONS[selectedMapPinIdx];
+                    setUser(prev => ({
+                      ...prev,
+                      houseNo: loc.house,
+                      street: loc.name,
+                      landmark: loc.landmark,
+                      pincode: loc.pincode,
+                      address: `${loc.house}, ${loc.name}, ${loc.landmark} - ${loc.pincode}`
+                    }));
+                    setShowMapSelection(false);
+                    setToast('Location pinned & details auto-filled!');
+                  }}
+                >
+                  <LinearGradient colors={['#FF852C', '#FD4F1B']} style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                    <Text style={{ color: '#FFFFFF', fontSize: 15, fontWeight: '800' }}>Confirm Pinned Location</Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+              </View>
+            </SafeAreaView>
           </View>
-        </View>
-      </SafeAreaView>
+        )}
+      </View>
     );
   }
 
-  // 6. Setup 3: Health Details
+  // 6. Setup 3: Health Details (Step 3 of 3)
   function RenderSetup3() {
+    const w = parseFloat(user.weight) || 74;
+    const h = (parseFloat(user.height) || 178) / 100;
+    const bmiVal = Math.round((w / (h * h)) * 10) / 10;
+
+    let bmiStatus = 'Normal Weight';
+    let bmiColor = '#2E7D32'; 
+    let bmiBg = '#EAF7EE'; 
+    let bmiBorder = '#CBEFCE';
+    
+    if (bmiVal < 18.5) {
+      bmiStatus = 'Underweight';
+      bmiColor = '#F59E0B'; 
+      bmiBg = '#FEF3C7';
+      bmiBorder = '#FDE68A';
+    } else if (bmiVal >= 25 && bmiVal < 30) {
+      bmiStatus = 'Overweight';
+      bmiColor = '#EF4444'; 
+      bmiBg = '#FEE2E2';
+      bmiBorder = '#FCA5A5';
+    } else if (bmiVal >= 30) {
+      bmiStatus = 'Obese';
+      bmiColor = '#B91C1C'; 
+      bmiBg = '#FEE2E2';
+      bmiBorder = '#FCA5A5';
+    }
+
     return (
-      <SafeAreaView style={[styles.safeArea, { backgroundColor: 'transparent' }]}>
-        <View style={{ flex: 1, paddingHorizontal: 24, justifyContent: 'center' }}>
-          <View style={{ backgroundColor: t.card, borderRadius: 28, borderWidth: 1, borderColor: t.border, padding: 24, shadowColor: '#000', shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.04, shadowRadius: 20, elevation: 4 }}>
-            <ScrollView showsVerticalScrollIndicator={false}>
-              <TouchableOpacity onPress={back} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 12 }}>
-                <ArrowLeft size={16} color={t.text} />
-                <Text style={{ fontSize: 13, color: t.sub, fontWeight: '600' }}>Back</Text>
-              </TouchableOpacity>
+      <View style={{ flex: 1, backgroundColor: '#FFFDF9', alignItems: 'center', justifyContent: 'center' }}>
+        <LinearGradient
+          colors={['#FED6B3', '#FFFDF9', '#FFF1E5']}
+          locations={[0, 0.45, 1.0]}
+          style={{ width: '100%', height: '100%', flex: 1 }}
+        >
+          <SafeAreaView style={{ flex: 1 }}>
+            <View style={{ flex: 1, paddingHorizontal: 24, justifyContent: 'center', alignItems: 'center' }}>
+              
+              <View style={{ 
+                width: '100%',
+                maxWidth: 380,
+                backgroundColor: 'rgba(255, 255, 255, 0.85)',
+                borderRadius: 32, 
+                borderWidth: 1.5, 
+                borderColor: '#FFEEDB', 
+                padding: 24, 
+                shadowColor: '#A05020', 
+                shadowOffset: { width: 0, height: 12 }, 
+                shadowOpacity: 0.1, 
+                shadowRadius: 20, 
+                elevation: 6,
+                maxHeight: SCREEN_HEIGHT - 80,
+              }}>
+                <ScrollView showsVerticalScrollIndicator={false}>
+                  {/* Top Progress bar and Back row */}
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                    <TouchableOpacity onPress={back} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: '#FFFFFF', borderWidth: 1.5, borderColor: '#FFEEDB', justifyContent: 'center', alignItems: 'center' }}>
+                      <ArrowLeft size={16} color="#13352C" />
+                    </TouchableOpacity>
+                    <View style={{ alignItems: 'flex-end' }}>
+                      <Text style={{ fontSize: 10, fontWeight: '900', color: '#DF7E2C', letterSpacing: 0.5 }}>STEP 3 OF 3</Text>
+                      <Text style={{ fontSize: 10, color: '#5A6A64', fontWeight: 'bold', marginTop: 1 }}>100% Complete</Text>
+                    </View>
+                  </View>
 
-              <Text style={{ fontSize: 10, fontWeight: '900', color: B.orange, letterSpacing: 1.5 }}>STEP 3 OF 3</Text>
-              <Text style={{ fontSize: 24, fontWeight: '900', color: t.text, marginTop: 4 }}>Health Profile</Text>
-              <Text style={{ fontSize: 13, color: t.sub, marginTop: 4 }}>Personalize your nutrition logs & meal portions.</Text>
+                  {/* Progress Line */}
+                  <View style={{ width: '100%', height: 6, backgroundColor: '#FFEEDB', borderRadius: 3, overflow: 'hidden', marginBottom: 20 }}>
+                    <View style={{ width: '100%', height: '100%', backgroundColor: '#DF7E2C', borderRadius: 3 }} />
+                  </View>
 
-              <View style={{ gap: 16, marginTop: 20 }}>
-                <View style={{ flexDirection: 'row', gap: 12 }}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={{ fontSize: 12, fontWeight: 'bold', color: t.text, marginBottom: 6 }}>Height (cm)</Text>
+                  {/* Title & Subtitle */}
+                  <Text style={{ fontSize: 24, fontWeight: '900', color: '#13352C' }}>Health & Customizations</Text>
+                  <Text style={{ fontSize: 13, color: '#5A6A64', marginTop: 4, lineHeight: 18, marginBottom: 16 }}>
+                    Select your dietary parameters, fitness goals and spice tolerances.
+                  </Text>
+
+                  {/* Height / Weight Inputs */}
+                  <View style={{ flexDirection: 'row', gap: 12 }}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontSize: 10, fontWeight: '900', color: '#DF7E2C', letterSpacing: 1.2, marginBottom: 8 }}>HEIGHT (CM)</Text>
+                      <TextInput
+                        style={{ height: 56, borderRadius: 18, borderWidth: 1.5, borderColor: '#FFEEDB', backgroundColor: '#FFFFFF', paddingHorizontal: 16, fontSize: 14, color: '#13352C', fontWeight: '600' }}
+                        value={user.height}
+                        onChangeText={val => setUser(prev => ({ ...prev, height: val }))}
+                        placeholder="178"
+                        placeholderTextColor="#A0B0AA"
+                        keyboardType="numeric"
+                      />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontSize: 10, fontWeight: '900', color: '#DF7E2C', letterSpacing: 1.2, marginBottom: 8 }}>WEIGHT (KG)</Text>
+                      <TextInput
+                        style={{ height: 56, borderRadius: 18, borderWidth: 1.5, borderColor: '#FFEEDB', backgroundColor: '#FFFFFF', paddingHorizontal: 16, fontSize: 14, color: '#13352C', fontWeight: '600' }}
+                        value={user.weight}
+                        onChangeText={val => setUser(prev => ({ ...prev, weight: val }))}
+                        placeholder="74"
+                        placeholderTextColor="#A0B0AA"
+                        keyboardType="numeric"
+                      />
+                    </View>
+                  </View>
+
+                  {/* Calculated BMI Card */}
+                  <View style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    backgroundColor: bmiBg,
+                    borderWidth: 1.5,
+                    borderColor: bmiBorder,
+                    borderRadius: 18,
+                    padding: 14,
+                    marginTop: 16,
+                    gap: 16
+                  }}>
+                    <ProgressRing pct={70} size={60} strokeW={5} color={bmiColor} label={String(bmiVal)} theme={t} />
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontSize: 13, fontWeight: 'bold', color: bmiColor }}>{bmiStatus}</Text>
+                      <Text style={{ fontSize: 11, color: '#5A6A64', marginTop: 2 }}>Dynamic dabba calorie target adapts to this.</Text>
+                    </View>
+                  </View>
+
+                  {/* Activity Level Selector */}
+                  <View style={{ marginTop: 20 }}>
+                    <Text style={{ fontSize: 10, fontWeight: '900', color: '#DF7E2C', letterSpacing: 1.2, marginBottom: 8 }}>ACTIVITY LEVEL</Text>
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                      {['Sedentary', 'Lightly Active', 'Moderately Active', 'Very Active', 'Athlete'].map(lvl => {
+                        const isSelected = user.activityLevel === lvl;
+                        return (
+                          <TouchableOpacity
+                            key={lvl}
+                            style={{
+                              paddingHorizontal: 14,
+                              paddingVertical: 10,
+                              borderRadius: 12,
+                              borderWidth: 1.5,
+                              borderColor: isSelected ? '#DF7E2C' : '#FFEEDB',
+                              backgroundColor: isSelected ? '#FFF4EC' : '#FFFFFF',
+                              justifyContent: 'center',
+                              alignItems: 'center'
+                            }}
+                            onPress={() => setUser(prev => ({ ...prev, activityLevel: lvl }))}
+                          >
+                            <Text style={{ fontSize: 11, fontWeight: '800', color: isSelected ? '#DF7E2C' : '#13352C' }}>{lvl}</Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+                  </View>
+
+                  {/* Health Goal */}
+                  <View style={{ marginTop: 20 }}>
+                    <Text style={{ fontSize: 10, fontWeight: '900', color: '#DF7E2C', letterSpacing: 1.2, marginBottom: 8 }}>HEALTH GOAL</Text>
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                      {['Weight Loss', 'Weight Gain', 'Muscle Gain', 'Maintain Weight', 'Healthy Lifestyle'].map(gl => {
+                        const isSelected = user.healthGoal === gl;
+                        return (
+                          <TouchableOpacity
+                            key={gl}
+                            style={{
+                              paddingHorizontal: 14,
+                              paddingVertical: 10,
+                              borderRadius: 12,
+                              borderWidth: 1.5,
+                              borderColor: isSelected ? '#DF7E2C' : '#FFEEDB',
+                              backgroundColor: isSelected ? '#FFF4EC' : '#FFFFFF',
+                              justifyContent: 'center',
+                              alignItems: 'center'
+                            }}
+                            onPress={() => setUser(prev => ({ ...prev, healthGoal: gl }))}
+                          >
+                            <Text style={{ fontSize: 11, fontWeight: '800', color: isSelected ? '#DF7E2C' : '#13352C' }}>{gl}</Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+                  </View>
+
+                  {/* Dietary Preference */}
+                  <View style={{ marginTop: 20 }}>
+                    <Text style={{ fontSize: 10, fontWeight: '900', color: '#DF7E2C', letterSpacing: 1.2, marginBottom: 8 }}>DIETARY PREFERENCE</Text>
+                    <View style={{ flexDirection: 'row', gap: 8 }}>
+                      {[
+                        { key: 'Veg', label: '🌿 Veg' },
+                        { key: 'Non-Veg', label: '🍗 Non-Veg' },
+                        { key: 'Egg', label: '🥚 Eggetarian' }
+                      ].map(pref => {
+                        const isSelected = user.foodPref === pref.key;
+                        return (
+                          <TouchableOpacity
+                            key={pref.key}
+                            style={{
+                              flex: 1,
+                              paddingVertical: 12,
+                              borderRadius: 12,
+                              borderWidth: 1.5,
+                              borderColor: isSelected ? '#DF7E2C' : '#FFEEDB',
+                              backgroundColor: isSelected ? '#FFF4EC' : '#FFFFFF',
+                              justifyContent: 'center',
+                              alignItems: 'center'
+                            }}
+                            onPress={() => setUser(prev => ({ ...prev, foodPref: pref.key }))}
+                          >
+                            <Text style={{ fontSize: 11, fontWeight: '800', color: isSelected ? '#DF7E2C' : '#13352C' }}>{pref.label}</Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+                  </View>
+
+                  {/* Spice Level tolerance */}
+                  <View style={{ marginTop: 20 }}>
+                    <Text style={{ fontSize: 10, fontWeight: '900', color: '#DF7E2C', letterSpacing: 1.2, marginBottom: 8 }}>SPICE LEVEL TOLERANCE</Text>
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                      {[
+                        { key: 'Mild', label: '🌶 Mild' },
+                        { key: 'Medium', label: '🌶🌶 Medium' },
+                        { key: 'Spicy', label: '🌶🌶🌶 Spicy' },
+                        { key: 'Extra Hot', label: '🔥 Extra Hot' }
+                      ].map(sp => {
+                        const isSelected = user.spiceLevel === sp.key;
+                        return (
+                          <TouchableOpacity
+                            key={sp.key}
+                            style={{
+                              paddingHorizontal: 12,
+                              paddingVertical: 10,
+                              borderRadius: 12,
+                              borderWidth: 1.5,
+                              borderColor: isSelected ? '#DF7E2C' : '#FFEEDB',
+                              backgroundColor: isSelected ? '#FFF4EC' : '#FFFFFF',
+                              justifyContent: 'center',
+                              alignItems: 'center'
+                            }}
+                            onPress={() => setUser(prev => ({ ...prev, spiceLevel: sp.key }))}
+                          >
+                            <Text style={{ fontSize: 11, fontWeight: '800', color: isSelected ? '#DF7E2C' : '#13352C' }}>{sp.label}</Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+                  </View>
+
+                  {/* Favorite Cuisines */}
+                  <View style={{ marginTop: 20 }}>
+                    <Text style={{ fontSize: 10, fontWeight: '900', color: '#DF7E2C', letterSpacing: 1.2, marginBottom: 8 }}>FAVORITE CUISINES (MULTI-SELECT)</Text>
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                      {['South Indian', 'North Indian', 'Andhra', 'Telangana', 'Jain'].map(c => {
+                        const isSelected = user.favCuisines.includes(c);
+                        return (
+                          <TouchableOpacity
+                            key={c}
+                            style={{
+                              paddingHorizontal: 12,
+                              paddingVertical: 10,
+                              borderRadius: 12,
+                              borderWidth: 1.5,
+                              borderColor: isSelected ? '#DF7E2C' : '#FFEEDB',
+                              backgroundColor: isSelected ? '#FFF4EC' : '#FFFFFF',
+                              justifyContent: 'center',
+                              alignItems: 'center'
+                            }}
+                            onPress={() => {
+                              const list = user.favCuisines;
+                              const newList = list.includes(c) ? list.filter(item => item !== c) : [...list, c];
+                              setUser(prev => ({ ...prev, favCuisines: newList }));
+                            }}
+                          >
+                            <Text style={{ fontSize: 11, fontWeight: '800', color: isSelected ? '#DF7E2C' : '#13352C' }}>{c}</Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+                  </View>
+
+                  {/* Allergies */}
+                  <View style={{ marginTop: 20 }}>
+                    <Text style={{ fontSize: 10, fontWeight: '900', color: '#DF7E2C', letterSpacing: 1.2, marginBottom: 8 }}>ALLERGIES (OPTIONAL)</Text>
                     <TextInput
-                      style={{ height: 56, borderRadius: 18, borderWidth: 1, borderColor: t.border, backgroundColor: t.input, paddingHorizontal: 16, fontSize: 14, color: t.text, fontWeight: '600' }}
-                      value={user.height}
-                      onChangeText={val => setUser(prev => ({ ...prev, height: val }))}
-                      placeholder="e.g. 175"
-                      placeholderTextColor={t.muted}
-                      keyboardType="numeric"
+                      style={{ height: 56, borderRadius: 18, borderWidth: 1.5, borderColor: '#FFEEDB', backgroundColor: '#FFFFFF', paddingHorizontal: 16, fontSize: 14, color: '#13352C', fontWeight: '600' }}
+                      value={user.allergies}
+                      onChangeText={val => setUser(prev => ({ ...prev, allergies: val }))}
+                      placeholder="e.g. Peanuts, Gluten (or None)"
+                      placeholderTextColor="#A0B0AA"
                     />
                   </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={{ fontSize: 12, fontWeight: 'bold', color: t.text, marginBottom: 6 }}>Weight (kg)</Text>
-                    <TextInput
-                      style={{ height: 56, borderRadius: 18, borderWidth: 1, borderColor: t.border, backgroundColor: t.input, paddingHorizontal: 16, fontSize: 14, color: t.text, fontWeight: '600' }}
-                      value={user.weight}
-                      onChangeText={val => setUser(prev => ({ ...prev, weight: val }))}
-                      placeholder="e.g. 72"
-                      placeholderTextColor={t.muted}
-                      keyboardType="numeric"
-                    />
-                  </View>
-                </View>
 
-                <View>
-                  <Text style={{ fontSize: 12, fontWeight: 'bold', color: t.text, marginBottom: 6 }}>Fitness Goal</Text>
-                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                    {['Weight Loss', 'Muscle Gain', 'Healthy Living', 'Senior Diet'].map(goal => {
-                      const isSelected = user.goal === goal;
-                      return (
-                        <TouchableOpacity
-                          key={goal}
-                          style={{
-                            paddingHorizontal: 12,
-                            paddingVertical: 8,
-                            borderRadius: 10,
-                            borderWidth: 1,
-                            borderColor: isSelected ? B.orange : t.border,
-                            backgroundColor: isSelected ? B.orangeL : t.card
-                          }}
-                          onPress={() => setUser(prev => ({ ...prev, goal: goal }))}
-                        >
-                          <Text style={{ fontSize: 12, fontWeight: 'bold', color: isSelected ? B.orange : t.text }}>
-                            {goal}
-                          </Text>
-                        </TouchableOpacity>
-                      );
-                    })}
-                  </View>
-                </View>
-
-                {/* Calculated Target Card */}
-                <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: B.orangeL, padding: 14, borderRadius: 18, borderWidth: 1, borderColor: B.orangeM }}>
-                  <Flame size={20} color={B.orange} />
-                  <View style={{ marginLeft: 12 }}>
-                    <Text style={{ fontSize: 9, color: B.orange, fontWeight: '900', letterSpacing: 0.5 }}>RECOMMENDED NUTRITION</Text>
-                    <Text style={{ fontSize: 16, fontWeight: '900', color: t.text, marginTop: 2 }}>{calorieCalc} kcal / day</Text>
-                  </View>
-                </View>
+                  {/* Submit Button */}
+                  <TouchableOpacity 
+                    style={{
+                      width: '100%',
+                      height: 56,
+                      borderRadius: 28,
+                      marginTop: 28,
+                      overflow: 'hidden',
+                      shadowColor: '#DF7E2C',
+                      shadowOffset: { width: 0, height: 6 },
+                      shadowOpacity: 0.25,
+                      shadowRadius: 10,
+                      elevation: 5,
+                      marginBottom: 16
+                    }} 
+                    onPress={() => {
+                      setToast('Profile Complete! Welcome aboard.');
+                      go('home');
+                    }}
+                  >
+                    <LinearGradient colors={['#FF852C', '#FD4F1B']} style={{ flex: 1, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 6 }}>
+                      <Text style={{ color: '#FFFFFF', fontSize: 16.5, fontWeight: '800' }}>Complete Onboarding ✓</Text>
+                    </LinearGradient>
+                  </TouchableOpacity>
+                </ScrollView>
               </View>
-
-              <TouchableOpacity
-                style={[styles.authBtn, { marginTop: 24 }]}
-                onPress={() => {
-                  setToast('Profile Complete! Welcome aboard.');
-                  go('home');
-                }}
-              >
-                <LinearGradient colors={[B.orange, B.secondary]} style={styles.obBtnGradient}>
-                  <Text style={styles.obBtnText}>Submit & Enter</Text>
-                </LinearGradient>
-              </TouchableOpacity>
-            </ScrollView>
-          </View>
-        </View>
-      </SafeAreaView>
+            </View>
+          </SafeAreaView>
+        </LinearGradient>
+      </View>
     );
   }
 
   // 7. Home Screen (Dashboard)
   function RenderHome() {
-    const specialMeal = mealsList.find(m => m.id === 3) || mealsList[0];
-
     const categories = [
       { name: 'All Meals', icon: UtensilsCrossed },
       { name: 'South Indian', icon: Coffee },
@@ -1545,28 +3393,39 @@ export default function App() {
       { name: 'Snacks', icon: Flame }
     ];
 
-    const kitchens = [
-      { name: "Priya's Kitchen", rating: "4.9", meals: "2.5k+ meals served", img: 'https://images.unsplash.com/photo-1556910103-1c02745aae4d?w=400' },
-      { name: "Amma's Kitchen", rating: "4.8", meals: "1.8k+ meals served", img: 'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?w=400' },
-      { name: "Sai Home Foods", rating: "4.7", meals: "1.2k+ meals served", img: 'https://images.unsplash.com/photo-1560624052-449f5ddf0c31?w=400' }
-    ];
-
     return (
       <SafeAreaView style={[styles.safeArea, { backgroundColor: 'transparent' }]}>
         <ScrollView contentContainerStyle={{ paddingBottom: 110 }} showsVerticalScrollIndicator={false}>
-          {/* Header */}
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingTop: 16 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          
+          {/* Header Row & Greetings */}
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', paddingHorizontal: 16, paddingTop: 16 }}>
+            <View>
               <TouchableOpacity
                 onPress={() => go('profile')}
-                style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: B.orange, justifyContent: 'center', alignItems: 'center', shadowColor: B.orange, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 4 }}
+                style={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: 24,
+                  backgroundColor: B.orangeL,
+                  borderWidth: 2,
+                  borderColor: B.orange,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  shadowColor: B.orange,
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: 0.15,
+                  shadowRadius: 8,
+                  elevation: 3
+                }}
               >
-                <Text style={{ fontSize: 18 }}>{user.avatar || '👩‍🍳'}</Text>
+                <Text style={{ fontSize: 24 }}>{user.avatar || '👩‍🍳'}</Text>
               </TouchableOpacity>
-              <View style={{ marginLeft: 12 }}>
-                <Text style={{ fontSize: 13, color: t.sub, fontWeight: '500' }}>Hello {user.name || 'Rithvik'} 👋</Text>
+              <View style={{ marginTop: 12 }}>
+                <Text style={{ fontSize: 13, color: t.sub, fontWeight: '600', letterSpacing: 0.5 }}>Good Morning,</Text>
+                <Text style={{ fontSize: 26, fontWeight: '900', color: t.text, marginTop: 2 }}>{user.name || 'Bhargav'} 👋</Text>
               </View>
             </View>
+            
             <TouchableOpacity
               style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: t.card, borderWidth: 1, borderColor: t.border, justifyContent: 'center', alignItems: 'center' }}
               onPress={() => go('notifications')}
@@ -1576,169 +3435,359 @@ export default function App() {
             </TouchableOpacity>
           </View>
 
-          {/* Headline */}
+          {/* 1. Live Tracking Card */}
           <View style={{ paddingHorizontal: 16, marginTop: 20 }}>
-            <Text style={{ fontSize: 32, fontWeight: '900', color: t.text, lineHeight: 40, letterSpacing: -0.5 }}>
-              What would you{'\n'}like to <Text style={{ color: B.orange }}>eat today?</Text>
-            </Text>
-          </View>
-
-          {/* Search bar */}
-          <View style={{ flexDirection: 'row', paddingHorizontal: 16, marginTop: 16, gap: 12 }}>
-            <View style={{ flex: 1, height: 54, borderRadius: 18, backgroundColor: t.card, borderWidth: 1, borderColor: t.border, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16 }}>
-              <HomeIcon size={18} color={t.muted} style={{ marginRight: 10 }} />
-              <TextInput
-                placeholder="Search for meals, cuisines..."
-                placeholderTextColor={t.muted}
-                style={{ flex: 1, fontSize: 14, color: t.text, fontWeight: '500' }}
-              />
-            </View>
-            <TouchableOpacity
-              style={{ width: 54, height: 54, borderRadius: 18, backgroundColor: t.card, borderWidth: 1, borderColor: t.border, justifyContent: 'center', alignItems: 'center' }}
-              onPress={() => setToast('Filters Opened!')}
-            >
-              <Settings size={20} color={t.text} />
-            </TouchableOpacity>
-          </View>
-
-          {/* Categories */}
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, marginTop: 20, gap: 12 }}>
-            {categories.map((cat) => {
-              const isActive = selectedCategory === cat.name;
-              return (
-                <TouchableOpacity
-                  key={cat.name}
-                  onPress={() => setSelectedCategory(cat.name)}
-                  style={{ alignItems: 'center', gap: 6 }}
-                >
-                  <View
-                    style={{
-                      width: 60,
-                      height: 60,
-                      borderRadius: 30,
-                      backgroundColor: isActive ? B.orange : t.card,
-                      borderWidth: 1,
-                      borderColor: isActive ? B.orange : t.border,
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                      shadowColor: isActive ? B.orange : '#000',
-                      shadowOffset: { width: 0, height: 4 },
-                      shadowOpacity: isActive ? 0.2 : 0.03,
-                      shadowRadius: 8,
-                      elevation: 2
-                    }}
-                  >
-                    <cat.icon size={20} color={isActive ? '#FFFFFF' : t.text} />
+            <TouchableOpacity onPress={() => go('tracking')} style={{
+              backgroundColor: t.card,
+              borderRadius: 24,
+              borderWidth: 1.5,
+              borderColor: B.orangeL,
+              padding: 16,
+              shadowColor: '#A05020',
+              shadowOffset: { width: 0, height: 8 },
+              shadowOpacity: 0.05,
+              shadowRadius: 16,
+              elevation: 4
+            }}>
+              {/* Card Header & Content Wrapper */}
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <View style={{ flex: 1, marginRight: 8 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 12 }}>
+                    <View style={{ backgroundColor: '#FEE2E2', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 }}>
+                      <Text style={{ fontSize: 9, fontWeight: '900', color: '#EF4444', letterSpacing: 0.5 }}>LIVE TRACKING</Text>
+                    </View>
+                    <View style={{ backgroundColor: '#EAF7EE', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 }}>
+                      <Text style={{ fontSize: 9, fontWeight: '900', color: '#2E7D32', letterSpacing: 0.5 }}>VEG</Text>
+                    </View>
                   </View>
-                  <Text style={{ fontSize: 11, fontWeight: 'bold', color: isActive ? B.orange : t.sub }}>{cat.name}</Text>
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
+                  <Text style={{ fontSize: 18, fontWeight: '900', color: t.text }}>Dal Tadka + Steamed Rice</Text>
+                  <Text style={{ fontSize: 11, fontWeight: 'bold', color: t.sub, marginTop: 2 }}>☀️ Lunch Slot · 12:30 PM</Text>
+                </View>
 
-          {/* Today's Special */}
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, marginTop: 24 }}>
-            <Text style={{ fontSize: 18, fontWeight: '900', color: t.text }}>Today's Special</Text>
-            <TouchableOpacity onPress={() => go('meals')}>
-              <Text style={{ fontSize: 12, fontWeight: 'bold', color: B.orange }}>See all</Text>
+                {/* Hot packaging box image */}
+                <Image 
+                  source={{ uri: 'https://images.unsplash.com/photo-1599889958709-e609f2c47798?w=200' }} 
+                  style={{ width: 64, height: 64, borderRadius: 14, borderWidth: 1, borderColor: t.border }} 
+                />
+              </View>
+
+              {/* Delivery Subtext */}
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 12, gap: 6 }}>
+                <Bike size={14} color={B.orange} />
+                <Text style={{ fontSize: 12, color: t.sub, fontWeight: '600' }}>
+                  Arjun is <Text style={{ color: t.text, fontWeight: 'bold' }}>2.4 km away</Text> · Delivery in <Text style={{ color: B.orange, fontWeight: 'bold' }}>12 min</Text>
+                </Text>
+              </View>
+
+              {/* Stepper tracking progress bar */}
+              <View style={{ marginTop: 20 }}>
+                {/* Visual line track */}
+                <View style={{ position: 'absolute', top: 8, left: 15, right: 15, height: 3, backgroundColor: t.border, zIndex: 0 }}>
+                  <View style={{ width: '50%', height: '100%', backgroundColor: B.orange }} />
+                </View>
+
+                {/* Nodes row */}
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', zIndex: 1 }}>
+                  {[
+                    { label: 'Prepared', status: 'done' },
+                    { label: 'On the Way', status: 'active' },
+                    { label: 'Delivered', status: 'pending' }
+                  ].map((step, idx) => {
+                    const isDone = step.status === 'done';
+                    const isActive = step.status === 'active';
+                    return (
+                      <View key={idx} style={{ alignItems: 'center', flex: 1 }}>
+                        <View style={{
+                          width: 20,
+                          height: 20,
+                          borderRadius: 10,
+                          backgroundColor: isDone ? B.orange : (isActive ? '#FFFFFF' : t.card),
+                          borderWidth: 2,
+                          borderColor: isDone || isActive ? B.orange : t.border,
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                          shadowColor: isDone || isActive ? B.orange : '#000',
+                          shadowOffset: { width: 0, height: 2 },
+                          shadowOpacity: 0.1,
+                          shadowRadius: 4
+                        }}>
+                          {isDone && <Check size={10} color="#FFFFFF" strokeWidth={3} />}
+                          {isActive && <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: B.orange }} />}
+                        </View>
+                        <Text style={{
+                          fontSize: 10,
+                          fontWeight: '800',
+                          color: isDone || isActive ? t.text : t.muted,
+                          marginTop: 6
+                        }}>
+                          {step.label}
+                        </Text>
+                      </View>
+                    );
+                  })}
+                </View>
+              </View>
             </TouchableOpacity>
           </View>
 
-          <TouchableOpacity
-            style={{
-              marginHorizontal: 16,
-              marginTop: 12,
+          {/* 2 & 3. Active Monthly Dabba + My Wallet (Side-by-Side) */}
+          <View style={{ flexDirection: 'row', gap: 12, paddingHorizontal: 16, marginTop: 16 }}>
+            {/* Monthly Dabba Plan card */}
+            <View style={{
+              flex: 1,
               backgroundColor: t.card,
               borderRadius: 24,
               borderWidth: 1,
               borderColor: t.border,
-              padding: 12,
-              flexDirection: 'row',
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 8 },
-              shadowOpacity: 0.04,
-              shadowRadius: 16,
-              elevation: 3
-            }}
-            onPress={() => {
-              setSelectedMealId(specialMeal.id);
-              go('meal_detail');
-            }}
-          >
-            <View style={{ width: 120, height: 120, borderRadius: 16, overflow: 'hidden' }}>
-              <Image source={{ uri: specialMeal.img }} style={{ width: '100%', height: '100%' }} />
-              <View style={{ position: 'absolute', top: 8, right: 8, backgroundColor: 'rgba(0,0,0,0.5)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 8, flexDirection: 'row', alignItems: 'center', gap: 2 }}>
-                <Star size={10} color="#F59E0B" />
-                <Text style={{ fontSize: 9, fontWeight: 'bold', color: '#FFFFFF' }}>{specialMeal.rating}</Text>
-              </View>
-            </View>
-
-            <View style={{ flex: 1, marginLeft: 16, justifyContent: 'space-between', paddingVertical: 4 }}>
-              <View>
-                <Text style={{ fontSize: 15, fontWeight: '900', color: t.text }}>{specialMeal.name}</Text>
-                <Text style={{ fontSize: 11, color: t.sub, marginTop: 4, lineHeight: 15 }} numberOfLines={2}>
-                  {specialMeal.desc}
-                </Text>
-              </View>
-
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Text style={{ fontSize: 16, fontWeight: '900', color: B.orange }}>{specialMeal.price || '₹129'}</Text>
-                <TouchableOpacity
-                  style={{
-                    borderRadius: 12,
-                    overflow: 'hidden',
-                  }}
-                  onPress={() => {
-                    setToast('Added to Cart!');
-                  }}
-                >
-                  <LinearGradient colors={[B.orange, B.secondary]} style={{ paddingHorizontal: 16, paddingVertical: 8 }}>
-                    <Text style={{ fontSize: 11, fontWeight: '900', color: '#FFFFFF' }}>+ Add</Text>
-                  </LinearGradient>
+              overflow: 'hidden'
+            }}>
+              <ImageBackground
+                source={{ uri: 'https://images.unsplash.com/photo-1599889958709-e609f2c47798?w=300' }}
+                style={{ flex: 1, padding: 16, minHeight: 140, justifyContent: 'space-between' }}
+                imageStyle={{ opacity: 0.15, borderRadius: 24 }}
+              >
+                <View>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                    <View style={{ backgroundColor: '#FFF4EC', paddingHorizontal: 6, paddingVertical: 3, borderRadius: 6 }}>
+                      <Text style={{ fontSize: 8.5, fontWeight: '900', color: B.orange }}>ACTIVE</Text>
+                    </View>
+                    <View style={{ backgroundColor: '#FEF3C7', paddingHorizontal: 6, paddingVertical: 3, borderRadius: 6 }}>
+                      <Text style={{ fontSize: 8.5, fontWeight: '900', color: '#D97706' }}>GOLD</Text>
+                    </View>
+                  </View>
+                  <Text style={{ fontSize: 13, fontWeight: 'bold', color: t.sub }}>Monthly Dabba</Text>
+                  <Text style={{ fontSize: 16, fontWeight: '900', color: t.text, marginTop: 2 }}>Day 3 of 30 left</Text>
+                </View>
+                <TouchableOpacity onPress={() => go('plans')} style={{ marginTop: 12 }}>
+                  <Text style={{ fontSize: 11, fontWeight: '800', color: B.orange }}>Manage plan →</Text>
                 </TouchableOpacity>
-              </View>
+              </ImageBackground>
             </View>
-          </TouchableOpacity>
 
-          {/* Top Rated Kitchens */}
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, marginTop: 24 }}>
-            <Text style={{ fontSize: 18, fontWeight: '900', color: t.text }}>Top Rated Kitchens</Text>
-            <TouchableOpacity onPress={() => go('kitchen')}>
-              <Text style={{ fontSize: 12, fontWeight: 'bold', color: B.orange }}>See all</Text>
+            {/* Wallet Balance Card */}
+            <View style={{
+              flex: 1,
+              backgroundColor: t.card,
+              borderRadius: 24,
+              borderWidth: 1,
+              borderColor: t.border,
+              overflow: 'hidden'
+            }}>
+              <ImageBackground
+                source={{ uri: 'https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=300' }}
+                style={{ flex: 1, padding: 16, minHeight: 140, justifyContent: 'space-between' }}
+                imageStyle={{ opacity: 0.08, borderRadius: 24 }}
+              >
+                <View>
+                  <View style={{ width: 32, height: 32, borderRadius: 10, backgroundColor: B.orangeL, justifyContent: 'center', alignItems: 'center', marginBottom: 8 }}>
+                    <Wallet size={16} color={B.orange} />
+                  </View>
+                  <Text style={{ fontSize: 13, fontWeight: 'bold', color: t.sub }}>My Wallet Balance</Text>
+                  <Text style={{ fontSize: 18, fontWeight: '900', color: t.text, marginTop: 2 }}>₹1,250.00 cash</Text>
+                </View>
+                <TouchableOpacity onPress={() => go('payments')} style={{ marginTop: 12 }}>
+                  <Text style={{ fontSize: 11, fontWeight: '800', color: B.orange }}>View statement →</Text>
+                </TouchableOpacity>
+              </ImageBackground>
+            </View>
+          </View>
+
+          {/* 4 & 5. Live Kitchen + Referrals (Side-by-Side) */}
+          <View style={{ flexDirection: 'row', gap: 12, paddingHorizontal: 16, marginTop: 12 }}>
+            {/* Live Kitchen */}
+            <View style={{
+              flex: 1,
+              backgroundColor: '#1E1814',
+              borderRadius: 24,
+              borderWidth: 1,
+              borderColor: t.border,
+              overflow: 'hidden'
+            }}>
+              <ImageBackground
+                source={{ uri: 'https://images.unsplash.com/photo-1556910103-1c02745aae4d?w=300' }}
+                style={{ flex: 1, minHeight: 145 }}
+                imageStyle={{ borderRadius: 24 }}
+              >
+                <View style={{ flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.48)', padding: 16, justifyContent: 'space-between' }}>
+                  <View>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                      <View style={{ width: 32, height: 32, borderRadius: 10, backgroundColor: 'rgba(255, 255, 255, 0.2)', justifyContent: 'center', alignItems: 'center' }}>
+                        <Video size={16} color="#FFFFFF" />
+                      </View>
+                      <View style={{ backgroundColor: '#EF4444', paddingHorizontal: 6, paddingVertical: 3, borderRadius: 6 }}>
+                        <Text style={{ fontSize: 8.5, fontWeight: '900', color: '#FFFFFF' }}>LIVE</Text>
+                      </View>
+                    </View>
+                    <Text style={{ fontSize: 13, fontWeight: 'bold', color: '#FFFFFF' }}>Watch Live Kitchen</Text>
+                    <Text style={{ fontSize: 11, color: '#E0D0C5', marginTop: 2 }}>A+ Certified Hygiene</Text>
+                  </View>
+                  <TouchableOpacity onPress={() => go('kitchen')} style={{ marginTop: 12 }}>
+                    <Text style={{ fontSize: 11, fontWeight: '800', color: '#FF9E66' }}>Meet the Chef →</Text>
+                  </TouchableOpacity>
+                </View>
+              </ImageBackground>
+            </View>
+
+            {/* Invite Friends */}
+            <View style={{
+              flex: 1,
+              backgroundColor: '#1E1814',
+              borderRadius: 24,
+              borderWidth: 1,
+              borderColor: t.border,
+              overflow: 'hidden'
+            }}>
+              <ImageBackground
+                source={{ uri: 'https://images.unsplash.com/photo-1530062848155-8a3a0ad05165?w=300' }}
+                style={{ flex: 1, minHeight: 145 }}
+                imageStyle={{ borderRadius: 24 }}
+              >
+                <View style={{ flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.48)', padding: 16, justifyContent: 'space-between' }}>
+                  <View>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                      <View style={{ width: 32, height: 32, borderRadius: 10, backgroundColor: 'rgba(255, 255, 255, 0.2)', justifyContent: 'center', alignItems: 'center' }}>
+                        <Gift size={16} color="#FFFFFF" />
+                      </View>
+                      <View style={{ backgroundColor: '#FF852C', paddingHorizontal: 6, paddingVertical: 3, borderRadius: 6 }}>
+                        <Text style={{ fontSize: 8.5, fontWeight: '900', color: '#FFFFFF' }}>🎁 FREE</Text>
+                      </View>
+                    </View>
+                    <Text style={{ fontSize: 13, fontWeight: 'bold', color: '#FFFFFF' }}>Invite Friends</Text>
+                    <Text style={{ fontSize: 11, color: '#E0D0C5', marginTop: 2 }}>Get ₹100 / referral</Text>
+                  </View>
+                  <TouchableOpacity onPress={() => go('refer')} style={{ marginTop: 12 }}>
+                    <Text style={{ fontSize: 11, fontWeight: '800', color: '#FF9E66' }}>Get coupon code →</Text>
+                  </TouchableOpacity>
+                </View>
+              </ImageBackground>
+            </View>
+          </View>
+
+          {/* 6. Up Next Tomorrow */}
+          <View style={{ paddingHorizontal: 16, marginTop: 24 }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+              <Text style={{ fontSize: 18, fontWeight: '900', color: t.text }}>Up Next tomorrow</Text>
+              <TouchableOpacity onPress={() => go('meals')}>
+                <Text style={{ fontSize: 13, fontWeight: 'bold', color: B.orange }}>Full Menu →</Text>
+              </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity onPress={() => go('meals')} style={{
+              backgroundColor: t.card,
+              borderRadius: 24,
+              borderWidth: 1,
+              borderColor: t.border,
+              padding: 16,
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between'
+            }}>
+              <View style={{ flex: 1, marginRight: 12 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+                  <View style={{ backgroundColor: B.orangeL, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 }}>
+                    <Text style={{ fontSize: 9, fontWeight: '900', color: B.orange, letterSpacing: 0.5 }}>TOMORROW LUNCH</Text>
+                  </View>
+                  <Text style={{ fontSize: 11, fontWeight: 'bold', color: t.sub, marginLeft: 8 }}>12:30 PM</Text>
+                </View>
+                <Text style={{ fontSize: 16, fontWeight: '900', color: t.text }}>Andhra Chicken + Bagara Rice</Text>
+                <Text style={{ fontSize: 11, color: t.sub, marginTop: 4 }}>560 kcal · 34g protein</Text>
+              </View>
+
+              {/* Tomorrow's dish image preview */}
+              <Image 
+                source={{ uri: 'https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?w=200' }} 
+                style={{ width: 72, height: 72, borderRadius: 16, borderWidth: 1, borderColor: t.border }}
+              />
             </TouchableOpacity>
           </View>
 
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, marginTop: 12, gap: 12 }}>
-            {kitchens.map((k, i) => (
-              <TouchableOpacity
-                key={i}
-                style={{
-                  width: 140,
-                  backgroundColor: t.card,
-                  borderRadius: 20,
-                  borderWidth: 1,
-                  borderColor: t.border,
-                  padding: 8,
-                  shadowColor: '#000',
-                  shadowOffset: { width: 0, height: 6 },
-                  shadowOpacity: 0.03,
-                  shadowRadius: 12,
-                  elevation: 2
-                }}
-                onPress={() => go('kitchen')}
-              >
-                <Image source={{ uri: k.img }} style={{ width: '100%', height: 90, borderRadius: 14 }} />
-                <Text style={{ fontSize: 12, fontWeight: 'bold', color: t.text, marginTop: 8 }} numberOfLines={1}>
-                  {k.name}
-                </Text>
-                <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4, gap: 2 }}>
-                  <Star size={10} color="#F59E0B" />
-                  <Text style={{ fontSize: 10, fontWeight: 'bold', color: t.text }}>{k.rating}</Text>
-                  <Text style={{ fontSize: 9, color: t.muted }}>({k.meals})</Text>
-                </View>
+          {/* 7. Active Wallet Coupons */}
+          <View style={{ marginTop: 24 }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, marginBottom: 10 }}>
+              <Text style={{ fontSize: 18, fontWeight: '900', color: t.text }}>Active Wallet Coupons</Text>
+              <TouchableOpacity onPress={() => setToast('All Coupons Loaded')}>
+                <Text style={{ fontSize: 13, fontWeight: 'bold', color: B.orange }}>View all</Text>
               </TouchableOpacity>
-            ))}
-          </ScrollView>
+            </View>
+
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, gap: 12 }}>
+              {[
+                { code: 'WELCOME50', desc: '₹50 off next billing' },
+                { code: 'SAVE20', desc: '20% off monthly tier' },
+                { code: 'REFER100', desc: 'Earn cash in wallet' }
+              ].map((cp, idx) => (
+                <TouchableOpacity
+                  key={idx}
+                  style={{
+                    backgroundColor: t.card,
+                    borderWidth: 1.5,
+                    borderColor: B.orangeL,
+                    borderRadius: 16,
+                    padding: 12,
+                    width: 170,
+                    borderStyle: 'dashed'
+                  }}
+                  onPress={() => setToast(`${cp.code} Coupon Active!`)}
+                >
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                    <Tag size={12} color={B.orange} />
+                    <Text style={{ fontSize: 12, fontWeight: '900', color: B.orange }}>{cp.code}</Text>
+                  </View>
+                  <Text style={{ fontSize: 11, color: t.text, fontWeight: '600' }}>{cp.desc}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+
+          {/* 8. Recommended for Bhargav */}
+          <View style={{ paddingHorizontal: 16, marginTop: 24 }}>
+            <Text style={{ fontSize: 18, fontWeight: '900', color: t.text, marginBottom: 12 }}>
+              Recommended for {user.name || 'Bhargav'}
+            </Text>
+
+            <View style={{ gap: 12 }}>
+              {[
+                { name: 'Dal Tadka + Steamed Rice', cal: '380 kcal', prot: '14g protein', pref: 'VEG', img: 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=400' },
+                { name: 'Paneer Butter Masala + Roti', cal: '420 kcal', prot: '18g protein', pref: 'VEG', img: 'https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=400' }
+              ].map((item, idx) => (
+                <View
+                  key={idx}
+                  style={{
+                    flexDirection: 'row',
+                    backgroundColor: t.card,
+                    borderRadius: 20,
+                    borderWidth: 1,
+                    borderColor: t.border,
+                    padding: 10,
+                    alignItems: 'center'
+                  }}
+                >
+                  <Image source={{ uri: item.img }} style={{ width: 70, height: 70, borderRadius: 12 }} />
+                  <View style={{ flex: 1, marginLeft: 12 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                      <Text style={{ fontSize: 14, fontWeight: 'bold', color: t.text }}>{item.name}</Text>
+                      <View style={{ backgroundColor: '#EAF7EE', paddingHorizontal: 4, paddingVertical: 2, borderRadius: 4 }}>
+                        <Text style={{ fontSize: 8, fontWeight: '900', color: '#2E7D32' }}>{item.pref}</Text>
+                      </View>
+                    </View>
+                    <Text style={{ fontSize: 11, color: t.sub, marginTop: 4 }}>{item.cal} · {item.prot}</Text>
+                  </View>
+                  <TouchableOpacity
+                    style={{
+                      backgroundColor: B.orange,
+                      borderRadius: 10,
+                      paddingHorizontal: 12,
+                      paddingVertical: 6
+                    }}
+                    onPress={() => setToast('Added to Cart!')}
+                  >
+                    <Text style={{ fontSize: 11, fontWeight: '900', color: '#FFFFFF' }}>+ Add</Text>
+                  </TouchableOpacity>
+                </View>
+              ))}
+            </View>
+          </View>
+
         </ScrollView>
 
         <BottomTabNav active="home" />
@@ -2465,30 +4514,151 @@ export default function App() {
           <Text style={[styles.headerTitle, { color: t.text }]}>Personal Details</Text>
         </View>
         <ScrollView contentContainerStyle={{ padding: 16 }}>
-          <View style={[styles.supportForm, { backgroundColor: t.card, borderColor: t.border }]}>
-            <Text style={[styles.setupLabel, { color: t.text }]}>Full Name</Text>
-            <TextInput
-              style={[styles.setupInput, { color: t.text, backgroundColor: isDark ? 'rgba(255, 255, 255, 0.02)' : '#FFFFFF', borderColor: t.border, borderWidth: 1 }]}
-              value={user.name}
-              onChangeText={val => setUser(prev => ({ ...prev, name: val }))}
-            />
+          <View style={[styles.supportForm, { backgroundColor: t.card, borderColor: t.border, padding: 20 }]}>
+            
+            {/* Profile Photo selector */}
+            <View style={{ alignItems: 'center', marginBottom: 20 }}>
+              <TouchableOpacity 
+                style={{
+                  width: 84,
+                  height: 84,
+                  borderRadius: 42,
+                  backgroundColor: '#FFF1E5',
+                  borderWidth: 2,
+                  borderColor: '#FFEEDB',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  position: 'relative',
+                  shadowColor: '#A05020',
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: 0.05,
+                  shadowRadius: 6,
+                  elevation: 2
+                }}
+                onPress={() => {
+                  const avatars = ['👩‍🍳', '👨‍🍳', '🥗', '🍲', '🥑', '🥦', '🥕', '🍎', '🥘'];
+                  const curIdx = avatars.indexOf(user.avatar);
+                  const nextIdx = (curIdx + 1) % avatars.length;
+                  setUser(prev => ({ ...prev, avatar: avatars[nextIdx] }));
+                  setToast('Profile Photo updated!');
+                }}
+              >
+                <Text style={{ fontSize: 40 }}>{user.avatar}</Text>
+                <View style={{
+                  position: 'absolute',
+                  bottom: 0,
+                  right: 0,
+                  backgroundColor: '#DF7E2C',
+                  width: 24,
+                  height: 24,
+                  borderRadius: 12,
+                  borderWidth: 2,
+                  borderColor: '#FFFFFF',
+                  justifyContent: 'center',
+                  alignItems: 'center'
+                }}>
+                  <Camera size={12} color="#FFFFFF" />
+                </View>
+              </TouchableOpacity>
+            </View>
 
-            <Text style={[styles.setupLabel, { color: t.text, marginTop: 12 }]}>Email Address</Text>
-            <TextInput
-              style={[styles.setupInput, { color: t.text, backgroundColor: isDark ? 'rgba(255, 255, 255, 0.02)' : '#FFFFFF', borderColor: t.border, borderWidth: 1 }]}
-              value={user.email}
-              onChangeText={val => setUser(prev => ({ ...prev, email: val }))}
-            />
+            {/* Inputs */}
+            <View style={{ gap: 14 }}>
+              <View>
+                <Text style={[styles.setupLabel, { color: t.text, marginBottom: 6 }]}>Full Name</Text>
+                <TextInput
+                  style={[styles.setupInput, { color: t.text, backgroundColor: isDark ? 'rgba(255, 255, 255, 0.02)' : '#FFFFFF', borderColor: t.border, borderWidth: 1 }]}
+                  value={user.name}
+                  onChangeText={val => setUser(prev => ({ ...prev, name: val }))}
+                />
+              </View>
 
-            <Text style={[styles.setupLabel, { color: t.text, marginTop: 12 }]}>Mobile Number</Text>
-            <TextInput
-              style={[styles.setupInput, { color: t.text, backgroundColor: isDark ? 'rgba(255, 255, 255, 0.02)' : '#FFFFFF', borderColor: t.border, borderWidth: 1 }]}
-              value={user.phone}
-              onChangeText={val => setUser(prev => ({ ...prev, phone: val }))}
-              keyboardType="phone-pad"
-            />
+              <View>
+                <Text style={[styles.setupLabel, { color: t.text, marginBottom: 6 }]}>Mobile Number (Read Only)</Text>
+                <View style={{
+                  flexDirection: 'row',
+                  height: 56,
+                  borderRadius: 18,
+                  borderWidth: 1,
+                  borderColor: t.border,
+                  backgroundColor: isDark ? 'rgba(255, 255, 255, 0.02)' : '#F5F6F5',
+                  alignItems: 'center',
+                  paddingHorizontal: 16,
+                }}>
+                  <TextInput
+                    style={{ flex: 1, fontSize: 14, color: t.muted, fontWeight: '600', height: '100%' }}
+                    value={user.phone}
+                    editable={false}
+                  />
+                  <Lock size={16} color={t.muted} />
+                </View>
+              </View>
 
-            <TouchableOpacity style={[styles.authBtn, { marginTop: 16 }]} onPress={() => { setToast('Details Updated!'); back(); }}>
+              <View>
+                <Text style={[styles.setupLabel, { color: t.text, marginBottom: 6 }]}>Email Address</Text>
+                <TextInput
+                  style={[styles.setupInput, { color: t.text, backgroundColor: isDark ? 'rgba(255, 255, 255, 0.02)' : '#FFFFFF', borderColor: t.border, borderWidth: 1 }]}
+                  value={user.email}
+                  onChangeText={val => setUser(prev => ({ ...prev, email: val }))}
+                  keyboardType="email-address"
+                />
+              </View>
+
+              <View>
+                <Text style={[styles.setupLabel, { color: t.text, marginBottom: 6 }]}>Date of Birth</Text>
+                <View style={{
+                  flexDirection: 'row',
+                  height: 56,
+                  borderRadius: 18,
+                  borderWidth: 1,
+                  borderColor: t.border,
+                  backgroundColor: isDark ? 'rgba(255, 255, 255, 0.02)' : '#FFFFFF',
+                  alignItems: 'center',
+                  paddingHorizontal: 16,
+                }}>
+                  <TextInput
+                    style={{ flex: 1, fontSize: 14, color: t.text, fontWeight: '600', height: '100%' }}
+                    value={user.dob}
+                    onChangeText={val => setUser(prev => ({ ...prev, dob: val }))}
+                    placeholder="DD/MM/YYYY"
+                    placeholderTextColor={t.muted}
+                    maxLength={10}
+                  />
+                  <Calendar size={18} color="#DF7E2C" />
+                </View>
+              </View>
+
+              <View>
+                <Text style={[styles.setupLabel, { color: t.text, marginBottom: 6 }]}>Gender</Text>
+                <View style={{ flexDirection: 'row', gap: 8 }}>
+                  {['Male', 'Female', 'Other'].map(g => {
+                    const isSelected = user.gender === g;
+                    return (
+                      <TouchableOpacity
+                        key={g}
+                        style={{
+                          flex: 1,
+                          height: 44,
+                          borderRadius: 12,
+                          borderWidth: 1.5,
+                          borderColor: isSelected ? '#DF7E2C' : t.border,
+                          backgroundColor: isSelected ? (isDark ? '#4A2A10' : '#FFF4EC') : (isDark ? 'rgba(255,255,255,0.02)' : '#FFFFFF'),
+                          justifyContent: 'center',
+                          alignItems: 'center'
+                        }}
+                        onPress={() => setUser(prev => ({ ...prev, gender: g }))}
+                      >
+                        <Text style={{ fontSize: 12, fontWeight: '800', color: isSelected ? '#DF7E2C' : t.text }}>
+                          {g}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </View>
+            </View>
+
+            <TouchableOpacity style={[styles.authBtn, { marginTop: 24 }]} onPress={() => { setToast('Details Updated!'); back(); }}>
               <LinearGradient colors={[B.orange, B.secondary]} style={styles.obBtnGradient}>
                 <Text style={styles.obBtnText}>Save Changes</Text>
               </LinearGradient>
