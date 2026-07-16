@@ -12,10 +12,11 @@ import {
 } from 'react-native';
 import Animated, {
   useSharedValue,
+  SharedValue,
   useAnimatedScrollHandler,
   useAnimatedStyle,
   interpolate,
-  Extrapolate,
+  Extrapolation,
   withSpring,
   withTiming,
   useAnimatedReaction,
@@ -64,15 +65,15 @@ interface Particle {
   emoji: string;
   startX: number;
   startY: number;
-  progress: Animated.SharedValue<number>;
+  progress: SharedValue<number>;
 }
 
 // ─── Carousel Item Component ────────────────────────────────────────────────
 interface CarouselItemProps {
   item: typeof PLATES[0];
   index: number;
-  scrollX: Animated.SharedValue<number>;
-  platePulse: Animated.SharedValue<number>;
+  scrollX: SharedValue<number>;
+  platePulse: SharedValue<number>;
 }
 
 const CarouselItem = ({ item, index, scrollX, platePulse }: CarouselItemProps) => {
@@ -81,10 +82,10 @@ const CarouselItem = ({ item, index, scrollX, platePulse }: CarouselItemProps) =
     const input = (scrollX.value - index * ITEM_WIDTH) / ITEM_WIDTH;
 
     // Smooth interpolations for scale, rotation and elevation displacement
-    const scale = interpolate(input, [-1, 0, 1], [0.65, 1.0, 0.65], Extrapolate.CLAMP);
-    const rotateY = interpolate(input, [-1, 0, 1], [40, 0, -40], Extrapolate.CLAMP);
-    const translateY = interpolate(input, [-1, 0, 1], [25, 0, 25], Extrapolate.CLAMP);
-    const opacity = interpolate(input, [-1, 0, 1], [0.4, 1.0, 0.4], Extrapolate.CLAMP);
+    const scale = interpolate(input, [-1, 0, 1], [0.65, 1.0, 0.65], Extrapolation.CLAMP);
+    const rotateY = interpolate(input, [-1, 0, 1], [40, 0, -40], Extrapolation.CLAMP);
+    const translateY = interpolate(input, [-1, 0, 1], [25, 0, 25], Extrapolation.CLAMP);
+    const opacity = interpolate(input, [-1, 0, 1], [0.4, 1.0, 0.4], Extrapolation.CLAMP);
 
     // Apply the active landing pulse if this is the center item
     const baseScale = scale * (index === Math.round(scrollX.value / ITEM_WIDTH) ? platePulse.value : 1);
@@ -155,8 +156,8 @@ export default function FluidAnimationsDemo({ onBack }: FluidAnimationsDemoProps
       const diff = Math.abs(exactIndex - Math.round(exactIndex));
 
       // As we scroll, slide bottom panel down slightly and fade out to redirect focus to carousel
-      const targetY = interpolate(diff, [0, 0.25], [0, 110], Extrapolate.CLAMP);
-      const targetOpacity = interpolate(diff, [0, 0.25], [1.0, 0.45], Extrapolate.CLAMP);
+      const targetY = interpolate(diff, [0, 0.25], [0, 110], Extrapolation.CLAMP);
+      const targetOpacity = interpolate(diff, [0, 0.25], [1.0, 0.45], Extrapolation.CLAMP);
 
       sheetY.value = withSpring(targetY, { damping: 15, stiffness: 120 });
       sheetOpacity.value = withSpring(targetOpacity, { damping: 15, stiffness: 120 });
@@ -186,7 +187,7 @@ export default function FluidAnimationsDemo({ onBack }: FluidAnimationsDemoProps
     const left = interpolate(listExpandProgress.value, [0, 1], [24, 0]);
     const bottom = interpolate(listExpandProgress.value, [0, 1], [30, 0]);
     const borderRadius = interpolate(listExpandProgress.value, [0, 1], [16, 0]);
-    const opacity = interpolate(listExpandProgress.value, [0, 0.01], [0, 1], Extrapolate.CLAMP);
+    const opacity = interpolate(listExpandProgress.value, [0, 0.01], [0, 1], Extrapolation.CLAMP);
 
     return {
       width,

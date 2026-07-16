@@ -16,12 +16,14 @@ import {
   Animated,
   useColorScheme,
   Platform,
-  Share
+  Share,
+  PanResponder
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Circle, Path, Rect, Ellipse, Defs, LinearGradient as SvgLinearGradient, Stop } from 'react-native-svg';
 import {
   Home as HomeIcon,
+  LayoutGrid,
   UtensilsCrossed,
   Package,
   Wallet,
@@ -83,9 +85,14 @@ import {
   Thermometer,
   BadgeCheck,
   Users,
-  X
+  X,
+  Search,
+  Contact
 } from 'lucide-react-native';
 import FluidAnimationsDemo from './FluidAnimationsDemo';
+import * as Location from 'expo-location';
+import * as Contacts from 'expo-contacts';
+import * as ImagePicker from 'expo-image-picker';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -226,6 +233,7 @@ const CATEGORIES = [
 ];
 
 const MEALS: Meal[] = [
+  // Monday
   {
     id: 1,
     name: 'Dal Tadka + Steamed Rice',
@@ -247,7 +255,7 @@ const MEALS: Meal[] = [
     chef: 'Chef Amrita Sen',
     isHealthy: true,
     isAvailableToday: true,
-    day: 'Today',
+    day: 'Monday',
     ingredients: {
       oil: 'Cold Pressed Groundnut Oil',
       rice: 'Sona Masoori',
@@ -283,7 +291,7 @@ const MEALS: Meal[] = [
     chef: 'Chef Sanjay Kapoor',
     isHealthy: true,
     isAvailableToday: true,
-    day: 'Today',
+    day: 'Monday',
     ingredients: {
       oil: 'Cold Pressed Sunflower Oil',
       veg: ['Ripe Tomatoes', 'Cashew Nuts', 'Kasuri Methi', 'Green Cardamom', 'Onion Paste'],
@@ -296,6 +304,7 @@ const MEALS: Meal[] = [
       { id: 202, user: 'Neha Sharma', rating: 5, comment: 'Very premium taste. Not oily or greasy like restaurants.', date: '3 days ago', verified: true, avatar: 'NS', helpful: 7 }
     ]
   },
+  // Tuesday
   {
     id: 3,
     name: 'Andhra Chicken Curry + Bagara Rice',
@@ -317,7 +326,7 @@ const MEALS: Meal[] = [
     chef: 'Chef Venkatesh Gowda',
     isHealthy: false,
     isAvailableToday: true,
-    day: 'Tomorrow',
+    day: 'Tuesday',
     ingredients: {
       oil: 'Freedom Refined Sunflower Oil',
       rice: 'Premium Basmati Rice',
@@ -333,39 +342,6 @@ const MEALS: Meal[] = [
   },
   {
     id: 4,
-    name: 'Kerala Avial + Red Rice',
-    img: IMG.salad,
-    when: 'lunch',
-    type: 'veg',
-    categories: ['Lunch', 'South Indian', 'Healthy', 'Senior Meals'],
-    cal: 320,
-    protein: 9,
-    carbs: 52,
-    fat: 8,
-    fiber: 9,
-    serving: '380g',
-    price: '₹159',
-    rating: 4.6,
-    reviewsCount: 54,
-    time: '12:30 PM',
-    desc: 'A nutrient-dense traditional mix of drumstick, raw banana, carrot, and pumpkin simmered in a light coconut-yogurt paste.',
-    chef: 'Chef Amrita Sen',
-    isHealthy: true,
-    isAvailableToday: true,
-    day: 'Tomorrow',
-    ingredients: {
-      oil: 'Cold Pressed Coconut Oil',
-      rice: 'Kerala Basmati Rice',
-      veg: ['Elephant Yam', 'Drumstick', 'Carrots', 'Raw Banana', 'Pumpkin', 'Curry Leaves'],
-      spices: ['Freshly Ground Cumin', 'Green Chillies', 'Turmeric Powder', 'Salt'],
-      dairy: ['Milky Mist Curd']
-    },
-    reviews: [
-      { id: 401, user: 'Suresh P.', rating: 5, comment: 'Very authentic. The red rice is very nutritious.', date: '4 days ago', verified: true, avatar: 'SP', helpful: 5 }
-    ]
-  },
-  {
-    id: 5,
     name: 'Double Egg Masala + Jeera Rice',
     img: IMG.curry,
     when: 'dinner',
@@ -385,7 +361,7 @@ const MEALS: Meal[] = [
     chef: 'Chef Sanjay Kapoor',
     isHealthy: true,
     isAvailableToday: true,
-    day: 'Tomorrow',
+    day: 'Tuesday',
     ingredients: {
       oil: 'Fortune Rice Bran Oil',
       rice: 'Sona Masoori',
@@ -395,6 +371,318 @@ const MEALS: Meal[] = [
     reviews: [
       { id: 501, user: 'Vikas J.', rating: 4, comment: 'Superb high protein meal after my gym session.', date: '1 week ago', verified: true, avatar: 'VJ', helpful: 10 }
     ]
+  },
+  // Wednesday
+  {
+    id: 5,
+    name: 'Kerala Avial + Red Rice',
+    img: IMG.salad,
+    when: 'lunch',
+    type: 'veg',
+    categories: ['Lunch', 'South Indian', 'Healthy', 'Senior Meals'],
+    cal: 320,
+    protein: 9,
+    carbs: 52,
+    fat: 8,
+    fiber: 9,
+    serving: '380g',
+    price: '₹159',
+    rating: 4.6,
+    reviewsCount: 54,
+    time: '12:30 PM',
+    desc: 'A nutrient-dense traditional mix of drumstick, raw banana, carrot, and pumpkin simmered in a light coconut-yogurt paste.',
+    chef: 'Chef Amrita Sen',
+    isHealthy: true,
+    isAvailableToday: true,
+    day: 'Wednesday',
+    ingredients: {
+      oil: 'Cold Pressed Coconut Oil',
+      rice: 'Kerala Basmati Rice',
+      veg: ['Elephant Yam', 'Drumstick', 'Carrots', 'Raw Banana', 'Pumpkin', 'Curry Leaves'],
+      spices: ['Freshly Ground Cumin', 'Green Chillies', 'Turmeric Powder', 'Salt'],
+      dairy: ['Milky Mist Curd']
+    },
+    reviews: [
+      { id: 401, user: 'Suresh P.', rating: 5, comment: 'Very authentic. The red rice is very nutritious.', date: '4 days ago', verified: true, avatar: 'SP', helpful: 5 }
+    ]
+  },
+  {
+    id: 6,
+    name: 'Butter Chicken + Garlic Naan',
+    img: IMG.chicken,
+    when: 'dinner',
+    type: 'non-veg',
+    categories: ['Dinner', 'Chef Specials', 'High Protein', 'North Indian'],
+    cal: 620,
+    protein: 36,
+    carbs: 70,
+    fat: 22,
+    fiber: 3,
+    serving: '450g',
+    price: '₹249',
+    rating: 4.9,
+    reviewsCount: 204,
+    time: '7:30 PM',
+    desc: 'Tandoori grilled chicken pieces simmered in a smooth, creamy tomato gravy with butter and fresh cream, served with handmade garlic naan.',
+    chef: 'Chef Sanjay Kapoor',
+    isHealthy: false,
+    isAvailableToday: true,
+    day: 'Wednesday',
+    ingredients: {
+      oil: 'Refined Oil',
+      veg: ['Tomatoes', 'Garlic', 'Cashew Paste'],
+      spices: ['Tandoori Masala', 'Garam Masala'],
+      dairy: ['Butter', 'Cream'],
+      meat: 'Chicken'
+    },
+    reviews: []
+  },
+  // Thursday
+  {
+    id: 7,
+    name: 'Veg Pulao + Mix Veg Raita',
+    img: IMG.rice,
+    when: 'lunch',
+    type: 'veg',
+    categories: ['Lunch', 'Healthy', 'South Indian'],
+    cal: 340,
+    protein: 11,
+    carbs: 54,
+    fat: 8,
+    fiber: 6,
+    serving: '400g',
+    price: '₹149',
+    rating: 4.4,
+    reviewsCount: 65,
+    time: '12:30 PM',
+    desc: 'Fragrant basmati rice cooked with fresh seasonal vegetables, mint, and mild spices, served with a refreshing cucumber-carrot curd raita.',
+    chef: 'Chef Amrita Sen',
+    isHealthy: true,
+    isAvailableToday: true,
+    day: 'Thursday',
+    ingredients: {
+      oil: 'Sunflower Oil',
+      rice: 'Basmati Rice',
+      veg: ['Carrots', 'Beans', 'Peas', 'Mint'],
+      spices: ['Biryani Spices'],
+      dairy: ['Curd']
+    },
+    reviews: []
+  },
+  {
+    id: 8,
+    name: 'Hyderabadi Chicken Biryani',
+    img: IMG.thali,
+    when: 'dinner',
+    type: 'non-veg',
+    categories: ['Dinner', 'Chef Specials', 'High Protein'],
+    cal: 680,
+    protein: 42,
+    carbs: 85,
+    fat: 18,
+    fiber: 4,
+    serving: '500g',
+    price: '₹269',
+    rating: 4.9,
+    reviewsCount: 312,
+    time: '7:30 PM',
+    desc: 'Layers of long-grain basmati rice and juicy marinated chicken cooked on Dum in sealed pots with saffron, mint, and brown onions.',
+    chef: 'Chef Venkatesh Gowda',
+    isHealthy: false,
+    isAvailableToday: true,
+    day: 'Thursday',
+    ingredients: {
+      oil: 'Ghee',
+      rice: 'Basmati Rice',
+      veg: ['Mint', 'Onions', 'Coriander'],
+      spices: ['Biryani Masala'],
+      meat: 'Fresh Halal Chicken'
+    },
+    reviews: []
+  },
+  // Friday
+  {
+    id: 9,
+    name: 'Rajma Masala + Basmati Rice',
+    img: IMG.dal,
+    when: 'lunch',
+    type: 'veg',
+    categories: ['Lunch', 'Healthy', 'North Indian'],
+    cal: 410,
+    protein: 15,
+    carbs: 62,
+    fat: 10,
+    fiber: 8,
+    serving: '440g',
+    price: '₹149',
+    rating: 4.7,
+    reviewsCount: 106,
+    time: '12:30 PM',
+    desc: 'Red kidney beans slow cooked in a thick onion-tomato gravy with ginger-garlic paste and fresh coriander, served with steamed white rice.',
+    chef: 'Chef Sanjay Kapoor',
+    isHealthy: true,
+    isAvailableToday: true,
+    day: 'Friday',
+    ingredients: {
+      oil: 'Mustard Oil',
+      rice: 'Basmati Rice',
+      veg: ['Onions', 'Tomatoes', 'Ginger-Garlic'],
+      spices: ['Turmeric', 'Coriander', 'Jeera']
+    },
+    reviews: []
+  },
+  {
+    id: 10,
+    name: 'Egg Curry + Soft Phulka',
+    img: IMG.curry,
+    when: 'dinner',
+    type: 'egg',
+    categories: ['Dinner', 'High Protein', 'South Indian'],
+    cal: 430,
+    protein: 20,
+    carbs: 48,
+    fat: 12,
+    fiber: 5,
+    serving: '410g',
+    price: '₹159',
+    rating: 4.5,
+    reviewsCount: 74,
+    time: '7:30 PM',
+    desc: 'Boiled eggs cooked in a flavorful coconut-tomato curry base, served along with three freshly blown hot handmade wheat phulkas.',
+    chef: 'Chef Venkatesh Gowda',
+    isHealthy: true,
+    isAvailableToday: true,
+    day: 'Friday',
+    ingredients: {
+      oil: 'Sunflower Oil',
+      veg: ['Tomatoes', 'Curry Leaves', 'Onions'],
+      spices: ['Chilli Powder', 'Turmeric'],
+      flour: 'Whole Wheat Flour'
+    },
+    reviews: []
+  },
+  // Saturday
+  {
+    id: 11,
+    name: 'Kadhai Paneer + Butter Naan',
+    img: IMG.paneer,
+    when: 'lunch',
+    type: 'veg',
+    categories: ['Lunch', 'North Indian', 'Chef Specials'],
+    cal: 480,
+    protein: 19,
+    carbs: 55,
+    fat: 18,
+    fiber: 4,
+    serving: '430g',
+    price: '₹199',
+    rating: 4.8,
+    reviewsCount: 135,
+    time: '12:30 PM',
+    desc: 'Paneer cubes tossed with bell peppers and freshly ground kadhai masala spices in an onion-tomato wok gravy, served with soft naan.',
+    chef: 'Chef Sanjay Kapoor',
+    isHealthy: true,
+    isAvailableToday: true,
+    day: 'Saturday',
+    ingredients: {
+      oil: 'Sunflower Oil',
+      veg: ['Capsicum', 'Onions', 'Tomatoes'],
+      spices: ['Kadhai Masala'],
+      dairy: ['Paneer', 'Butter']
+    },
+    reviews: []
+  },
+  {
+    id: 12,
+    name: 'Chicken Masala + Chapati',
+    img: IMG.chicken,
+    when: 'dinner',
+    type: 'non-veg',
+    categories: ['Dinner', 'High Protein', 'Andhra'],
+    cal: 510,
+    protein: 32,
+    carbs: 50,
+    fat: 12,
+    fiber: 4,
+    serving: '420g',
+    price: '₹209',
+    rating: 4.6,
+    reviewsCount: 84,
+    time: '7:30 PM',
+    desc: 'Dhaba style thick chicken curry cooked with dry roasted spices and whole peppercorns, served with three thin soft chapatis.',
+    chef: 'Chef Venkatesh Gowda',
+    isHealthy: true,
+    isAvailableToday: true,
+    day: 'Saturday',
+    ingredients: {
+      oil: 'Groundnut Oil',
+      veg: ['Ginger', 'Onions', 'Garlic'],
+      spices: ['Dhaba Garam Masala'],
+      meat: 'Chicken'
+    },
+    reviews: []
+  },
+  // Sunday
+  {
+    id: 13,
+    name: 'Sambar Rice + Veg Poriyal',
+    img: IMG.rice,
+    when: 'lunch',
+    type: 'veg',
+    categories: ['Lunch', 'South Indian', 'Healthy'],
+    cal: 310,
+    protein: 8,
+    carbs: 58,
+    fat: 6,
+    fiber: 8,
+    serving: '400g',
+    price: '₹139',
+    rating: 4.7,
+    reviewsCount: 119,
+    time: '12:30 PM',
+    desc: 'Hot aromatic sambar mashed with rice and served with a side of dry-sautéed cabbage and carrot poriyal topped with fresh coconut.',
+    chef: 'Chef Amrita Sen',
+    isHealthy: true,
+    isAvailableToday: true,
+    day: 'Sunday',
+    ingredients: {
+      oil: 'Coconut Oil',
+      rice: 'Sona Masoori',
+      veg: ['Cabbage', 'Carrot', 'Pumpkin'],
+      spices: ['Sambar Powder', 'Asafoetida', 'Mustard']
+    },
+    reviews: []
+  },
+  {
+    id: 14,
+    name: 'Mutton Curry + Steamed Rice',
+    img: IMG.curry,
+    when: 'dinner',
+    type: 'non-veg',
+    categories: ['Dinner', 'High Protein', 'Chef Specials'],
+    cal: 610,
+    protein: 38,
+    carbs: 60,
+    fat: 20,
+    fiber: 3,
+    serving: '450g',
+    price: '₹299',
+    rating: 4.9,
+    reviewsCount: 156,
+    time: '7:30 PM',
+    desc: 'Tender premium mutton pieces slow braised in a spiced gravy with onions, yoghurt, and rich spices, served with soft basmati rice.',
+    chef: 'Chef Sanjay Kapoor',
+    isHealthy: false,
+    isAvailableToday: true,
+    day: 'Sunday',
+    ingredients: {
+      oil: 'Mustard Oil',
+      rice: 'Basmati Rice',
+      veg: ['Garlic', 'Ginger', 'Onions'],
+      spices: ['Mutton Masala'],
+      meat: 'Fresh Halal Mutton'
+    },
+    reviews: []
   }
 ];
 
@@ -548,7 +836,8 @@ export default function App() {
     favCuisines: ['South Indian', 'North Indian'] as string[],
     allergies: 'None'
   });
-  const [subscribed, setSubscribed] = useState(true);
+  const [subscribed, setSubscribed] = useState(false);
+  const [newUserHomeMealTab, setNewUserHomeMealTab] = useState<'lunch' | 'dinner'>('lunch');
   const [paused, setPaused] = useState(false);
   const [selectedMealId, setSelectedMealId] = useState<number>(1);
   const [mealsList, setMealsList] = useState<Meal[]>(MEALS);
@@ -560,7 +849,7 @@ export default function App() {
   const [otpCountdown, setOtpCountdown] = useState(30);
 
   // Lifted UI State (to keep nested render functions completely stateless & hook-free)
-  const [selectedFilter, setSelectedFilter] = useState('All');
+  const [selectedFilter, setSelectedFilter] = useState('Both');
   const [selectedCategory, setSelectedCategory] = useState('All Categories');
   const [selectedCam, setSelectedCam] = useState(1);
 
@@ -587,6 +876,87 @@ export default function App() {
   // Pinterest style Menu Carousel Animations and Tabs
   const [activeMealIndex, setActiveMealIndex] = useState(0);
   const [menuActiveTab, setMenuActiveTab] = useState<'recipes' | 'customize'>('recipes');
+  // New Location Screen State
+  const [selectedAddress, setSelectedAddress] = useState("Madhapur, Hyderabad, Telangana, India");
+  const [addressDetails, setAddressDetails] = useState("");
+  const [locationPermissionEnabled, setLocationPermissionEnabled] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [receiverDetailsName, setReceiverDetailsName] = useState("");
+  const [receiverDetailsPhone, setReceiverDetailsPhone] = useState("");
+  const [showPhotoPicker, setShowPhotoPicker] = useState(false);
+  const [showSearchModal, setShowSearchModal] = useState(false);
+  const [showLocationDialog, setShowLocationDialog] = useState(false);
+  
+  const [addressesList, setAddressesList] = useState<{ id: string; label: string; address: string; name: string; phone: string; image?: string; }[]>([
+    { id: '1', label: 'Home', address: 'Bollaram Industrial Area, Hyderabad, Telangana, India', name: 'Rithvik', phone: '+91 7075420121' }
+  ]);
+  const [addressLabel, setAddressLabel] = useState<'Home' | 'Work' | 'Other'>('Home');
+  const [doorImageUri, setDoorImageUri] = useState<string | null>(null);
+  const [mapTranslateX, setMapTranslateX] = useState(0);
+  const [mapTranslateY, setMapTranslateY] = useState(0);
+  const [mapOffsetList, setMapOffsetList] = useState({ x: 0, y: 0 });
+  const [isDraggingMap, setIsDraggingMap] = useState(false);
+  const [showContactsModal, setShowContactsModal] = useState(false);
+  const [deviceContacts, setDeviceContacts] = useState<any[]>([]);
+  const [contactsSearchQuery, setContactsSearchQuery] = useState("");
+
+  // New Health Setup States
+  const [setup3SubPage, setSetup3SubPage] = useState(1);
+  const [goalWeight, setGoalWeight] = useState("");
+  const [workoutFrequency, setWorkoutFrequency] = useState("Never");
+  const [workoutTypes, setWorkoutTypes] = useState<string[]>([]);
+  const [primaryGoal, setPrimaryGoal] = useState("Eat Healthy");
+  const [goalSpeed, setGoalSpeed] = useState("0.5 kg/week");
+  const [motivation, setMotivation] = useState("Live a Healthier Lifestyle");
+  const [allergiesList, setAllergiesList] = useState<string[]>([]);
+  const [healthConditions, setHealthConditions] = useState<string[]>([]);
+  const [foodDislikes, setFoodDislikes] = useState<string[]>([]);
+  const [waterIntakeGoal, setWaterIntakeGoal] = useState("2 L");
+  const [customWaterIntake, setCustomWaterIntake] = useState("");
+  const [bedtime, setBedtime] = useState("22:00");
+  const [wakeupTime, setWakeupTime] = useState("06:00");
+  const [smartNotifications, setSmartNotifications] = useState({
+    meal: false,
+    water: false,
+    workout: false,
+    sleep: false,
+    orderUpdates: true
+  });
+  const [connectedHealthApps, setConnectedHealthApps] = useState<string[]>([]);
+
+  const panResponder = useMemo(() => PanResponder.create({
+    onStartShouldSetPanResponder: () => true,
+    onMoveShouldSetPanResponder: () => true,
+    onPanResponderGrant: () => {
+      setIsDraggingMap(true);
+    },
+    onPanResponderMove: (evt, gestureState) => {
+      setMapTranslateX(mapOffsetList.x + gestureState.dx);
+      setMapTranslateY(mapOffsetList.y + gestureState.dy);
+    },
+    onPanResponderRelease: (evt, gestureState) => {
+      setIsDraggingMap(false);
+      const nextX = mapOffsetList.x + gestureState.dx;
+      const nextY = mapOffsetList.y + gestureState.dy;
+      setMapOffsetList({ x: nextX, y: nextY });
+
+      const totalDist = Math.sqrt(gestureState.dx * gestureState.dx + gestureState.dy * gestureState.dy);
+      if (totalDist > 10) {
+        const mockAddresses = [
+          "Bollaram Industrial Area, Hyderabad, Telangana, India",
+          "Bachupally Road, Bachupally, Hyderabad, Telangana, India",
+          "Urbanrise On Cloud 33, Bachupally, Hyderabad, Telangana, India",
+          "St. Peter's School Lane, Bachupally, Hyderabad, Telangana, India",
+          "Devashrey Hostel Road, Bachupally, Hyderabad, Telangana, India",
+          "Mallampet Road, Bollaram, Hyderabad, Telangana, India"
+        ];
+        const index = Math.abs(Math.floor(nextX + nextY)) % mockAddresses.length;
+        setSelectedAddress(mockAddresses[index]);
+        setToast("Pin location updated!");
+      }
+    }
+  }), [mapOffsetList]);
+
   const plateScale = useRef(new Animated.Value(1)).current;
   const plateRotate = useRef(new Animated.Value(0)).current;
   const plateFade = useRef(new Animated.Value(1)).current;
@@ -598,8 +968,7 @@ export default function App() {
     return MEALS.filter(m => {
       let matchesType = true;
       if (selectedFilter === 'Veg') matchesType = m.type === 'veg';
-      else if (selectedFilter === 'Non-Veg') matchesType = m.type === 'non-veg';
-      else if (selectedFilter === 'Egg') matchesType = m.type === 'egg';
+      else if (selectedFilter === 'Non-Veg') matchesType = m.type === 'non-veg' || m.type === 'egg';
 
       let matchesCat = true;
       if (selectedCategory !== 'All Menu' && selectedCategory !== 'All Categories') {
@@ -683,6 +1052,336 @@ export default function App() {
       return () => clearTimeout(timer);
     }
   }, [toast]);
+
+  const detectCurrentLocation = async (silent = false) => {
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        if (!silent) {
+          setToast("Location permission denied. Please enable it in settings.");
+        }
+        return;
+      }
+      setLocationPermissionEnabled(true);
+      
+      const loc = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+      });
+      
+      const response = await Location.reverseGeocodeAsync({
+        latitude: loc.coords.latitude,
+        longitude: loc.coords.longitude,
+      });
+
+      if (response && response.length > 0) {
+        const item = response[0];
+        const formattedAddress = [
+          item.name || item.street,
+          item.district || item.subregion,
+          item.city,
+          item.region,
+          item.postalCode,
+          item.country
+        ].filter(Boolean).join(', ');
+        
+        if (formattedAddress.trim()) {
+          setSelectedAddress(formattedAddress);
+          if (!silent) setToast("Location detected automatically!");
+          return;
+        }
+      }
+      
+      setSelectedAddress("Bollaram Industrial Area, Hyderabad, Telangana, India");
+      if (!silent) setToast("Location detected!");
+    } catch (error) {
+      console.warn("Location detection failed, using fallback:", error);
+      setLocationPermissionEnabled(true);
+      setSelectedAddress("Bollaram Industrial Area, Hyderabad, Telangana, India");
+      if (!silent) setToast("Location detected!");
+    }
+  };
+
+  // Detect location automatically when moving to Setup 2
+  useEffect(() => {
+    if (currentScreen === 'setup2') {
+      detectCurrentLocation(true);
+    }
+  }, [currentScreen]);
+
+  const handlePickContact = async () => {
+    try {
+      const { status } = await Contacts.requestPermissionsAsync();
+      if (status !== 'granted') {
+        setToast("Contacts permission denied. Please enable it in settings.");
+        return;
+      }
+
+      if (Platform.OS !== 'web' && typeof Contacts.presentContactPickerAsync === 'function') {
+        const contact = await Contacts.presentContactPickerAsync();
+        if (contact) {
+          setReceiverDetailsName(contact.name || '');
+          if (contact.phoneNumbers && contact.phoneNumbers.length > 0) {
+            setReceiverDetailsPhone(contact.phoneNumbers[0].number || '');
+          }
+          setToast("Contact selected!");
+          return;
+        }
+      }
+
+      const { data } = await Contacts.getContactsAsync({
+        fields: [Contacts.Fields.PhoneNumbers, Contacts.Fields.Emails],
+      });
+
+      if (data && data.length > 0) {
+        setDeviceContacts(data);
+      } else {
+        setDeviceContacts([
+          { id: '1', name: 'Rithvik Revelli', phoneNumbers: [{ number: '+91 7075420121' }] },
+          { id: '2', name: 'Amrita Sen', phoneNumbers: [{ number: '+91 9876543210' }] },
+          { id: '3', name: 'Nani', phoneNumbers: [{ number: '+91 8185998010' }] },
+          { id: '4', name: 'Srinivas Reddy', phoneNumbers: [{ number: '+91 9988776655' }] }
+        ]);
+      }
+      setShowContactsModal(true);
+    } catch (error) {
+      console.warn("Contact pick failed, showing mocks", error);
+      setDeviceContacts([
+        { id: '1', name: 'Rithvik Revelli', phoneNumbers: [{ number: '+91 7075420121' }] },
+        { id: '2', name: 'Amrita Sen', phoneNumbers: [{ number: '+91 9876543210' }] },
+        { id: '3', name: 'Nani', phoneNumbers: [{ number: '+91 8185998010' }] },
+        { id: '4', name: 'Srinivas Reddy', phoneNumbers: [{ number: '+91 9988776655' }] }
+      ]);
+      setShowContactsModal(true);
+    }
+  };
+
+  const handlePickImage = () => {
+    setShowPhotoPicker(true);
+  };
+
+  const handleTakePhoto = async () => {
+    setShowPhotoPicker(false);
+    try {
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      if (status !== 'granted') {
+        setToast("Camera permission is required to take photos.");
+        return;
+      }
+
+      const result = await ImagePicker.launchCameraAsync({
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        setDoorImageUri(result.assets[0].uri);
+        setToast("Image captured successfully!");
+      }
+    } catch (error) {
+      console.warn("Failed to launch camera", error);
+      setToast("Failed to open camera");
+    }
+  };
+
+  const handleChooseFromLibrary = async () => {
+    setShowPhotoPicker(false);
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        setToast("Gallery permission is required to choose photos.");
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        setDoorImageUri(result.assets[0].uri);
+        setToast("Image selected successfully!");
+      }
+    } catch (error) {
+      console.warn("Failed to launch gallery", error);
+      setToast("Failed to open gallery");
+    }
+  };
+
+  const calculateSleepHours = (bed: string, wake: string) => {
+    try {
+      const [bedH, bedM] = bed.split(':').map(Number);
+      const [wakeH, wakeM] = wake.split(':').map(Number);
+      if (isNaN(bedH) || isNaN(bedM) || isNaN(wakeH) || isNaN(wakeM)) return "8 hours";
+      
+      let diffMins = (wakeH * 60 + wakeM) - (bedH * 60 + bedM);
+      if (diffMins < 0) {
+        diffMins += 24 * 60; // sleep went past midnight
+      }
+      const hrs = Math.floor(diffMins / 60);
+      const mins = diffMins % 60;
+      return mins > 0 ? `${hrs}h ${mins}m` : `${hrs} hours`;
+    } catch {
+      return "8 hours";
+    }
+  };
+
+  function LocationAccuracyDialog() {
+    if (!showLocationDialog) return null;
+    return (
+      <Modal transparent visible={showLocationDialog} animationType="fade">
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center', padding: 24 }}>
+          <View style={{ width: '100%', maxWidth: 320, backgroundColor: t.card, borderRadius: 28, padding: 24, shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.25, shadowRadius: 15, elevation: 10, borderWidth: 1, borderColor: t.border }}>
+            <View style={{ width: 54, height: 54, borderRadius: 27, backgroundColor: B.orangeL, justifyContent: 'center', alignItems: 'center', marginBottom: 14, alignSelf: 'center' }}>
+              <MapPin size={24} color={B.orange} />
+            </View>
+            <Text style={{ fontSize: 16, fontWeight: '800', color: t.text, textAlign: 'center', marginBottom: 12 }}>
+              Enable Location Accuracy
+            </Text>
+            <Text style={{ fontSize: 13, color: t.sub, textAlign: 'center', marginBottom: 20, lineHeight: 18 }}>
+              This app needs location accuracy turned on to position the map pin at your exact delivery spot.
+            </Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 12 }}>
+              <TouchableOpacity 
+                onPress={() => setShowLocationDialog(false)} 
+                style={{ paddingVertical: 10, paddingHorizontal: 16, borderRadius: 20, borderWidth: 1, borderColor: t.border }}
+              >
+                <Text style={{ fontSize: 13, fontWeight: '800', color: t.text }}>No, thanks</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                onPress={() => {
+                  setShowLocationDialog(false);
+                  detectCurrentLocation();
+                }} 
+                style={{ paddingVertical: 10, paddingHorizontal: 16, borderRadius: 20, backgroundColor: B.orange }}
+              >
+                <Text style={{ fontSize: 13, fontWeight: '800', color: '#FFFFFF' }}>Enable</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    );
+  }
+
+  function SelectLocationSearchModal() {
+    if (!showSearchModal) return null;
+
+    const LOCATIONS = [
+      { name: "Bollaram Industrial Area", desc: "Hyderabad, Telangana, India", dist: "1.2 km" },
+      { name: "Industrial Development Area Bollaram", desc: "Bollaram, Telangana, India", dist: "1.3 km" },
+      { name: "Bollaram", desc: "Telangana, India", dist: "2.5 km" },
+      { name: "Bollaram Municipality", desc: "Bollaram Village, Industrial Development Area...", dist: "1.1 km" },
+      { name: "Bollaram Road", desc: "Industrial Area, Krishnaja Hills, Nizampet, Hyderabad", dist: "3.2 km" },
+      { name: "Urbanrise On Cloud 33", desc: "Bachupally, Hyderabad, Telangana, India", dist: "0.8 km" },
+      { name: "Maisammaguda", desc: "Dulapally, Hyderabad, Telangana, India", dist: "4.5 km" }
+    ];
+
+    const filtered = LOCATIONS.filter(l => 
+      l.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      l.desc.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    return (
+      <Modal visible={showSearchModal} transparent animationType="slide">
+        <View style={{ flex: 1, backgroundColor: t.bg }}>
+          <SafeAreaView style={{ flex: 1 }}>
+            {/* Header */}
+            <View style={{
+              height: 56,
+              flexDirection: 'row',
+              alignItems: 'center',
+              paddingHorizontal: 16,
+              borderBottomWidth: 1,
+              borderBottomColor: t.border,
+              backgroundColor: t.card,
+              gap: 12
+            }}>
+              <TouchableOpacity 
+                onPress={() => setShowSearchModal(false)} 
+                style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.surface, borderWidth: 1.5, borderColor: t.border, justifyContent: 'center', alignItems: 'center' }}
+              >
+                <ArrowLeft size={16} color={t.text} />
+              </TouchableOpacity>
+              <Text style={{ fontSize: 16, fontWeight: '900', color: t.text }}>Search Location</Text>
+            </View>
+
+            {/* Search Input Box */}
+            <View style={{ padding: 16 }}>
+              <View style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                backgroundColor: t.input,
+                borderRadius: 16,
+                paddingHorizontal: 16,
+                height: 50,
+                borderWidth: 1.5,
+                borderColor: t.border
+              }}>
+                <Search size={18} color={t.muted} />
+                <TextInput
+                  style={{ flex: 1, fontSize: 14, color: t.text, marginLeft: 10, height: '100%' }}
+                  placeholder="Search for area, street name..."
+                  placeholderTextColor={t.muted}
+                  value={searchQuery}
+                  onChangeText={setSearchQuery}
+                  autoFocus
+                />
+                {searchQuery ? (
+                  <TouchableOpacity onPress={() => setSearchQuery("")}>
+                    <X size={18} color={t.muted} />
+                  </TouchableOpacity>
+                ) : null}
+              </View>
+            </View>
+
+            {/* Results List */}
+            <FlatList
+              data={filtered}
+              keyExtractor={(item) => item.name}
+              contentContainerStyle={{ paddingHorizontal: 16 }}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  onPress={() => {
+                    setSelectedAddress(item.name + ", " + item.desc);
+                    const hash = item.name.length;
+                    setMapTranslateX((hash % 5) * 50 - 100);
+                    setMapTranslateY((hash % 3) * 50 - 50);
+                    setMapOffsetList({ x: (hash % 5) * 50 - 100, y: (hash % 3) * 50 - 50 });
+                    setShowSearchModal(false);
+                    setToast("Location updated!");
+                  }}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    paddingVertical: 14,
+                    borderBottomWidth: 1,
+                    borderBottomColor: t.border,
+                    gap: 14
+                  }}
+                >
+                  <MapPin size={20} color={B.orange} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 14, fontWeight: '700', color: t.text }}>{item.name}</Text>
+                    <Text style={{ fontSize: 12, color: t.muted, marginTop: 2 }}>{item.desc}</Text>
+                  </View>
+                  <Text style={{ fontSize: 11, fontWeight: 'bold', color: t.muted }}>{item.dist}</Text>
+                </TouchableOpacity>
+              )}
+              ListEmptyComponent={
+                <View style={{ alignItems: 'center', marginTop: 40 }}>
+                  <Text style={{ color: t.muted }}>No matching locations found</Text>
+                </View>
+              }
+            />
+          </SafeAreaView>
+        </View>
+      </Modal>
+    );
+  }
 
   // Countdown timer for OTP
   useEffect(() => {
@@ -2160,7 +2859,7 @@ export default function App() {
           style={{ width: '100%', height: '100%', flex: 1 }}
         >
           <SafeAreaView style={{ flex: 1 }}>
-            <View style={{ flex: 1, paddingHorizontal: 24, justifyContent: 'center', alignItems: 'center' }}>
+            <View style={{ flex: 1, paddingHorizontal: 24, justifyContent: 'center' }}>
               
               {/* Optional Demo Top Header */}
               <View style={{
@@ -2191,17 +2890,6 @@ export default function App() {
 
               <Animated.View style={{ 
                 width: '100%',
-                maxWidth: 380,
-                backgroundColor: 'rgba(255, 255, 255, 0.85)',
-                borderRadius: 32, 
-                borderWidth: 1.5, 
-                borderColor: '#FFEEDB', 
-                padding: 24, 
-                shadowColor: '#A05020', 
-                shadowOffset: { width: 0, height: 12 }, 
-                shadowOpacity: 0.1, 
-                shadowRadius: 20, 
-                elevation: 6,
                 opacity: authFade,
                 transform: [{ translateY: authSlideY }]
               }}>
@@ -2258,7 +2946,7 @@ export default function App() {
                           keyboardType="numeric"
                           maxLength={10}
                           value={mobileNumber}
-                          onChangeText={setMobileNumber}
+                          onChangeText={val => setMobileNumber(val.replace(/[^0-9]/g, ''))}
                         />
                       </View>
                     </View>
@@ -2353,7 +3041,7 @@ export default function App() {
                       keyboardType="numeric"
                       maxLength={6}
                       value={otpCode}
-                      onChangeText={setOtpCode}
+                      onChangeText={val => setOtpCode(val.replace(/[^0-9]/g, ''))}
                     />
 
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 }}>
@@ -2409,23 +3097,8 @@ export default function App() {
           style={{ width: '100%', height: '100%', flex: 1 }}
         >
           <SafeAreaView style={{ flex: 1 }}>
-            <View style={{ flex: 1, paddingHorizontal: 24, justifyContent: 'center', alignItems: 'center' }}>
-              
-              <View style={{ 
-                width: '100%',
-                maxWidth: 380,
-                backgroundColor: 'rgba(255, 255, 255, 0.85)',
-                borderRadius: 32, 
-                borderWidth: 1.5, 
-                borderColor: '#FFEEDB', 
-                padding: 24, 
-                shadowColor: '#A05020', 
-                shadowOffset: { width: 0, height: 12 }, 
-                shadowOpacity: 0.1, 
-                shadowRadius: 20, 
-                elevation: 6,
-              }}>
-                <ScrollView showsVerticalScrollIndicator={false}>
+            <View style={{ flex: 1, paddingHorizontal: 24 }}>
+              <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingVertical: 24 }}>
                   {/* Top Progress bar and Back row */}
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                     <TouchableOpacity onPress={back} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: '#FFFFFF', borderWidth: 1.5, borderColor: '#FFEEDB', justifyContent: 'center', alignItems: 'center' }}>
@@ -2504,7 +3177,7 @@ export default function App() {
                       <TextInput
                         style={{ height: 56, borderRadius: 18, borderWidth: 1.5, borderColor: '#FFEEDB', backgroundColor: '#FFFFFF', paddingHorizontal: 16, fontSize: 14, color: '#13352C', fontWeight: '600' }}
                         value={user.name}
-                        onChangeText={val => setUser(prev => ({ ...prev, name: val }))}
+                        onChangeText={val => setUser(prev => ({ ...prev, name: val.replace(/[^a-zA-Z\s]/g, '') }))}
                         placeholder="Bhargav"
                         placeholderTextColor="#A0B0AA"
                       />
@@ -2536,7 +3209,7 @@ export default function App() {
                       <TextInput
                         style={{ height: 56, borderRadius: 18, borderWidth: 1.5, borderColor: '#FFEEDB', backgroundColor: '#FFFFFF', paddingHorizontal: 16, fontSize: 14, color: '#13352C', fontWeight: '600' }}
                         value={user.email}
-                        onChangeText={val => setUser(prev => ({ ...prev, email: val }))}
+                        onChangeText={val => setUser(prev => ({ ...prev, email: val.replace(/[^a-zA-Z0-9@._+-]/g, '') }))}
                         placeholder="bhargav@koikoi.in"
                         placeholderTextColor="#A0B0AA"
                         keyboardType="email-address"
@@ -2558,10 +3231,18 @@ export default function App() {
                         <TextInput
                           style={{ flex: 1, fontSize: 14, color: '#13352C', fontWeight: '600', height: '100%' }}
                           value={user.dob}
-                          onChangeText={val => setUser(prev => ({ ...prev, dob: val }))}
+                          onChangeText={val => {
+                            const cleaned = val.replace(/[^0-9]/g, '');
+                            let formatted = '';
+                            if (cleaned.length > 0) formatted += cleaned.slice(0, 2);
+                            if (cleaned.length > 2) formatted += '/' + cleaned.slice(2, 4);
+                            if (cleaned.length > 4) formatted += '/' + cleaned.slice(4, 8);
+                            setUser(prev => ({ ...prev, dob: formatted }));
+                          }}
                           placeholder="e.g. 15/08/1996"
                           placeholderTextColor="#A0B0AA"
                           maxLength={10}
+                          keyboardType="numeric"
                         />
                         <Calendar size={18} color="#DF7E2C" />
                       </View>
@@ -2612,11 +3293,20 @@ export default function App() {
                       elevation: 5,
                     }} 
                     onPress={() => {
-                      if (!user.name || !user.email || !user.dob) {
+                      if (!user.name.trim() || !user.email.trim() || !user.dob.trim()) {
                         setToast('Please enter all profile details');
-                      } else {
-                        go('setup2');
+                        return;
                       }
+                      const emailRegex = /\S+@\S+\.\S+/;
+                      if (!emailRegex.test(user.email.trim())) {
+                        setToast('Please enter a valid email address.');
+                        return;
+                      }
+                      if (user.dob.trim().length < 10) {
+                        setToast('Please enter date of birth in DD/MM/YYYY format');
+                        return;
+                      }
+                      go('setup2');
                     }}
                   >
                     <LinearGradient colors={['#FF852C', '#FD4F1B']} style={{ flex: 1, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 6 }}>
@@ -2625,7 +3315,6 @@ export default function App() {
                     </LinearGradient>
                   </TouchableOpacity>
                 </ScrollView>
-              </View>
             </View>
           </SafeAreaView>
         </LinearGradient>
@@ -2635,833 +3324,1290 @@ export default function App() {
 
   // 5. Setup 2: Address Details (Step 2 of 3)
   function RenderSetup2() {
-    return (
-      <View style={{ flex: 1, backgroundColor: '#FFFDF9', alignItems: 'center', justifyContent: 'center' }}>
-        <LinearGradient
-          colors={['#FED6B3', '#FFFDF9', '#FFF1E5']}
-          locations={[0, 0.45, 1.0]}
-          style={{ width: '100%', height: '100%', flex: 1 }}
-        >
-          <SafeAreaView style={{ flex: 1 }}>
-            <View style={{ flex: 1, paddingHorizontal: 24, justifyContent: 'center', alignItems: 'center' }}>
-              
-              <View style={{ 
-                width: '100%',
-                maxWidth: 380,
-                backgroundColor: 'rgba(255, 255, 255, 0.85)',
-                borderRadius: 32, 
-                borderWidth: 1.5, 
-                borderColor: '#FFEEDB', 
-                padding: 24, 
-                shadowColor: '#A05020', 
-                shadowOffset: { width: 0, height: 12 }, 
-                shadowOpacity: 0.1, 
-                shadowRadius: 20, 
-                elevation: 6,
-              }}>
-                <ScrollView showsVerticalScrollIndicator={false}>
-                  {/* Top Progress bar and Back row */}
-                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                    <TouchableOpacity onPress={back} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: '#FFFFFF', borderWidth: 1.5, borderColor: '#FFEEDB', justifyContent: 'center', alignItems: 'center' }}>
-                      <ArrowLeft size={16} color="#13352C" />
-                    </TouchableOpacity>
-                    <View style={{ alignItems: 'flex-end' }}>
-                      <Text style={{ fontSize: 10, fontWeight: '900', color: '#DF7E2C', letterSpacing: 0.5 }}>STEP 2 OF 3</Text>
-                      <Text style={{ fontSize: 10, color: '#5A6A64', fontWeight: 'bold', marginTop: 1 }}>67% Complete</Text>
-                    </View>
-                  </View>
+    const isMaisammaguda = selectedAddress.includes("Maisammaguda");
 
-                  {/* Progress Line */}
-                  <View style={{ width: '100%', height: 6, backgroundColor: '#FFEEDB', borderRadius: 3, overflow: 'hidden', marginBottom: 20 }}>
-                    <View style={{ width: '67%', height: '100%', backgroundColor: '#DF7E2C', borderRadius: 3 }} />
-                  </View>
+    // Contacts Modal Component
+    const renderContactsModal = () => {
+      const filteredContacts = deviceContacts.filter(c => 
+        c.name?.toLowerCase().includes(contactsSearchQuery.toLowerCase())
+      );
 
-                  {/* Title & Subtitle */}
-                  <Text style={{ fontSize: 24, fontWeight: '900', color: '#13352C' }}>Delivery Location</Text>
-                  <Text style={{ fontSize: 13, color: '#5A6A64', marginTop: 4, lineHeight: 18 }}>
-                    Specify where we should drop off your daily dabbas.
-                  </Text>
+      return (
+        <Modal visible={showContactsModal} transparent animationType="slide">
+          <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}>
+            <View style={{ height: '70%', backgroundColor: t.surface, borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 20 }}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                <Text style={{ fontSize: 18, fontWeight: '800', color: t.text }}>Select Contact</Text>
+                <TouchableOpacity onPress={() => setShowContactsModal(false)} style={{ padding: 4 }}>
+                  <X size={24} color={t.text} />
+                </TouchableOpacity>
+              </View>
 
-                  {/* Detect Location Button */}
-                  <TouchableOpacity 
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      backgroundColor: '#FFF8F2',
-                      borderWidth: 1.5,
-                      borderColor: '#FFE0CC',
-                      borderRadius: 18,
-                      padding: 14,
-                      marginTop: 20,
-                      justifyContent: 'space-between'
-                    }}
-                    onPress={() => {
-                      setShowLocationPermission(true);
-                    }}
-                  >
-                    <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, gap: 12 }}>
-                      <View style={{
-                        width: 42,
-                        height: 42,
-                        borderRadius: 12,
-                        backgroundColor: '#FFF1E5',
-                        justifyContent: 'center',
+              <TextInput
+                style={{
+                  height: 48,
+                  borderRadius: 12,
+                  borderWidth: 1,
+                  borderColor: t.border,
+                  backgroundColor: t.input,
+                  color: t.text,
+                  paddingHorizontal: 16,
+                  marginBottom: 16
+                }}
+                value={contactsSearchQuery}
+                onChangeText={setContactsSearchQuery}
+                placeholder="Search contacts..."
+                placeholderTextColor={t.muted}
+              />
+
+              <FlatList
+                data={filteredContacts}
+                keyExtractor={(item, index) => item.id || index.toString()}
+                renderItem={({ item }) => {
+                  const phone = item.phoneNumbers && item.phoneNumbers[0]?.number || 'No number';
+                  return (
+                    <TouchableOpacity
+                      onPress={() => {
+                        setReceiverDetailsName(item.name || '');
+                        setReceiverDetailsPhone(phone);
+                        setShowContactsModal(false);
+                        setToast("Selected: " + item.name);
+                      }}
+                      style={{
+                        paddingVertical: 14,
+                        borderBottomWidth: 1,
+                        borderBottomColor: t.border,
+                        flexDirection: 'row',
+                        justifyContent: 'space-between',
                         alignItems: 'center'
-                      }}>
-                        <Navigation size={20} color="#DF7E2C" />
+                      }}
+                    >
+                      <View>
+                        <Text style={{ fontSize: 15, fontWeight: '700', color: t.text }}>{item.name}</Text>
+                        <Text style={{ fontSize: 13, color: t.muted, marginTop: 2 }}>{phone}</Text>
                       </View>
-                      <View style={{ flex: 1 }}>
-                        <Text style={{ fontSize: 13, fontWeight: 'bold', color: '#13352C' }}>Detect Current Location</Text>
-                        <Text style={{ fontSize: 11, color: '#7A8A83', marginTop: 2 }}>Use GPS coordinates to auto-fill address</Text>
-                      </View>
-                    </View>
-                    <ChevronRight size={16} color="#DF7E2C" />
-                  </TouchableOpacity>
-
-                  {/* OR divider */}
-                  <View style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 20 }}>
-                    <View style={{ flex: 1, height: 1, backgroundColor: '#FFEEDB' }} />
-                    <Text style={{ fontSize: 9, fontWeight: '900', color: '#90A09A', marginHorizontal: 12, letterSpacing: 1 }}>
-                      OR ENTER DETAILS MANUALLY
-                    </Text>
-                    <View style={{ flex: 1, height: 1, backgroundColor: '#FFEEDB' }} />
+                      <ChevronRight size={18} color={t.muted} />
+                    </TouchableOpacity>
+                  );
+                }}
+                ListEmptyComponent={
+                  <View style={{ alignItems: 'center', marginTop: 40 }}>
+                    <Text style={{ color: t.muted }}>No contacts found</Text>
                   </View>
-
-                  {/* Manual Inputs */}
-                  <View style={{ gap: 16 }}>
-                    <View>
-                      <Text style={{ fontSize: 10, fontWeight: '900', color: '#DF7E2C', letterSpacing: 1.2, marginBottom: 8 }}>HOUSE / FLAT</Text>
-                      <TextInput
-                        style={{ height: 56, borderRadius: 18, borderWidth: 1.5, borderColor: '#FFEEDB', backgroundColor: '#FFFFFF', paddingHorizontal: 16, fontSize: 14, color: '#13352C', fontWeight: '600' }}
-                        value={user.houseNo}
-                        onChangeText={val => setUser(prev => ({ ...prev, houseNo: val }))}
-                        placeholder="Plot 42"
-                        placeholderTextColor="#A0B0AA"
-                      />
-                    </View>
-
-                    <View>
-                      <Text style={{ fontSize: 10, fontWeight: '900', color: '#DF7E2C', letterSpacing: 1.2, marginBottom: 8 }}>APARTMENT / STREET / AREA</Text>
-                      <TextInput
-                        style={{ height: 56, borderRadius: 18, borderWidth: 1.5, borderColor: '#FFEEDB', backgroundColor: '#FFFFFF', paddingHorizontal: 16, fontSize: 14, color: '#13352C', fontWeight: '600' }}
-                        value={user.street}
-                        onChangeText={val => setUser(prev => ({ ...prev, street: val }))}
-                        placeholder="Jubilee Hills Road"
-                        placeholderTextColor="#A0B0AA"
-                      />
-                    </View>
-
-                    <View>
-                      <Text style={{ fontSize: 10, fontWeight: '900', color: '#DF7E2C', letterSpacing: 1.2, marginBottom: 8 }}>LANDMARK (OPTIONAL)</Text>
-                      <TextInput
-                        style={{ height: 56, borderRadius: 18, borderWidth: 1.5, borderColor: '#FFEEDB', backgroundColor: '#FFFFFF', paddingHorizontal: 16, fontSize: 14, color: '#13352C', fontWeight: '600' }}
-                        value={user.landmark}
-                        onChangeText={val => setUser(prev => ({ ...prev, landmark: val }))}
-                        placeholder="Near Metro Station"
-                        placeholderTextColor="#A0B0AA"
-                      />
-                    </View>
-
-                    <View>
-                      <Text style={{ fontSize: 10, fontWeight: '900', color: '#DF7E2C', letterSpacing: 1.2, marginBottom: 8 }}>PINCODE</Text>
-                      <TextInput
-                        style={{ height: 56, borderRadius: 18, borderWidth: 1.5, borderColor: '#FFEEDB', backgroundColor: '#FFFFFF', paddingHorizontal: 16, fontSize: 14, color: '#13352C', fontWeight: '600' }}
-                        value={user.pincode}
-                        onChangeText={val => setUser(prev => ({ ...prev, pincode: val }))}
-                        placeholder="500033"
-                        placeholderTextColor="#A0B0AA"
-                        keyboardType="numeric"
-                        maxLength={6}
-                      />
-                    </View>
-
-                    {/* Address Label Selection */}
-                    <View>
-                      <Text style={{ fontSize: 10, fontWeight: '900', color: '#DF7E2C', letterSpacing: 1.2, marginBottom: 8 }}>SAVE ADDRESS AS</Text>
-                      <View style={{ flexDirection: 'row', gap: 8 }}>
-                        {['Home', 'Work', 'Other'].map(lbl => {
-                          const isSelected = user.addressLabel === lbl;
-                          return (
-                            <TouchableOpacity
-                              key={lbl}
-                              style={{
-                                flex: 1,
-                                height: 44,
-                                borderRadius: 12,
-                                borderWidth: 1.5,
-                                borderColor: isSelected ? '#DF7E2C' : '#FFEEDB',
-                                backgroundColor: isSelected ? '#FFF4EC' : '#FFFFFF',
-                                justifyContent: 'center',
-                                alignItems: 'center'
-                              }}
-                              onPress={() => setUser(prev => ({ ...prev, addressLabel: lbl }))}
-                            >
-                              <Text style={{ fontSize: 12, fontWeight: '800', color: isSelected ? '#DF7E2C' : '#13352C' }}>{lbl}</Text>
-                            </TouchableOpacity>
-                          );
-                        })}
-                      </View>
-                    </View>
-                  </View>
-
-                  {/* Continue Button */}
-                  <TouchableOpacity 
-                    style={{
-                      width: '100%',
-                      height: 56,
-                      borderRadius: 28,
-                      marginTop: 28,
-                      overflow: 'hidden',
-                      shadowColor: '#DF7E2C',
-                      shadowOffset: { width: 0, height: 6 },
-                      shadowOpacity: 0.25,
-                      shadowRadius: 10,
-                      elevation: 5,
-                    }} 
-                    onPress={() => {
-                      if (!user.houseNo || !user.street || !user.pincode) {
-                        setToast('Please enter your house/street details and pincode');
-                      } else {
-                        // Concatenate fields into single address string
-                        const conc = `${user.houseNo}, ${user.street}${user.landmark ? ', ' + user.landmark : ''}${user.pincode ? ' - ' + user.pincode : ''}`;
-                        setUser(prev => ({ ...prev, address: conc }));
-                        go('setup3');
-                      }
-                    }}
-                  >
-                    <LinearGradient colors={['#FF852C', '#FD4F1B']} style={{ flex: 1, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 6 }}>
-                      <Text style={{ color: '#FFFFFF', fontSize: 16.5, fontWeight: '800' }}>Continue</Text>
-                      <ChevronRight size={18} color="#FFFFFF" strokeWidth={2.5} />
-                    </LinearGradient>
-                  </TouchableOpacity>
-                </ScrollView>
-              </View>
-            </View>
-          </SafeAreaView>
-        </LinearGradient>
-
-        {/* Location Permission Request Alert Popup */}
-        {showLocationPermission && (
-          <View style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.45)',
-            justifyContent: 'center',
-            alignItems: 'center',
-            zIndex: 2000,
-            padding: 24
-          }}>
-            <View style={{
-              width: '100%',
-              maxWidth: 300,
-              backgroundColor: t.card,
-              borderRadius: 20,
-              paddingTop: 24,
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 8 },
-              shadowOpacity: 0.15,
-              shadowRadius: 16,
-              elevation: 8,
-              alignItems: 'center',
-              borderWidth: 1,
-              borderColor: t.border
-            }}>
-              {/* Pulsing map pin badge */}
-              <View style={{ width: 54, height: 54, borderRadius: 27, backgroundColor: B.orangeL, justifyContent: 'center', alignItems: 'center', marginBottom: 14 }}>
-                <MapPin size={24} color={B.orange} />
-              </View>
-              <Text style={{ fontSize: 16, fontWeight: '900', color: t.text, textAlign: 'center', paddingHorizontal: 16 }}>
-                Allow "Koi Koi" to access location?
-              </Text>
-              <Text style={{ fontSize: 12, color: t.sub, textAlign: 'center', marginTop: 8, paddingHorizontal: 20, lineHeight: 16 }}>
-                We use your device location to position the delivery pin on our map for hot dabba drops.
-              </Text>
-              
-              <View style={{ width: '100%', borderTopWidth: 1, borderTopColor: t.border, flexDirection: 'row', marginTop: 24 }}>
-                <TouchableOpacity 
-                  style={{ flex: 1, paddingVertical: 14, borderRightWidth: 1, borderRightColor: t.border, alignItems: 'center' }}
-                  onPress={() => {
-                    setShowLocationPermission(false);
-                    setToast('Permission denied. Please type address details manually.');
-                  }}
-                >
-                  <Text style={{ fontSize: 14, color: '#FF5A5F', fontWeight: 'bold' }}>Don't Allow</Text>
-                </TouchableOpacity>
-                <TouchableOpacity 
-                  style={{ flex: 1, paddingVertical: 14, alignItems: 'center' }}
-                  onPress={() => {
-                    setShowLocationPermission(false);
-                    setShowMapSelection(true);
-                  }}
-                >
-                  <Text style={{ fontSize: 14, color: B.orange, fontWeight: '900' }}>Allow</Text>
-                </TouchableOpacity>
-              </View>
+                }
+              />
             </View>
           </View>
-        )}
+        </Modal>
+      );
+    };
 
-        {/* Fullscreen Interactive Map Pin Picker */}
-        {showMapSelection && (
-          <View style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: t.bg,
-            zIndex: 3000
+    // Photo Picker Choice Dialog
+    const renderPhotoPickerModal = () => {
+      if (!showPhotoPicker) return null;
+      return (
+        <Modal transparent visible={showPhotoPicker} animationType="fade">
+          <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', padding: 24 }}>
+            <View style={{ width: '100%', maxWidth: 300, backgroundColor: t.card, borderRadius: 24, padding: 20, borderWidth: 1, borderColor: t.border }}>
+              <Text style={{ fontSize: 16, fontWeight: '800', color: t.text, textAlign: 'center', marginBottom: 20 }}>Upload Door/Building Image</Text>
+              
+              <TouchableOpacity
+                onPress={handleTakePhoto}
+                style={{
+                  height: 48,
+                  borderRadius: 12,
+                  backgroundColor: B.orange,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  marginBottom: 12
+                }}
+              >
+                <Text style={{ color: '#FFFFFF', fontWeight: 'bold', fontSize: 14 }}>Take Photo (Camera)</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={handleChooseFromLibrary}
+                style={{
+                  height: 48,
+                  borderRadius: 12,
+                  borderWidth: 1.5,
+                  borderColor: B.orange,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  marginBottom: 16
+                }}
+              >
+                <Text style={{ color: B.orange, fontWeight: 'bold', fontSize: 14 }}>Choose from Gallery</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={() => setShowPhotoPicker(false)}
+                style={{
+                  alignSelf: 'center',
+                  padding: 8
+                }}
+              >
+                <Text style={{ color: t.muted, fontWeight: '700', fontSize: 13 }}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+      );
+    };
+
+    return (
+      <SafeAreaView style={[styles.safeArea, { backgroundColor: t.bg, paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 24) : 0 }]}>
+        <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={t.bg} />
+        
+        {/* Header Row: Back button & Search Bar side-by-side as shown in image */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: 12, gap: 10 }}>
+          <TouchableOpacity onPress={back} style={{ width: 40, height: 40, justifyContent: 'center', alignItems: 'center' }}>
+            <ArrowLeft size={24} color={t.text} />
+          </TouchableOpacity>
+
+          {/* Search Input Button */}
+          <TouchableOpacity 
+            activeOpacity={0.8}
+            onPress={() => setShowSearchModal(true)} 
+            style={{ 
+              flex: 1,
+              flexDirection: 'row', 
+              alignItems: 'center', 
+              backgroundColor: t.input, 
+              borderRadius: 16, 
+              paddingHorizontal: 16, 
+              height: 50, 
+              borderWidth: 1.5,
+              borderColor: t.border
+            }}
+          >
+            <Search size={18} color={t.muted} />
+            <Text style={{ color: t.muted, marginLeft: 10, fontSize: 14 }}>Search for area, street name...</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Immersive Interactive Map Canvas */}
+        <View 
+          {...panResponder.panHandlers}
+          style={{ flex: 1, backgroundColor: isDark ? '#1C1F22' : '#F0F4F8', position: 'relative', overflow: 'hidden', marginTop: 12 }}
+        >
+          {/* Custom Stylized Map Vectors that translate on drag */}
+          <View style={{ 
+            position: 'absolute', 
+            width: 1000, 
+            height: 1000, 
+            left: -300, 
+            top: -300,
+            transform: [{ translateX: mapTranslateX }, { translateY: mapTranslateY }] 
           }}>
-            <SafeAreaView style={{ flex: 1 }}>
-              {/* Header Bar */}
+            <Svg width="100%" height="100%" style={{ opacity: isDark ? 0.15 : 0.4 }}>
+              {/* Grid streets */}
+              <Path d="M 0 100 L 1000 300 M 100 0 L 300 1000 M 0 700 L 1000 400 M 500 0 L 500 1000 M 200 100 L 800 900 M 800 100 L 200 900" stroke={isDark ? "#FFFFFF" : "#475467"} strokeWidth={4} />
+              <Rect x={140} y={250} width={180} height={120} rx={16} fill={isDark ? "#2E7D32" : "#81C784"} opacity={0.6} />
+              <Rect x={600} y={450} width={150} height={200} rx={16} fill={isDark ? "#1565C0" : "#64B5F6"} opacity={0.6} />
+              <Ellipse cx={500} cy={200} rx={90} ry={60} fill={isDark ? "#C62828" : "#E57373"} opacity={0.5} />
+            </Svg>
+
+            {/* Map Landmarks that move with streets */}
+            <View style={{ position: 'absolute', top: 220, left: 160, opacity: 0.6 }}>
+              <Text style={{ fontSize: 11, color: t.text, fontWeight: 'bold' }}>St.Peter's High School</Text>
+            </View>
+            <View style={{ position: 'absolute', top: 480, right: 280, opacity: 0.6 }}>
+              <Text style={{ fontSize: 11, color: t.text, fontWeight: 'bold' }}>Devashrey Hostel - Zeus</Text>
+            </View>
+            <View style={{ position: 'absolute', top: 620, left: 240, opacity: 0.6 }}>
+              <Text style={{ fontSize: 11, color: t.text, fontWeight: 'bold' }}>Ajith boys hostel</Text>
+            </View>
+            <View style={{ position: 'absolute', top: 380, right: 350, opacity: 0.6 }}>
+              <Text style={{ fontSize: 11, color: t.text, fontWeight: 'bold' }}>Tower 3 lobby entry</Text>
+            </View>
+          </View>
+
+          {/* Centered Map Pin (Stays static, but bounces on drag) */}
+          <View style={{ position: 'absolute', left: '50%', top: '45%', marginLeft: -18, marginTop: -36, alignItems: 'center', zIndex: 10 }}>
+            {/* Pin Tooltip */}
+            <View style={{
+              backgroundColor: '#FFFFFF',
+              paddingHorizontal: 12,
+              paddingVertical: 8,
+              borderRadius: 8,
+              borderWidth: 1,
+              borderColor: '#E4E7EC',
+              position: 'absolute',
+              bottom: 45,
+              width: 230,
+              alignItems: 'center',
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.15,
+              shadowRadius: 6,
+              elevation: 5
+            }}>
+              <Text style={{ fontSize: 11, color: '#101828', fontWeight: '800', textAlign: 'center' }}>Move pin to your exact delivery location</Text>
+              <View style={{ width: 0, height: 0, borderLeftWidth: 6, borderRightWidth: 6, borderTopWidth: 6, borderLeftColor: 'transparent', borderRightColor: 'transparent', borderTopColor: '#FFFFFF', position: 'absolute', bottom: -6 }} />
+            </View>
+
+            <Animated.View style={{
+              transform: [
+                { translateY: isDraggingMap ? -12 : 0 },
+                { scale: isDraggingMap ? 1.15 : 1.0 }
+              ]
+            }}>
+              <MapPin size={38} color="#F04438" />
+            </Animated.View>
+            <View style={{ 
+              width: 10, 
+              height: 10, 
+              borderRadius: 5, 
+              backgroundColor: 'rgba(0,0,0,0.25)', 
+              transform: [{ scaleX: isDraggingMap ? 0.6 : 2 }], 
+              marginTop: -2,
+              opacity: isDraggingMap ? 0.4 : 1
+            }} />
+          </View>
+
+          {/* Use Current Location Floating Button */}
+          <TouchableOpacity 
+            onPress={() => {
+              setMapTranslateX(0);
+              setMapTranslateY(0);
+              setMapOffsetList({ x: 0, y: 0 });
+              detectCurrentLocation();
+            }}
+            style={{ 
+              position: 'absolute', 
+              bottom: 16, 
+              alignSelf: 'center', 
+              flexDirection: 'row', 
+              alignItems: 'center', 
+              backgroundColor: t.card, 
+              borderWidth: 1.5, 
+              borderColor: t.border, 
+              borderRadius: 20, 
+              paddingHorizontal: 16, 
+              paddingVertical: 10,
+              gap: 8,
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.1,
+              shadowRadius: 4,
+              elevation: 3
+            }}
+          >
+            <Svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="#F04438" strokeWidth={2.5}>
+              <Circle cx={12} cy={12} r={8} />
+              <Circle cx={12} cy={12} r={3} />
+              <Path d="M12 2 L12 6 M12 18 L12 22 M2 12 L6 12 M18 12 L22 12" />
+            </Svg>
+            <Text style={{ fontSize: 13, fontWeight: '800', color: '#F04438' }}>Use current location</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Scrollable Bottom Delivery Details Sheet */}
+        <View style={{ maxHeight: '55%', backgroundColor: t.surface, borderTopLeftRadius: 28, borderTopRightRadius: 28, borderWidth: 1, borderTopColor: t.border }}>
+          <ScrollView contentContainerStyle={{ padding: 20 }} showsVerticalScrollIndicator={false}>
+            <Text style={{ fontSize: 13, fontWeight: '900', color: t.sub, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 12 }}>Delivery details</Text>
+
+            {/* Selected Address Row */}
+            <TouchableOpacity onPress={() => setShowSearchModal(true)} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+              <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(240, 68, 56, 0.1)', justifyContent: 'center', alignItems: 'center' }}>
+                <MapPin size={18} color="#F04438" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 14, fontWeight: '800', color: t.text, lineHeight: 20 }}>
+                  {selectedAddress.split(',')[0]}
+                </Text>
+                <Text style={{ fontSize: 12, color: t.muted, marginTop: 2 }} numberOfLines={1}>
+                  {selectedAddress}
+                </Text>
+              </View>
+              <ChevronRight size={16} color={t.muted} />
+            </TouchableOpacity>
+
+            {/* Warning / Allow Location alert box */}
+            {!locationPermissionEnabled ? (
+              <TouchableOpacity 
+                onPress={() => setShowLocationDialog(true)}
+                style={{
+                  backgroundColor: isDark ? 'rgba(234, 179, 8, 0.05)' : '#FFFBEB',
+                  borderWidth: 1,
+                  borderColor: isDark ? 'rgba(234, 179, 8, 0.25)' : '#FDE68A',
+                  borderRadius: 16,
+                  padding: 14,
+                  marginBottom: 16
+                }}
+              >
+                <Text style={{ fontSize: 12, fontWeight: '700', color: '#EAB308' }}>
+                  Enable location access to get your delivery address
+                </Text>
+                <Text style={{ fontSize: 12, fontWeight: '900', color: '#F04438', marginTop: 4 }}>
+                  Allow location access ‣
+                </Text>
+              </TouchableOpacity>
+            ) : isMaisammaguda ? (
               <View style={{
+                backgroundColor: isDark ? 'rgba(234, 179, 8, 0.05)' : '#FFFBEB',
+                borderWidth: 1,
+                borderColor: isDark ? 'rgba(234, 179, 8, 0.25)' : '#FDE68A',
+                borderRadius: 16,
+                padding: 14,
+                marginBottom: 16
+              }}>
+                <Text style={{ fontSize: 12, fontWeight: '700', color: '#EAB308', lineHeight: 18 }}>
+                  The selected restaurant is not available for delivery at your location.
+                </Text>
+              </View>
+            ) : null}
+
+            {/* Address Details input field */}
+            <View style={{ marginBottom: 16 }}>
+              <Text style={{ fontSize: 11, fontWeight: '900', color: t.sub, letterSpacing: 0.5, marginBottom: 8 }}>ADDRESS DETAILS*</Text>
+              <TextInput
+                style={{ height: 50, borderRadius: 14, borderWidth: 1, borderColor: t.border, backgroundColor: t.input, paddingHorizontal: 16, fontSize: 14, color: t.text, fontWeight: '600' }}
+                value={addressDetails}
+                onChangeText={setAddressDetails}
+                placeholder="E.g. Floor, House no."
+                placeholderTextColor={t.muted}
+              />
+            </View>
+
+            {/* Receiver details */}
+            <View style={{ borderTopWidth: 1, borderTopColor: t.border, paddingTop: 16, marginBottom: 16 }}>
+              <Text style={{ fontSize: 11, fontWeight: '900', color: t.sub, letterSpacing: 0.5, marginBottom: 14 }}>RECEIVER DETAILS FOR THIS ADDRESS</Text>
+              
+              {/* Receiver's Name Card with label inside and contacts book icon */}
+              <View style={{
+                borderWidth: 1,
+                borderColor: t.border,
+                borderRadius: 14,
                 height: 56,
+                position: 'relative',
                 flexDirection: 'row',
                 alignItems: 'center',
                 paddingHorizontal: 16,
-                borderBottomWidth: 1,
-                borderBottomColor: t.border,
-                backgroundColor: t.card
+                backgroundColor: t.input,
+                marginBottom: 16
               }}>
-                <TouchableOpacity 
-                  onPress={() => setShowMapSelection(false)} 
-                  style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.surface, borderWidth: 1.5, borderColor: t.border, justifyContent: 'center', alignItems: 'center' }}
-                >
-                  <ArrowLeft size={16} color={t.text} />
+                <Text style={{
+                  position: 'absolute',
+                  top: -8,
+                  left: 12,
+                  fontSize: 11,
+                  fontWeight: 'bold',
+                  color: t.sub,
+                  backgroundColor: t.surface,
+                  paddingHorizontal: 6,
+                  zIndex: 1
+                }}>Receiver's Name</Text>
+                
+                <TextInput
+                  style={{ flex: 1, height: '100%', color: t.text, fontSize: 14, fontWeight: '600' }}
+                  value={receiverDetailsName}
+                  onChangeText={setReceiverDetailsName}
+                  placeholder="Enter name"
+                  placeholderTextColor={t.muted}
+                />
+
+                {receiverDetailsName ? (
+                  <TouchableOpacity onPress={() => setReceiverDetailsName("")} style={{ padding: 4 }}>
+                    <X size={16} color={t.muted} />
+                  </TouchableOpacity>
+                ) : null}
+
+                <View style={{ width: 1, height: 20, backgroundColor: t.border, marginHorizontal: 12 }} />
+
+                <TouchableOpacity onPress={handlePickContact} style={{ padding: 4 }}>
+                  <Contact size={20} color={B.orange} />
                 </TouchableOpacity>
-                <Text style={{ fontSize: 16, fontWeight: '900', color: t.text, marginLeft: 14 }}>Pin Delivery Location</Text>
               </View>
 
-              {/* Map Canvas with grids and pins */}
+              {/* Receiver's Phone Card with label inside */}
               <View style={{
-                flex: 1,
-                backgroundColor: isDark ? '#16120E' : '#FFF9F3',
-                margin: 16,
-                borderRadius: 28,
-                borderWidth: 1.5,
-                borderColor: t.border,
-                overflow: 'hidden',
-                position: 'relative'
-              }}>
-                {/* Horizontal Road grid */}
-                <View style={{ position: 'absolute', left: 0, right: 0, top: '40%', height: 32, backgroundColor: isDark ? '#261F1A' : '#F0E5DC', borderTopWidth: 1, borderBottomWidth: 1, borderColor: t.border, justifyContent: 'center', paddingLeft: 16 }}>
-                  <Text style={{ fontSize: 8, fontWeight: 'bold', color: t.muted, letterSpacing: 1 }}>KOIKOI EXPRESS RING ROAD</Text>
-                </View>
-                <View style={{ position: 'absolute', left: 0, right: 0, top: '75%', height: 24, backgroundColor: isDark ? '#261F1A' : '#F0E5DC', borderTopWidth: 1, borderBottomWidth: 1, borderColor: t.border }} />
-
-                {/* Vertical Road Grid */}
-                <View style={{ position: 'absolute', top: 0, bottom: 0, left: '50%', width: 28, backgroundColor: isDark ? '#261F1A' : '#F0E5DC', borderLeftWidth: 1, borderRightWidth: 1, borderColor: t.border, justifyContent: 'center', alignItems: 'center' }}>
-                  <Text style={{ fontSize: 7, fontWeight: 'bold', color: t.muted, letterSpacing: 0.5, transform: [{ rotate: '90deg' }] }}>CHEF AVENUE</Text>
-                </View>
-
-                {/* Indiranagar Green Hub Park */}
-                <View style={{
-                  position: 'absolute',
-                  left: 16,
-                  top: 16,
-                  width: 130,
-                  height: 90,
-                  borderRadius: 16,
-                  backgroundColor: '#3BA76A',
-                  opacity: isDark ? 0.08 : 0.12,
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  borderWidth: 1,
-                  borderColor: '#3BA76A'
-                }}>
-                  <Text style={{ fontSize: 9, fontWeight: 'bold', color: '#2E7D32' }}>KOI KOI GREEN PARK</Text>
-                </View>
-
-                {/* Dabba Lake */}
-                <View style={{
-                  position: 'absolute',
-                  right: 16,
-                  bottom: 120,
-                  width: 100,
-                  height: 60,
-                  borderRadius: 30,
-                  backgroundColor: '#3B82F6',
-                  opacity: isDark ? 0.08 : 0.12,
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  borderWidth: 1,
-                  borderColor: '#3B82F6'
-                }}>
-                  <Text style={{ fontSize: 9, fontWeight: 'bold', color: '#1D4ED8' }}>DABBA LAKE</Text>
-                </View>
-
-                {/* Grid Fine Cross lines */}
-                <View style={{ position: 'absolute', top: 0, bottom: 0, left: '25%', width: 1, backgroundColor: t.border, opacity: 0.4 }} />
-                <View style={{ position: 'absolute', top: 0, bottom: 0, left: '75%', width: 1, backgroundColor: t.border, opacity: 0.4 }} />
-                <View style={{ position: 'absolute', left: 0, right: 0, top: '20%', height: 1, backgroundColor: t.border, opacity: 0.4 }} />
-                <View style={{ position: 'absolute', left: 0, right: 0, top: '60%', height: 1, backgroundColor: t.border, opacity: 0.4 }} />
-
-                {/* Clickable Map Pins */}
-                {MOCK_MAP_LOCATIONS.map((loc, idx) => {
-                  const active = selectedMapPinIdx === idx;
-                  return (
-                    <TouchableOpacity
-                      key={loc.id}
-                      style={{
-                        position: 'absolute',
-                        left: `${loc.x}%`,
-                        top: `${loc.y}%`,
-                        marginLeft: -20,
-                        marginTop: -20,
-                        width: 40,
-                        height: 40,
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        zIndex: active ? 100 : 10
-                      }}
-                      onPress={() => setSelectedMapPinIdx(idx)}
-                    >
-                      {/* Flashing selected halo ring */}
-                      {active ? (
-                        <View style={{
-                          position: 'absolute',
-                          width: 32,
-                          height: 32,
-                          borderRadius: 16,
-                          backgroundColor: B.orange + '30',
-                          borderWidth: 1.5,
-                          borderColor: B.orange,
-                          alignItems: 'center',
-                          justifyContent: 'center'
-                        }}>
-                          <View style={{
-                            width: 12,
-                            height: 12,
-                            borderRadius: 6,
-                            backgroundColor: B.orange
-                          }} />
-                        </View>
-                      ) : (
-                        <View style={{
-                          width: 14,
-                          height: 14,
-                          borderRadius: 7,
-                          backgroundColor: t.muted,
-                          borderWidth: 1.5,
-                          borderColor: '#FFFFFF'
-                        }} />
-                      )}
-                      
-                      {/* Floating pin indicator icon */}
-                      {active && (
-                        <View style={{ position: 'absolute', top: -16 }}>
-                          <MapPin size={24} color={B.orange} />
-                        </View>
-                      )}
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-
-              {/* Floating address details card at bottom */}
-              <View style={{
-                backgroundColor: t.card,
-                borderTopLeftRadius: 32,
-                borderTopRightRadius: 32,
                 borderWidth: 1,
                 borderColor: t.border,
-                padding: 20,
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: -6 },
-                shadowOpacity: 0.08,
-                shadowRadius: 12,
-                elevation: 5
+                borderRadius: 14,
+                height: 56,
+                position: 'relative',
+                flexDirection: 'row',
+                alignItems: 'center',
+                paddingHorizontal: 16,
+                backgroundColor: t.input,
+                marginBottom: 12
               }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-                  <View style={{ width: 36, height: 36, borderRadius: 12, backgroundColor: B.orangeL, justifyContent: 'center', alignItems: 'center' }}>
-                    <MapPin size={18} color={B.orange} />
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={{ fontSize: 11, color: B.orange, fontWeight: '900', letterSpacing: 0.5 }}>PINNED ADDRESS</Text>
-                    <Text style={{ fontSize: 15, fontWeight: 'bold', color: t.text, marginTop: 2 }} numberOfLines={1}>
-                      {MOCK_MAP_LOCATIONS[selectedMapPinIdx].label}
-                    </Text>
-                  </View>
-                </View>
+                <Text style={{
+                  position: 'absolute',
+                  top: -8,
+                  left: 12,
+                  fontSize: 11,
+                  fontWeight: 'bold',
+                  color: t.sub,
+                  backgroundColor: t.surface,
+                  paddingHorizontal: 6,
+                  zIndex: 1
+                }}>Receiver's Phone</Text>
+                
+                <TextInput
+                  style={{ flex: 1, height: '100%', color: t.text, fontSize: 14, fontWeight: '600' }}
+                  value={receiverDetailsPhone}
+                  onChangeText={setReceiverDetailsPhone}
+                  placeholder="Enter phone number"
+                  placeholderTextColor={t.muted}
+                  keyboardType="phone-pad"
+                />
 
-                {/* Subtext info list */}
-                <View style={{
-                  backgroundColor: t.bg,
-                  borderRadius: 16,
-                  padding: 12,
-                  gap: 6,
-                  borderWidth: 1,
-                  borderColor: t.border,
-                  marginBottom: 20
-                }}>
-                  <Text style={{ fontSize: 11, color: t.sub }}><Text style={{ fontWeight: 'bold', color: t.text }}>House/Plot:</Text> {MOCK_MAP_LOCATIONS[selectedMapPinIdx].house}</Text>
-                  <Text style={{ fontSize: 11, color: t.sub }}><Text style={{ fontWeight: 'bold', color: t.text }}>Area/Street:</Text> {MOCK_MAP_LOCATIONS[selectedMapPinIdx].name}</Text>
-                  <Text style={{ fontSize: 11, color: t.sub }}><Text style={{ fontWeight: 'bold', color: t.text }}>Landmark:</Text> {MOCK_MAP_LOCATIONS[selectedMapPinIdx].landmark}</Text>
-                  <Text style={{ fontSize: 11, color: t.sub }}><Text style={{ fontWeight: 'bold', color: t.text }}>Pincode:</Text> {MOCK_MAP_LOCATIONS[selectedMapPinIdx].pincode}</Text>
-                </View>
+                {receiverDetailsPhone ? (
+                  <TouchableOpacity onPress={() => setReceiverDetailsPhone("")} style={{ padding: 4 }}>
+                    <X size={16} color={t.muted} />
+                  </TouchableOpacity>
+                ) : null}
+              </View>
+            </View>
 
-                {/* Confirm details and continue */}
-                <TouchableOpacity
+            {/* Save address as */}
+            <View style={{ marginBottom: 20 }}>
+              <Text style={{ fontSize: 11, fontWeight: '900', color: t.sub, letterSpacing: 0.5, marginBottom: 10 }}>SAVE ADDRESS AS</Text>
+              <View style={{ flexDirection: 'row', gap: 10 }}>
+                {/* Home */}
+                <TouchableOpacity 
+                  onPress={() => setAddressLabel('Home')}
                   style={{
-                    height: 54,
-                    borderRadius: 27,
-                    overflow: 'hidden',
-                    shadowColor: B.orange,
-                    shadowOffset: { width: 0, height: 4 },
-                    shadowOpacity: 0.2,
-                    shadowRadius: 8,
-                    elevation: 3
-                  }}
-                  onPress={() => {
-                    const loc = MOCK_MAP_LOCATIONS[selectedMapPinIdx];
-                    setUser(prev => ({
-                      ...prev,
-                      houseNo: loc.house,
-                      street: loc.name,
-                      landmark: loc.landmark,
-                      pincode: loc.pincode,
-                      address: `${loc.house}, ${loc.name}, ${loc.landmark} - ${loc.pincode}`
-                    }));
-                    setShowMapSelection(false);
-                    setToast('Location pinned & details auto-filled!');
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    paddingHorizontal: 16,
+                    paddingVertical: 10,
+                    borderRadius: 20,
+                    borderWidth: 1.5,
+                    borderColor: addressLabel === 'Home' ? B.orange : t.border,
+                    backgroundColor: addressLabel === 'Home' ? (isDark ? 'rgba(233, 106, 46, 0.1)' : 'rgba(233, 106, 46, 0.05)') : t.input,
+                    gap: 6
                   }}
                 >
-                  <LinearGradient colors={['#FF852C', '#FD4F1B']} style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                    <Text style={{ color: '#FFFFFF', fontSize: 15, fontWeight: '800' }}>Confirm Pinned Location</Text>
-                  </LinearGradient>
+                  <HomeIcon size={16} color={addressLabel === 'Home' ? B.orange : t.muted} />
+                  <Text style={{ fontSize: 13, fontWeight: 'bold', color: addressLabel === 'Home' ? B.orange : t.text }}>Home</Text>
+                </TouchableOpacity>
+
+                {/* Work */}
+                <TouchableOpacity 
+                  onPress={() => setAddressLabel('Work')}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    paddingHorizontal: 16,
+                    paddingVertical: 10,
+                    borderRadius: 20,
+                    borderWidth: 1.5,
+                    borderColor: addressLabel === 'Work' ? B.orange : t.border,
+                    backgroundColor: addressLabel === 'Work' ? (isDark ? 'rgba(233, 106, 46, 0.1)' : 'rgba(233, 106, 46, 0.05)') : t.input,
+                    gap: 6
+                  }}
+                >
+                  <Building2 size={16} color={addressLabel === 'Work' ? B.orange : t.muted} />
+                  <Text style={{ fontSize: 13, fontWeight: 'bold', color: addressLabel === 'Work' ? B.orange : t.text }}>Work</Text>
+                </TouchableOpacity>
+
+                {/* Other */}
+                <TouchableOpacity 
+                  onPress={() => setAddressLabel('Other')}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    paddingHorizontal: 16,
+                    paddingVertical: 10,
+                    borderRadius: 20,
+                    borderWidth: 1.5,
+                    borderColor: addressLabel === 'Other' ? B.orange : t.border,
+                    backgroundColor: addressLabel === 'Other' ? (isDark ? 'rgba(233, 106, 46, 0.1)' : 'rgba(233, 106, 46, 0.05)') : t.input,
+                    gap: 6
+                  }}
+                >
+                  <MapPin size={16} color={addressLabel === 'Other' ? B.orange : t.muted} />
+                  <Text style={{ fontSize: 13, fontWeight: 'bold', color: addressLabel === 'Other' ? B.orange : t.text }}>Other</Text>
                 </TouchableOpacity>
               </View>
-            </SafeAreaView>
-          </View>
-        )}
-      </View>
+            </View>
+
+            {/* Door/building image (optional) section */}
+            <View style={{ marginBottom: 24 }}>
+              <Text style={{ fontSize: 11, fontWeight: '900', color: t.sub, letterSpacing: 0.5, marginBottom: 8 }}>DOOR/BUILDING IMAGE (OPTIONAL)</Text>
+              
+              {doorImageUri ? (
+                <View style={{ height: 120, borderRadius: 14, overflow: 'hidden', borderWidth: 1.5, borderColor: t.border, position: 'relative' }}>
+                  <Image source={{ uri: doorImageUri }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+                  <TouchableOpacity 
+                    onPress={() => setDoorImageUri(null)}
+                    style={{
+                      position: 'absolute',
+                      top: 8,
+                      right: 8,
+                      backgroundColor: 'rgba(0,0,0,0.6)',
+                      width: 24,
+                      height: 24,
+                      borderRadius: 12,
+                      justifyContent: 'center',
+                      alignItems: 'center'
+                    }}
+                  >
+                    <X size={14} color="#FFFFFF" />
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <TouchableOpacity 
+                  onPress={handlePickImage}
+                  style={{
+                    borderWidth: 1.5,
+                    borderStyle: 'dashed',
+                    borderColor: B.orange,
+                    borderRadius: 14,
+                    height: 52,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    flexDirection: 'row',
+                    gap: 8,
+                    backgroundColor: t.input
+                  }}
+                >
+                  <Camera size={18} color={B.orange} />
+                  <Text style={{ fontSize: 13, fontWeight: 'bold', color: B.orange }}>Add an image</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+
+            {/* Confirm details and continue */}
+            <TouchableOpacity
+              style={{
+                height: 52,
+                borderRadius: 26,
+                overflow: 'hidden',
+                backgroundColor: B.orange,
+                justifyContent: 'center',
+                alignItems: 'center'
+              }}
+              onPress={() => {
+                if (isMaisammaguda) {
+                  setToast("Sorry, we do not deliver to Maisammaguda yet. Please pick another area.");
+                  return;
+                }
+                if (!addressDetails.trim()) {
+                  setToast("Please enter address details (house/floor number)");
+                  return;
+                }
+                if (!receiverDetailsName.trim()) {
+                  setToast("Please enter receiver's name");
+                  return;
+                }
+                if (!receiverDetailsPhone.trim()) {
+                  setToast("Please enter receiver's phone number");
+                  return;
+                }
+                
+                // Save details to user and address list
+                const fullAddressString = addressDetails + ", " + selectedAddress;
+                const newAddr = {
+                  id: Date.now().toString(),
+                  label: addressLabel,
+                  address: fullAddressString,
+                  name: receiverDetailsName,
+                  phone: receiverDetailsPhone,
+                  image: doorImageUri || undefined
+                };
+
+                setAddressesList(prev => [newAddr, ...prev]);
+                setUser(prev => ({
+                  ...prev,
+                  houseNo: addressDetails,
+                  street: selectedAddress.split(',')[0],
+                  address: fullAddressString,
+                  addressLabel: addressLabel
+                }));
+
+                setToast("Address saved successfully!");
+                go('setup3');
+              }}
+            >
+              <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '800' }}>Save address</Text>
+            </TouchableOpacity>
+          </ScrollView>
+        </View>
+
+        {renderContactsModal()}
+        {renderPhotoPickerModal()}
+      </SafeAreaView>
     );
   }
-
-  // 6. Setup 3: Health Details (Step 3 of 3)
-  function RenderSetup3() {
+function RenderSetup3() {
     const w = parseFloat(user.weight) || 74;
     const h = (parseFloat(user.height) || 178) / 100;
     const bmiVal = Math.round((w / (h * h)) * 10) / 10;
 
     let bmiStatus = 'Normal Weight';
     let bmiColor = '#2E7D32'; 
-    let bmiBg = '#EAF7EE'; 
-    let bmiBorder = '#CBEFCE';
+    let bmiBg = isDark ? 'rgba(46, 125, 50, 0.1)' : 'rgba(46, 125, 50, 0.05)'; 
+    let bmiBorder = isDark ? 'rgba(46, 125, 50, 0.3)' : 'rgba(46, 125, 50, 0.15)';
     
     if (bmiVal < 18.5) {
       bmiStatus = 'Underweight';
       bmiColor = '#F59E0B'; 
-      bmiBg = '#FEF3C7';
-      bmiBorder = '#FDE68A';
+      bmiBg = isDark ? 'rgba(245, 158, 11, 0.1)' : 'rgba(245, 158, 11, 0.05)';
+      bmiBorder = isDark ? 'rgba(245, 158, 11, 0.3)' : 'rgba(245, 158, 11, 0.15)';
     } else if (bmiVal >= 25 && bmiVal < 30) {
       bmiStatus = 'Overweight';
       bmiColor = '#EF4444'; 
-      bmiBg = '#FEE2E2';
-      bmiBorder = '#FCA5A5';
+      bmiBg = isDark ? 'rgba(239, 68, 68, 0.1)' : 'rgba(239, 68, 68, 0.05)';
+      bmiBorder = isDark ? 'rgba(239, 68, 68, 0.3)' : 'rgba(239, 68, 68, 0.15)';
     } else if (bmiVal >= 30) {
       bmiStatus = 'Obese';
       bmiColor = '#B91C1C'; 
-      bmiBg = '#FEE2E2';
-      bmiBorder = '#FCA5A5';
+      bmiBg = isDark ? 'rgba(185, 28, 28, 0.1)' : 'rgba(185, 28, 28, 0.05)';
+      bmiBorder = isDark ? 'rgba(185, 28, 28, 0.3)' : 'rgba(185, 28, 28, 0.15)';
     }
 
-    return (
-      <View style={{ flex: 1, backgroundColor: '#FFFDF9', alignItems: 'center', justifyContent: 'center' }}>
-        <LinearGradient
-          colors={['#FED6B3', '#FFFDF9', '#FFF1E5']}
-          locations={[0, 0.45, 1.0]}
-          style={{ width: '100%', height: '100%', flex: 1 }}
-        >
-          <SafeAreaView style={{ flex: 1 }}>
-            <View style={{ flex: 1, paddingHorizontal: 24, justifyContent: 'center', alignItems: 'center' }}>
-              
-              <View style={{ 
-                width: '100%',
-                maxWidth: 380,
-                backgroundColor: 'rgba(255, 255, 255, 0.85)',
-                borderRadius: 32, 
-                borderWidth: 1.5, 
-                borderColor: '#FFEEDB', 
-                padding: 24, 
-                shadowColor: '#A05020', 
-                shadowOffset: { width: 0, height: 12 }, 
-                shadowOpacity: 0.1, 
-                shadowRadius: 20, 
-                elevation: 6,
-                maxHeight: SCREEN_HEIGHT - 80,
-              }}>
-                <ScrollView showsVerticalScrollIndicator={false}>
-                  {/* Top Progress bar and Back row */}
-                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                    <TouchableOpacity onPress={back} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: '#FFFFFF', borderWidth: 1.5, borderColor: '#FFEEDB', justifyContent: 'center', alignItems: 'center' }}>
-                      <ArrowLeft size={16} color="#13352C" />
-                    </TouchableOpacity>
-                    <View style={{ alignItems: 'flex-end' }}>
-                      <Text style={{ fontSize: 10, fontWeight: '900', color: '#DF7E2C', letterSpacing: 0.5 }}>STEP 3 OF 3</Text>
-                      <Text style={{ fontSize: 10, color: '#5A6A64', fontWeight: 'bold', marginTop: 1 }}>100% Complete</Text>
-                    </View>
-                  </View>
+    const progressPct = 75 + (setup3SubPage - 1) * 6.25; 
+    const displayedPercent = Math.round(75 + (setup3SubPage - 1) * 8.33); 
+    
+    const handleSetup3Back = () => {
+      if (setup3SubPage > 1) {
+        setSetup3SubPage(setup3SubPage - 1);
+      } else {
+        back();
+      }
+    };
 
-                  {/* Progress Line */}
-                  <View style={{ width: '100%', height: 6, backgroundColor: '#FFEEDB', borderRadius: 3, overflow: 'hidden', marginBottom: 20 }}>
-                    <View style={{ width: '100%', height: '100%', backgroundColor: '#DF7E2C', borderRadius: 3 }} />
-                  </View>
+    const handleSetup3Next = () => {
+      if (setup3SubPage === 1) {
+        if (!user.height.trim() || !user.weight.trim() || !goalWeight.trim()) {
+          setToast("Please fill in height, weight, and goal weight.");
+          return;
+        }
+        setSetup3SubPage(2);
+      } else if (setup3SubPage === 2) {
+        setSetup3SubPage(3);
+      } else if (setup3SubPage === 3) {
+        setSetup3SubPage(4);
+      } else {
+        // Complete onboarding
+        setUser(prev => ({
+          ...prev,
+          height: user.height,
+          weight: user.weight,
+          goalWeight: goalWeight,
+          activityLevel: user.activityLevel,
+          workoutFrequency: workoutFrequency,
+          workoutTypes: workoutTypes,
+          healthGoal: primaryGoal,
+          goalSpeed: goalSpeed,
+          motivation: motivation,
+          foodPref: user.foodPref,
+          allergies: allergiesList.length > 0 ? allergiesList.join(', ') : 'None',
+          healthConditions: healthConditions,
+          foodDislikes: foodDislikes,
+          waterIntakeGoal: waterIntakeGoal === 'Custom' ? customWaterIntake + ' L' : waterIntakeGoal,
+          bedtime: bedtime,
+          wakeupTime: wakeupTime,
+          sleepHours: calculateSleepHours(bedtime, wakeupTime),
+          smartNotifications: smartNotifications,
+          connectedHealthApps: connectedHealthApps
+        }));
+        setToast("Profile onboarding completed successfully!");
+        go('home');
+      }
+    };
 
-                  {/* Title & Subtitle */}
-                  <Text style={{ fontSize: 24, fontWeight: '900', color: '#13352C' }}>Health & Customizations</Text>
-                  <Text style={{ fontSize: 13, color: '#5A6A64', marginTop: 4, lineHeight: 18, marginBottom: 16 }}>
-                    Select your dietary parameters, fitness goals and spice tolerances.
-                  </Text>
+    const toggleWorkoutType = (type: string) => {
+      setWorkoutTypes(prev => 
+        prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type]
+      );
+    };
 
-                  {/* Height / Weight Inputs */}
-                  <View style={{ flexDirection: 'row', gap: 12 }}>
-                    <View style={{ flex: 1 }}>
-                      <Text style={{ fontSize: 10, fontWeight: '900', color: '#DF7E2C', letterSpacing: 1.2, marginBottom: 8 }}>HEIGHT (CM)</Text>
-                      <TextInput
-                        style={{ height: 56, borderRadius: 18, borderWidth: 1.5, borderColor: '#FFEEDB', backgroundColor: '#FFFFFF', paddingHorizontal: 16, fontSize: 14, color: '#13352C', fontWeight: '600' }}
-                        value={user.height}
-                        onChangeText={val => setUser(prev => ({ ...prev, height: val }))}
-                        placeholder="178"
-                        placeholderTextColor="#A0B0AA"
-                        keyboardType="numeric"
-                      />
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={{ fontSize: 10, fontWeight: '900', color: '#DF7E2C', letterSpacing: 1.2, marginBottom: 8 }}>WEIGHT (KG)</Text>
-                      <TextInput
-                        style={{ height: 56, borderRadius: 18, borderWidth: 1.5, borderColor: '#FFEEDB', backgroundColor: '#FFFFFF', paddingHorizontal: 16, fontSize: 14, color: '#13352C', fontWeight: '600' }}
-                        value={user.weight}
-                        onChangeText={val => setUser(prev => ({ ...prev, weight: val }))}
-                        placeholder="74"
-                        placeholderTextColor="#A0B0AA"
-                        keyboardType="numeric"
-                      />
-                    </View>
-                  </View>
+    const toggleAllergy = (allergy: string) => {
+      setAllergiesList(prev => 
+        prev.includes(allergy) ? prev.filter(a => a !== allergy) : [...prev, allergy]
+      );
+    };
 
-                  {/* Calculated BMI Card */}
-                  <View style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    backgroundColor: bmiBg,
+    const toggleCondition = (cond: string) => {
+      if (cond === 'None') {
+        setHealthConditions(['None']);
+        return;
+      }
+      setHealthConditions(prev => {
+        const filtered = prev.filter(x => x !== 'None');
+        return filtered.includes(cond) ? filtered.filter(x => x !== cond) : [...filtered, cond];
+      });
+    };
+
+    const toggleDislike = (dislike: string) => {
+      setFoodDislikes(prev => 
+        prev.includes(dislike) ? prev.filter(d => d !== dislike) : [...prev, dislike]
+      );
+    };
+
+    const toggleHealthApp = (app: string) => {
+      setConnectedHealthApps(prev => 
+        prev.includes(app) ? prev.filter(a => a !== app) : [...prev, app]
+      );
+    };
+
+    // Sub-Page 1 Render
+    const renderPage1 = () => (
+      <View style={{ gap: 20 }}>
+        <Text style={{ fontSize: 20, fontWeight: '900', color: t.text }}>Page 1 — Body & Fitness Profile</Text>
+        <Text style={{ fontSize: 13, color: t.sub, lineHeight: 18 }}>Understand your physical measurements and daily activity.</Text>
+        
+        {/* Physical Measurements inputs */}
+        <Text style={{ fontSize: 11, fontWeight: '900', color: '#DF7E2C', letterSpacing: 1.2 }}>PHYSICAL MEASUREMENTS</Text>
+        
+        <View style={{ flexDirection: 'row', gap: 12 }}>
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontSize: 10, fontWeight: 'bold', color: t.sub, marginBottom: 6 }}>HEIGHT (CM)</Text>
+            <TextInput
+              style={{ height: 50, borderRadius: 14, borderWidth: 1.5, borderColor: t.border, backgroundColor: t.input, paddingHorizontal: 16, fontSize: 14, color: t.text, fontWeight: '600' }}
+              value={user.height}
+              onChangeText={val => setUser(prev => ({ ...prev, height: val }))}
+              placeholder="178"
+              placeholderTextColor={t.muted}
+              keyboardType="numeric"
+            />
+          </View>
+
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontSize: 10, fontWeight: 'bold', color: t.sub, marginBottom: 6 }}>WEIGHT (KG)</Text>
+            <TextInput
+              style={{ height: 50, borderRadius: 14, borderWidth: 1.5, borderColor: t.border, backgroundColor: t.input, paddingHorizontal: 16, fontSize: 14, color: t.text, fontWeight: '600' }}
+              value={user.weight}
+              onChangeText={val => setUser(prev => ({ ...prev, weight: val }))}
+              placeholder="74"
+              placeholderTextColor={t.muted}
+              keyboardType="numeric"
+            />
+          </View>
+
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontSize: 10, fontWeight: 'bold', color: t.sub, marginBottom: 6 }}>GOAL WEIGHT (KG)</Text>
+            <TextInput
+              style={{ height: 50, borderRadius: 14, borderWidth: 1.5, borderColor: t.border, backgroundColor: t.input, paddingHorizontal: 16, fontSize: 14, color: t.text, fontWeight: '600' }}
+              value={goalWeight}
+              onChangeText={setGoalWeight}
+              placeholder="70"
+              placeholderTextColor={t.muted}
+              keyboardType="numeric"
+            />
+          </View>
+        </View>
+
+        {/* Calculated BMI */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: bmiBg, borderWidth: 1.5, borderColor: bmiBorder, borderRadius: 18, padding: 14, gap: 16 }}>
+          <ProgressRing pct={70} size={60} strokeW={5} color={bmiColor} label={String(bmiVal)} theme={t} />
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontSize: 13, fontWeight: 'bold', color: bmiColor }}>{bmiStatus} (BMI: {bmiVal})</Text>
+            <Text style={{ fontSize: 11, color: t.sub, marginTop: 2 }}>Your recommended daily calorie intake dynamically adapts to this target.</Text>
+          </View>
+        </View>
+
+        {/* Activity Level Selector */}
+        <View>
+          <Text style={{ fontSize: 11, fontWeight: '900', color: '#DF7E2C', letterSpacing: 1.2, marginBottom: 10 }}>DAILY ACTIVITY LEVEL</Text>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+            {['Sedentary', 'Lightly Active', 'Moderately Active', 'Very Active', 'Athlete'].map(level => {
+              const isSel = user.activityLevel === level;
+              return (
+                <TouchableOpacity
+                  key={level}
+                  onPress={() => setUser(prev => ({ ...prev, activityLevel: level }))}
+                  style={{
+                    paddingHorizontal: 12,
+                    paddingVertical: 8,
+                    borderRadius: 12,
                     borderWidth: 1.5,
-                    borderColor: bmiBorder,
-                    borderRadius: 18,
-                    padding: 14,
-                    marginTop: 16,
-                    gap: 16
-                  }}>
-                    <ProgressRing pct={70} size={60} strokeW={5} color={bmiColor} label={String(bmiVal)} theme={t} />
-                    <View style={{ flex: 1 }}>
-                      <Text style={{ fontSize: 13, fontWeight: 'bold', color: bmiColor }}>{bmiStatus}</Text>
-                      <Text style={{ fontSize: 11, color: '#5A6A64', marginTop: 2 }}>Dynamic dabba calorie target adapts to this.</Text>
-                    </View>
-                  </View>
+                    borderColor: isSel ? B.orange : t.border,
+                    backgroundColor: isSel ? (isDark ? 'rgba(233, 106, 46, 0.15)' : '#FFF4EC') : t.input
+                  }}
+                >
+                  <Text style={{ fontSize: 11, fontWeight: '800', color: isSel ? B.orange : t.text }}>{level}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
 
-                  {/* Activity Level Selector */}
-                  <View style={{ marginTop: 20 }}>
-                    <Text style={{ fontSize: 10, fontWeight: '900', color: '#DF7E2C', letterSpacing: 1.2, marginBottom: 8 }}>ACTIVITY LEVEL</Text>
-                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                      {['Sedentary', 'Lightly Active', 'Moderately Active', 'Very Active', 'Athlete'].map(lvl => {
-                        const isSelected = user.activityLevel === lvl;
-                        return (
-                          <TouchableOpacity
-                            key={lvl}
-                            style={{
-                              paddingHorizontal: 14,
-                              paddingVertical: 10,
-                              borderRadius: 12,
-                              borderWidth: 1.5,
-                              borderColor: isSelected ? '#DF7E2C' : '#FFEEDB',
-                              backgroundColor: isSelected ? '#FFF4EC' : '#FFFFFF',
-                              justifyContent: 'center',
-                              alignItems: 'center'
-                            }}
-                            onPress={() => setUser(prev => ({ ...prev, activityLevel: lvl }))}
-                          >
-                            <Text style={{ fontSize: 11, fontWeight: '800', color: isSelected ? '#DF7E2C' : '#13352C' }}>{lvl}</Text>
-                          </TouchableOpacity>
-                        );
-                      })}
-                    </View>
-                  </View>
+        {/* Workout Frequency */}
+        <View>
+          <Text style={{ fontSize: 11, fontWeight: '900', color: '#DF7E2C', letterSpacing: 1.2, marginBottom: 10 }}>WORKOUT FREQUENCY</Text>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+            {['Never', '1–2 days/week', '3–4 days/week', '5–6 days/week', 'Daily'].map(freq => {
+              const isSel = workoutFrequency === freq;
+              return (
+                <TouchableOpacity
+                  key={freq}
+                  onPress={() => setWorkoutFrequency(freq)}
+                  style={{
+                    paddingHorizontal: 12,
+                    paddingVertical: 8,
+                    borderRadius: 12,
+                    borderWidth: 1.5,
+                    borderColor: isSel ? B.orange : t.border,
+                    backgroundColor: isSel ? (isDark ? 'rgba(233, 106, 46, 0.15)' : '#FFF4EC') : t.input
+                  }}
+                >
+                  <Text style={{ fontSize: 11, fontWeight: '800', color: isSel ? B.orange : t.text }}>{freq}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
 
-                  {/* Health Goal */}
-                  <View style={{ marginTop: 20 }}>
-                    <Text style={{ fontSize: 10, fontWeight: '900', color: '#DF7E2C', letterSpacing: 1.2, marginBottom: 8 }}>HEALTH GOAL</Text>
-                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                      {['Weight Loss', 'Weight Gain', 'Muscle Gain', 'Maintain Weight', 'Healthy Lifestyle'].map(gl => {
-                        const isSelected = user.healthGoal === gl;
-                        return (
-                          <TouchableOpacity
-                            key={gl}
-                            style={{
-                              paddingHorizontal: 14,
-                              paddingVertical: 10,
-                              borderRadius: 12,
-                              borderWidth: 1.5,
-                              borderColor: isSelected ? '#DF7E2C' : '#FFEEDB',
-                              backgroundColor: isSelected ? '#FFF4EC' : '#FFFFFF',
-                              justifyContent: 'center',
-                              alignItems: 'center'
-                            }}
-                            onPress={() => setUser(prev => ({ ...prev, healthGoal: gl }))}
-                          >
-                            <Text style={{ fontSize: 11, fontWeight: '800', color: isSelected ? '#DF7E2C' : '#13352C' }}>{gl}</Text>
-                          </TouchableOpacity>
-                        );
-                      })}
-                    </View>
-                  </View>
-
-                  {/* Dietary Preference */}
-                  <View style={{ marginTop: 20 }}>
-                    <Text style={{ fontSize: 10, fontWeight: '900', color: '#DF7E2C', letterSpacing: 1.2, marginBottom: 8 }}>DIETARY PREFERENCE</Text>
-                    <View style={{ flexDirection: 'row', gap: 8 }}>
-                      {[
-                        { key: 'Veg', label: '🌿 Veg' },
-                        { key: 'Non-Veg', label: '🍗 Non-Veg' },
-                        { key: 'Egg', label: '🥚 Eggetarian' }
-                      ].map(pref => {
-                        const isSelected = user.foodPref === pref.key;
-                        return (
-                          <TouchableOpacity
-                            key={pref.key}
-                            style={{
-                              flex: 1,
-                              paddingVertical: 12,
-                              borderRadius: 12,
-                              borderWidth: 1.5,
-                              borderColor: isSelected ? '#DF7E2C' : '#FFEEDB',
-                              backgroundColor: isSelected ? '#FFF4EC' : '#FFFFFF',
-                              justifyContent: 'center',
-                              alignItems: 'center'
-                            }}
-                            onPress={() => setUser(prev => ({ ...prev, foodPref: pref.key }))}
-                          >
-                            <Text style={{ fontSize: 11, fontWeight: '800', color: isSelected ? '#DF7E2C' : '#13352C' }}>{pref.label}</Text>
-                          </TouchableOpacity>
-                        );
-                      })}
-                    </View>
-                  </View>
-
-                  {/* Spice Level tolerance */}
-                  <View style={{ marginTop: 20 }}>
-                    <Text style={{ fontSize: 10, fontWeight: '900', color: '#DF7E2C', letterSpacing: 1.2, marginBottom: 8 }}>SPICE LEVEL TOLERANCE</Text>
-                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                      {[
-                        { key: 'Mild', label: '🌶 Mild' },
-                        { key: 'Medium', label: '🌶🌶 Medium' },
-                        { key: 'Spicy', label: '🌶🌶🌶 Spicy' },
-                        { key: 'Extra Hot', label: '🔥 Extra Hot' }
-                      ].map(sp => {
-                        const isSelected = user.spiceLevel === sp.key;
-                        return (
-                          <TouchableOpacity
-                            key={sp.key}
-                            style={{
-                              paddingHorizontal: 12,
-                              paddingVertical: 10,
-                              borderRadius: 12,
-                              borderWidth: 1.5,
-                              borderColor: isSelected ? '#DF7E2C' : '#FFEEDB',
-                              backgroundColor: isSelected ? '#FFF4EC' : '#FFFFFF',
-                              justifyContent: 'center',
-                              alignItems: 'center'
-                            }}
-                            onPress={() => setUser(prev => ({ ...prev, spiceLevel: sp.key }))}
-                          >
-                            <Text style={{ fontSize: 11, fontWeight: '800', color: isSelected ? '#DF7E2C' : '#13352C' }}>{sp.label}</Text>
-                          </TouchableOpacity>
-                        );
-                      })}
-                    </View>
-                  </View>
-
-                  {/* Favorite Cuisines */}
-                  <View style={{ marginTop: 20 }}>
-                    <Text style={{ fontSize: 10, fontWeight: '900', color: '#DF7E2C', letterSpacing: 1.2, marginBottom: 8 }}>FAVORITE CUISINES (MULTI-SELECT)</Text>
-                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                      {['South Indian', 'North Indian', 'Andhra', 'Telangana', 'Jain'].map(c => {
-                        const isSelected = user.favCuisines.includes(c);
-                        return (
-                          <TouchableOpacity
-                            key={c}
-                            style={{
-                              paddingHorizontal: 12,
-                              paddingVertical: 10,
-                              borderRadius: 12,
-                              borderWidth: 1.5,
-                              borderColor: isSelected ? '#DF7E2C' : '#FFEEDB',
-                              backgroundColor: isSelected ? '#FFF4EC' : '#FFFFFF',
-                              justifyContent: 'center',
-                              alignItems: 'center'
-                            }}
-                            onPress={() => {
-                              const list = user.favCuisines;
-                              const newList = list.includes(c) ? list.filter(item => item !== c) : [...list, c];
-                              setUser(prev => ({ ...prev, favCuisines: newList }));
-                            }}
-                          >
-                            <Text style={{ fontSize: 11, fontWeight: '800', color: isSelected ? '#DF7E2C' : '#13352C' }}>{c}</Text>
-                          </TouchableOpacity>
-                        );
-                      })}
-                    </View>
-                  </View>
-
-                  {/* Allergies */}
-                  <View style={{ marginTop: 20 }}>
-                    <Text style={{ fontSize: 10, fontWeight: '900', color: '#DF7E2C', letterSpacing: 1.2, marginBottom: 8 }}>ALLERGIES (OPTIONAL)</Text>
-                    <TextInput
-                      style={{ height: 56, borderRadius: 18, borderWidth: 1.5, borderColor: '#FFEEDB', backgroundColor: '#FFFFFF', paddingHorizontal: 16, fontSize: 14, color: '#13352C', fontWeight: '600' }}
-                      value={user.allergies}
-                      onChangeText={val => setUser(prev => ({ ...prev, allergies: val }))}
-                      placeholder="e.g. Peanuts, Gluten (or None)"
-                      placeholderTextColor="#A0B0AA"
-                    />
-                  </View>
-
-                  {/* Submit Button */}
-                  <TouchableOpacity 
-                    style={{
-                      width: '100%',
-                      height: 56,
-                      borderRadius: 28,
-                      marginTop: 28,
-                      overflow: 'hidden',
-                      shadowColor: '#DF7E2C',
-                      shadowOffset: { width: 0, height: 6 },
-                      shadowOpacity: 0.25,
-                      shadowRadius: 10,
-                      elevation: 5,
-                      marginBottom: 16
-                    }} 
-                    onPress={() => {
-                      setToast('Profile Complete! Welcome aboard.');
-                      go('home');
-                    }}
-                  >
-                    <LinearGradient colors={['#FF852C', '#FD4F1B']} style={{ flex: 1, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 6 }}>
-                      <Text style={{ color: '#FFFFFF', fontSize: 16.5, fontWeight: '800' }}>Complete Onboarding ✓</Text>
-                    </LinearGradient>
-                  </TouchableOpacity>
-                </ScrollView>
-              </View>
-            </View>
-          </SafeAreaView>
-        </LinearGradient>
+        {/* Workout Type */}
+        <View>
+          <Text style={{ fontSize: 11, fontWeight: '900', color: '#DF7E2C', letterSpacing: 1.2, marginBottom: 10 }}>WORKOUT TYPE (MULTI-SELECT)</Text>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+            {['Walking', 'Running', 'Gym', 'Yoga', 'Cycling', 'Swimming', 'Home Workout', 'Strength Training', 'Sports', 'Other'].map(type => {
+              const isSel = workoutTypes.includes(type);
+              return (
+                <TouchableOpacity
+                  key={type}
+                  onPress={() => toggleWorkoutType(type)}
+                  style={{
+                    paddingHorizontal: 12,
+                    paddingVertical: 8,
+                    borderRadius: 12,
+                    borderWidth: 1.5,
+                    borderColor: isSel ? B.orange : t.border,
+                    backgroundColor: isSel ? (isDark ? 'rgba(233, 106, 46, 0.15)' : '#FFF4EC') : t.input
+                  }}
+                >
+                  <Text style={{ fontSize: 11, fontWeight: '800', color: isSel ? B.orange : t.text }}>{type}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
       </View>
     );
-  }
 
-  // 7. Home Screen (Dashboard)
-  function RenderHome() {
+    // Sub-Page 2 Render
+    const renderPage2 = () => {
+      const showSpeed = primaryGoal === 'Lose Weight' || primaryGoal === 'Gain Weight';
+      return (
+        <View style={{ gap: 20 }}>
+          <Text style={{ fontSize: 20, fontWeight: '900', color: t.text }}>Page 2 — Health Goals</Text>
+          <Text style={{ fontSize: 13, color: t.sub, lineHeight: 18 }}>Select your primary targets and motivations.</Text>
+
+          {/* Primary Goal */}
+          <View>
+            <Text style={{ fontSize: 11, fontWeight: '900', color: '#DF7E2C', letterSpacing: 1.2, marginBottom: 10 }}>PRIMARY FITNESS GOAL</Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+              {['Lose Weight', 'Gain Weight', 'Build Muscle', 'Maintain Weight', 'Eat Healthy', 'Improve Energy', 'Improve Fitness'].map(goal => {
+                const isSel = primaryGoal === goal;
+                return (
+                  <TouchableOpacity
+                    key={goal}
+                    onPress={() => setPrimaryGoal(goal)}
+                    style={{
+                      paddingHorizontal: 12,
+                      paddingVertical: 8,
+                      borderRadius: 12,
+                      borderWidth: 1.5,
+                      borderColor: isSel ? B.orange : t.border,
+                      backgroundColor: isSel ? (isDark ? 'rgba(233, 106, 46, 0.15)' : '#FFF4EC') : t.input
+                    }}
+                  >
+                    <Text style={{ fontSize: 11, fontWeight: '800', color: isSel ? B.orange : t.text }}>{goal}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+
+          {/* Goal Speed (Conditional) */}
+          {showSpeed ? (
+            <View>
+              <Text style={{ fontSize: 11, fontWeight: '900', color: '#DF7E2C', letterSpacing: 1.2, marginBottom: 10 }}>GOAL SPEED (WEIGHT CHANGE / WEEK)</Text>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                {['Slow (0.25 kg/week)', 'Moderate (0.5 kg/week)', 'Fast (0.75 kg/week)', 'Extreme (1 kg/week)'].map(speed => {
+                  const isSel = goalSpeed === speed || (speed.includes(goalSpeed) && goalSpeed.length > 0);
+                  return (
+                    <TouchableOpacity
+                      key={speed}
+                      onPress={() => setGoalSpeed(speed)}
+                      style={{
+                        paddingHorizontal: 12,
+                        paddingVertical: 8,
+                        borderRadius: 12,
+                        borderWidth: 1.5,
+                        borderColor: isSel ? B.orange : t.border,
+                        backgroundColor: isSel ? (isDark ? 'rgba(233, 106, 46, 0.15)' : '#FFF4EC') : t.input
+                      }}
+                    >
+                      <Text style={{ fontSize: 11, fontWeight: '800', color: isSel ? B.orange : t.text }}>{speed}</Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
+          ) : null}
+
+          {/* Motivation */}
+          <View>
+            <Text style={{ fontSize: 11, fontWeight: '900', color: '#DF7E2C', letterSpacing: 1.2, marginBottom: 10 }}>WHAT MOTIVATES YOU?</Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+              {[
+                'Live a Healthier Lifestyle',
+                "Doctor's Recommendation",
+                'Build Muscle',
+                'Weight Loss',
+                'Better Energy',
+                'Improve Sports Performance',
+                'Wedding/Event',
+                'Other'
+              ].map(mote => {
+                const isSel = motivation === mote;
+                return (
+                  <TouchableOpacity
+                    key={mote}
+                    onPress={() => setMotivation(mote)}
+                    style={{
+                      paddingHorizontal: 12,
+                      paddingVertical: 8,
+                      borderRadius: 12,
+                      borderWidth: 1.5,
+                      borderColor: isSel ? B.orange : t.border,
+                      backgroundColor: isSel ? (isDark ? 'rgba(233, 106, 46, 0.15)' : '#FFF4EC') : t.input
+                    }}
+                  >
+                    <Text style={{ fontSize: 11, fontWeight: '800', color: isSel ? B.orange : t.text }}>{mote}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+        </View>
+      );
+    };
+
+    // Sub-Page 3 Render
+    const renderPage3 = () => (
+      <View style={{ gap: 20 }}>
+        <Text style={{ fontSize: 20, fontWeight: '900', color: t.text }}>Page 3 — Food & Health Preferences</Text>
+        <Text style={{ fontSize: 13, color: t.sub, lineHeight: 18 }}>Personalize your meals and list safety/allergen rules.</Text>
+
+        {/* Dietary Preference */}
+        <View>
+          <Text style={{ fontSize: 11, fontWeight: '900', color: '#DF7E2C', letterSpacing: 1.2, marginBottom: 10 }}>DIETARY PREFERENCE</Text>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+            {['Vegetarian', 'Non-Vegetarian', 'Eggetarian', 'Vegan'].map(pref => {
+              const isSel = user.foodPref === pref || (pref === 'Vegetarian' && user.foodPref === 'Veg') || (pref === 'Non-Vegetarian' && user.foodPref === 'Non-Veg');
+              return (
+                <TouchableOpacity
+                  key={pref}
+                  onPress={() => setUser(prev => ({ ...prev, foodPref: pref }))}
+                  style={{
+                    paddingHorizontal: 12,
+                    paddingVertical: 8,
+                    borderRadius: 12,
+                    borderWidth: 1.5,
+                    borderColor: isSel ? B.orange : t.border,
+                    backgroundColor: isSel ? (isDark ? 'rgba(233, 106, 46, 0.15)' : '#FFF4EC') : t.input
+                  }}
+                >
+                  <Text style={{ fontSize: 11, fontWeight: '800', color: isSel ? B.orange : t.text }}>{pref}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+
+        {/* Food Allergies */}
+        <View>
+          <Text style={{ fontSize: 11, fontWeight: '900', color: '#DF7E2C', letterSpacing: 1.2, marginBottom: 10 }}>FOOD ALLERGIES (MULTI-SELECT)</Text>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+            {['Dairy', 'Eggs', 'Peanuts', 'Tree Nuts', 'Gluten', 'Soy', 'Seafood', 'Shellfish', 'Sesame', 'Other'].map(allergy => {
+              const isSel = allergiesList.includes(allergy);
+              return (
+                <TouchableOpacity
+                  key={allergy}
+                  onPress={() => toggleAllergy(allergy)}
+                  style={{
+                    paddingHorizontal: 12,
+                    paddingVertical: 8,
+                    borderRadius: 12,
+                    borderWidth: 1.5,
+                    borderColor: isSel ? B.orange : t.border,
+                    backgroundColor: isSel ? (isDark ? 'rgba(233, 106, 46, 0.15)' : '#FFF4EC') : t.input
+                  }}
+                >
+                  <Text style={{ fontSize: 11, fontWeight: '800', color: isSel ? B.orange : t.text }}>{allergy}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+
+        {/* Health Conditions */}
+        <View>
+          <Text style={{ fontSize: 11, fontWeight: '900', color: '#DF7E2C', letterSpacing: 1.2, marginBottom: 10 }}>HEALTH CONDITIONS (OPTIONAL / MULTI-SELECT)</Text>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+            {['Diabetes', 'High Blood Pressure', 'Thyroid', 'PCOS', 'High Cholesterol', 'Kidney Disease', 'Fatty Liver', 'Heart Disease', 'None'].map(cond => {
+              const isSel = healthConditions.includes(cond);
+              return (
+                <TouchableOpacity
+                  key={cond}
+                  onPress={() => toggleCondition(cond)}
+                  style={{
+                    paddingHorizontal: 12,
+                    paddingVertical: 8,
+                    borderRadius: 12,
+                    borderWidth: 1.5,
+                    borderColor: isSel ? B.orange : t.border,
+                    backgroundColor: isSel ? (isDark ? 'rgba(233, 106, 46, 0.15)' : '#FFF4EC') : t.input
+                  }}
+                >
+                  <Text style={{ fontSize: 11, fontWeight: '800', color: isSel ? B.orange : t.text }}>{cond}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+
+        {/* Food Dislikes */}
+        <View>
+          <Text style={{ fontSize: 11, fontWeight: '900', color: '#DF7E2C', letterSpacing: 1.2, marginBottom: 10 }}>FOOD DISLIKES (MULTI-SELECT)</Text>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+            {['Onion', 'Garlic', 'Mushroom', 'Paneer', 'Fish', 'Chicken', 'Spicy Food', 'Bitter Foods', 'Other'].map(dislike => {
+              const isSel = foodDislikes.includes(dislike);
+              return (
+                <TouchableOpacity
+                  key={dislike}
+                  onPress={() => toggleDislike(dislike)}
+                  style={{
+                    paddingHorizontal: 12,
+                    paddingVertical: 8,
+                    borderRadius: 12,
+                    borderWidth: 1.5,
+                    borderColor: isSel ? B.orange : t.border,
+                    backgroundColor: isSel ? (isDark ? 'rgba(233, 106, 46, 0.15)' : '#FFF4EC') : t.input
+                  }}
+                >
+                  <Text style={{ fontSize: 11, fontWeight: '800', color: isSel ? B.orange : t.text }}>{dislike}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+      </View>
+    );
+
+    // Sub-Page 4 Render
+    const renderPage4 = () => {
+      const showCustomWater = waterIntakeGoal === 'Custom';
+      const sleepHoursText = calculateSleepHours(bedtime, wakeupTime);
+      return (
+        <View style={{ gap: 20 }}>
+          <Text style={{ fontSize: 20, fontWeight: '900', color: t.text }}>Page 4 — Healthy Lifestyle</Text>
+          <Text style={{ fontSize: 13, color: t.sub, lineHeight: 18 }}>Habit configuration and tracking integrations.</Text>
+
+          {/* Daily Water Intake Goal */}
+          <View>
+            <Text style={{ fontSize: 11, fontWeight: '900', color: '#DF7E2C', letterSpacing: 1.2, marginBottom: 10 }}>DAILY WATER INTAKE GOAL</Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: showCustomWater ? 10 : 0 }}>
+              {['2 L', '2.5 L', '3 L', 'Custom'].map(goal => {
+                const isSel = waterIntakeGoal === goal;
+                return (
+                  <TouchableOpacity
+                    key={goal}
+                    onPress={() => setWaterIntakeGoal(goal)}
+                    style={{
+                      paddingHorizontal: 12,
+                      paddingVertical: 8,
+                      borderRadius: 12,
+                      borderWidth: 1.5,
+                      borderColor: isSel ? B.orange : t.border,
+                      backgroundColor: isSel ? (isDark ? 'rgba(233, 106, 46, 0.15)' : '#FFF4EC') : t.input
+                    }}
+                  >
+                    <Text style={{ fontSize: 11, fontWeight: '800', color: isSel ? B.orange : t.text }}>{goal}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
+            {showCustomWater ? (
+              <TextInput
+                style={{ height: 50, borderRadius: 14, borderWidth: 1.5, borderColor: t.border, backgroundColor: t.input, paddingHorizontal: 16, fontSize: 14, color: t.text, fontWeight: '600' }}
+                value={customWaterIntake}
+                onChangeText={setCustomWaterIntake}
+                placeholder="E.g. 3.5"
+                placeholderTextColor={t.muted}
+                keyboardType="numeric"
+              />
+            ) : null}
+          </View>
+
+          {/* Sleep Schedule */}
+          <View>
+            <Text style={{ fontSize: 11, fontWeight: '900', color: '#DF7E2C', letterSpacing: 1.2, marginBottom: 10 }}>SLEEP SCHEDULE</Text>
+            <View style={{ flexDirection: 'row', gap: 12, marginBottom: 12 }}>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 10, fontWeight: 'bold', color: t.sub, marginBottom: 6 }}>BEDTIME</Text>
+                <TextInput
+                  style={{ height: 50, borderRadius: 14, borderWidth: 1.5, borderColor: t.border, backgroundColor: t.input, paddingHorizontal: 16, fontSize: 14, color: t.text, fontWeight: '600' }}
+                  value={bedtime}
+                  onChangeText={setBedtime}
+                  placeholder="22:00"
+                  placeholderTextColor={t.muted}
+                />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 10, fontWeight: 'bold', color: t.sub, marginBottom: 6 }}>WAKE-UP TIME</Text>
+                <TextInput
+                  style={{ height: 50, borderRadius: 14, borderWidth: 1.5, borderColor: t.border, backgroundColor: t.input, paddingHorizontal: 16, fontSize: 14, color: t.text, fontWeight: '600' }}
+                  value={wakeupTime}
+                  onChangeText={setWakeupTime}
+                  placeholder="06:00"
+                  placeholderTextColor={t.muted}
+                />
+              </View>
+            </View>
+
+            {/* Calculated Average Sleep Hours */}
+            <View style={{ backgroundColor: isDark ? 'rgba(233,106,46,0.1)' : '#FFF4EC', padding: 12, borderRadius: 12, borderWidth: 1, borderColor: t.border, alignItems: 'center' }}>
+              <Text style={{ fontSize: 12, color: t.text, fontWeight: '700' }}>
+                Auto-calculated Average Sleep: <Text style={{ color: B.orange, fontWeight: '900' }}>{sleepHoursText}</Text>
+              </Text>
+            </View>
+          </View>
+
+          {/* Smart Notifications */}
+          <View>
+            <Text style={{ fontSize: 11, fontWeight: '900', color: '#DF7E2C', letterSpacing: 1.2, marginBottom: 10 }}>SMART NOTIFICATIONS (REMINDERS)</Text>
+            <View style={{ gap: 8 }}>
+              {[
+                { key: 'meal', label: 'Meal Reminder' },
+                { key: 'water', label: 'Water Reminder' },
+                { key: 'workout', label: 'Workout Reminder' },
+                { key: 'sleep', label: 'Sleep Reminder' },
+                { key: 'orderUpdates', label: 'Order & Delivery Updates (default enabled)' }
+              ].map(item => {
+                const isVal = (smartNotifications as any)[item.key];
+                return (
+                  <TouchableOpacity
+                    key={item.key}
+                    onPress={() => setSmartNotifications(prev => ({ ...prev, [item.key]: !isVal }))}
+                    style={{
+                      flexDirection: 'row',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      padding: 14,
+                      borderRadius: 14,
+                      borderWidth: 1.5,
+                      borderColor: isVal ? B.orange : t.border,
+                      backgroundColor: isVal ? (isDark ? 'rgba(233, 106, 46, 0.1)' : 'rgba(233, 106, 46, 0.05)') : t.input
+                    }}
+                  >
+                    <Text style={{ fontSize: 13, fontWeight: 'bold', color: t.text }}>{item.label}</Text>
+                    <View style={{
+                      width: 20,
+                      height: 20,
+                      borderRadius: 10,
+                      borderWidth: 2,
+                      borderColor: isVal ? B.orange : t.muted,
+                      backgroundColor: isVal ? B.orange : 'transparent',
+                      justifyContent: 'center',
+                      alignItems: 'center'
+                    }}>
+                      {isVal ? <Check size={12} color="#FFFFFF" strokeWidth={3} /> : null}
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+
+          {/* Connect Health Apps */}
+          <View>
+            <Text style={{ fontSize: 11, fontWeight: '900', color: '#DF7E2C', letterSpacing: 1.2, marginBottom: 10 }}>CONNECT HEALTH APPS (OPTIONAL)</Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+              {['Apple Health', 'Google Fit', 'Fitbit', 'Garmin', 'Samsung Health'].map(app => {
+                const isSel = connectedHealthApps.includes(app);
+                return (
+                  <TouchableOpacity
+                    key={app}
+                    onPress={() => toggleHealthApp(app)}
+                    style={{
+                      paddingHorizontal: 12,
+                      paddingVertical: 8,
+                      borderRadius: 12,
+                      borderWidth: 1.5,
+                      borderColor: isSel ? B.orange : t.border,
+                      backgroundColor: isSel ? (isDark ? 'rgba(233, 106, 46, 0.15)' : '#FFF4EC') : t.input
+                    }}
+                  >
+                    <Text style={{ fontSize: 11, fontWeight: '800', color: isSel ? B.orange : t.text }}>{app}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+        </View>
+      );
+    };
+
+    return (
+      <SafeAreaView style={[styles.safeArea, { backgroundColor: t.bg }]}>
+        <View style={{ flex: 1, paddingHorizontal: 24 }}>
+          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingVertical: 24 }}>
+            {/* Top Progress bar and Back row */}
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+              <TouchableOpacity onPress={handleSetup3Back} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.surface, borderWidth: 1.5, borderColor: t.border, justifyContent: 'center', alignItems: 'center' }}>
+                <ArrowLeft size={16} color={t.text} />
+              </TouchableOpacity>
+              <View style={{ alignItems: 'flex-end' }}>
+                <Text style={{ fontSize: 10, fontWeight: '900', color: B.orange, letterSpacing: 0.5 }}>STEP 3 OF 3</Text>
+                <Text style={{ fontSize: 10, color: t.muted, fontWeight: 'bold', marginTop: 1 }}>Page {setup3SubPage} of 4 ({displayedPercent}% Complete)</Text>
+              </View>
+            </View>
+
+            {/* Progress Line */}
+            <View style={{ width: '100%', height: 6, backgroundColor: t.border, borderRadius: 3, overflow: 'hidden', marginBottom: 20 }}>
+              <View style={{ width: `${progressPct}%`, height: '100%', backgroundColor: B.orange, borderRadius: 3 }} />
+            </View>
+
+            {/* Sub-page switch renderer */}
+            {setup3SubPage === 1 && renderPage1()}
+            {setup3SubPage === 2 && renderPage2()}
+            {setup3SubPage === 3 && renderPage3()}
+            {setup3SubPage === 4 && renderPage4()}
+
+            {/* Submit / Next Button */}
+            <TouchableOpacity 
+              style={{
+                width: '100%',
+                height: 56,
+                borderRadius: 28,
+                marginTop: 28,
+                overflow: 'hidden',
+                shadowColor: B.orange,
+                shadowOffset: { width: 0, height: 6 },
+                shadowOpacity: 0.2,
+                shadowRadius: 10,
+                elevation: 5,
+                marginBottom: 16
+              }} 
+              onPress={handleSetup3Next}
+            >
+              <LinearGradient colors={['#FF852C', '#FD4F1B']} style={{ flex: 1, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 6 }}>
+                <Text style={{ color: '#FFFFFF', fontSize: 16.5, fontWeight: '800' }}>
+                  {setup3SubPage === 4 ? 'Complete Onboarding ✓' : 'Continue'}
+                </Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          </ScrollView>
+        </View>
+      </SafeAreaView>
+    );
+  }function RenderHome() {
+    if (!subscribed) {
+      return RenderNewUserHome();
+    }
+
     const categories = [
       { name: 'All Meals', icon: UtensilsCrossed },
       { name: 'South Indian', icon: Coffee },
@@ -3912,575 +5058,946 @@ export default function App() {
     );
   }
 
-  // 8. Meals Screen (Daily Menu & Customized Setup)
-  function RenderMeals() {
-    const filteredMeals = mealsList.filter(m => {
-      let matchesType = true;
-      if (selectedFilter === 'Veg') matchesType = m.type === 'veg';
-      else if (selectedFilter === 'Non-Veg') matchesType = m.type === 'non-veg';
-      else if (selectedFilter === 'Egg') matchesType = m.type === 'egg';
+  function RenderNewUserHome() {
+    const categories = [
+      { id: 'All Menu', label: 'All Menu', icon: LayoutGrid, color: B.orange, bg: `${B.orange}10` },
+      { id: 'Veg', label: 'Veg', icon: Leaf, color: B.green, bg: `${B.green}10` },
+      { id: 'Non-Veg', label: 'Non-Veg', icon: Flame, color: '#EF4444', bg: '#FEE2E2' },
+      { id: 'Both', label: 'Both', icon: UtensilsCrossed, color: '#F59E0B', bg: '#FEF3C7' },
+      { id: 'Lunch', label: 'Lunch', icon: Sun, color: '#10B981', bg: '#D1FAE5' },
+      { id: 'Dinner', label: 'Dinner', icon: Moon, color: '#6366F1', bg: '#E0E7FF' },
+    ];
 
-      let matchesCat = true;
-      if (selectedCategory !== 'All Menu' && selectedCategory !== 'All Categories') {
-        let targetCat = selectedCategory;
-        if (selectedCategory === 'Chef Special') targetCat = 'Chef Specials';
-        if (selectedCategory === 'Healthy Diet') targetCat = 'Healthy';
-        if (selectedCategory === 'Traditional thali') {
-          matchesCat = m.categories.includes('South Indian') || m.categories.includes('North Indian') || m.categories.includes('Andhra');
-        } else if (selectedCategory === 'Quick Bites') {
-          matchesCat = m.categories.includes('Lunch') || m.categories.includes('Dinner');
-        } else {
-          matchesCat = m.categories.includes(targetCat);
-        }
+    const getShortAddress = (addr: string) => {
+      const parts = addr.split(',');
+      if (parts.length >= 2) {
+        return `${parts[0].trim()}, ${parts[1].trim()}`;
       }
-
-      return matchesType && matchesCat;
-    });
-
-    const activeMeal = filteredMeals[activeMealIndex] || filteredMeals[0] || MEALS[0];
-    const prevMeal = activeMealIndex > 0 ? filteredMeals[activeMealIndex - 1] : filteredMeals[filteredMeals.length - 1];
-    const nextMeal = activeMealIndex < filteredMeals.length - 1 ? filteredMeals[activeMealIndex + 1] : filteredMeals[0];
-
-    const rotateInterpolated = plateRotate.interpolate({
-      inputRange: [-0.8, 0, 0.8],
-      outputRange: ['-30deg', '0deg', '30deg']
-    });
-
-    const handleTouchStart = (evt: any) => {
-      const pageX = evt.nativeEvent.pageX || (evt.nativeEvent.touches && evt.nativeEvent.touches[0] ? evt.nativeEvent.touches[0].pageX : 0);
-      const pageY = evt.nativeEvent.pageY || (evt.nativeEvent.touches && evt.nativeEvent.touches[0] ? evt.nativeEvent.touches[0].pageY : 0);
-      touchStartRef.current = pageX;
-      touchStartRefY.current = pageY;
+      return addr;
     };
-
-    const handleMoveShouldSetResponder = (evt: any) => {
-      const pageX = evt.nativeEvent.pageX || (evt.nativeEvent.touches && evt.nativeEvent.touches[0] ? evt.nativeEvent.touches[0].pageX : 0);
-      const pageY = evt.nativeEvent.pageY || (evt.nativeEvent.touches && evt.nativeEvent.touches[0] ? evt.nativeEvent.touches[0].pageY : 0);
-      const dx = Math.abs(pageX - touchStartRef.current);
-      const dy = Math.abs(pageY - touchStartRefY.current);
-      return dx > 20 && dx > dy;
-    };
-
-    const handleResponderRelease = (evt: any) => {
-      const currentX = evt.nativeEvent.pageX || (evt.nativeEvent.changedTouches && evt.nativeEvent.changedTouches[0] ? evt.nativeEvent.changedTouches[0].pageX : 0);
-      const dx = currentX - touchStartRef.current;
-      if (Math.abs(dx) > 40) {
-        if (dx > 0) {
-          setActiveMealIndex(prev => prev > 0 ? prev - 1 : filteredMeals.length - 1);
-        } else {
-          setActiveMealIndex(prev => prev < filteredMeals.length - 1 ? prev + 1 : 0);
-        }
-      }
-    };
-
-    const categoryList = ['All Menu', 'Chef Special', 'Healthy Diet', 'Traditional thali', 'Quick Bites'];
 
     return (
       <SafeAreaView style={[styles.safeArea, { backgroundColor: 'transparent' }]}>
-        {/* Top Header Bar */}
-        <View style={{ paddingHorizontal: 20, paddingTop: 16, paddingBottom: 8, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <View>
-            <Text style={{ fontSize: 24, fontWeight: '900', color: t.text, letterSpacing: -0.5 }}>Koi Koi Dabba</Text>
-            <Text style={{ fontSize: 11, color: t.sub, marginTop: 2 }}>Premium food menu & customization</Text>
-          </View>
-          <TouchableOpacity onPress={() => go('notifications')} style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: t.card, borderWidth: 1, borderColor: t.border, justifyContent: 'center', alignItems: 'center' }}>
-            <Bell size={18} color={t.text} />
-          </TouchableOpacity>
-        </View>
+        <ScrollView contentContainerStyle={{ paddingBottom: 110 }} showsVerticalScrollIndicator={false}>
+          
+          {/* Header Row */}
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', paddingHorizontal: 16, paddingTop: 16 }}>
+            <View style={{ flex: 1, marginRight: 16 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <TouchableOpacity
+                  onPress={() => go('profile')}
+                  style={{
+                    width: 44,
+                    height: 44,
+                    borderRadius: 22,
+                    backgroundColor: B.orangeL,
+                    borderWidth: 1.5,
+                    borderColor: B.orange,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    shadowColor: B.orange,
+                    shadowOffset: { width: 0, height: 4 },
+                    shadowOpacity: 0.1,
+                    shadowRadius: 6,
+                    elevation: 2
+                  }}
+                >
+                  <Text style={{ fontSize: 22 }}>{user.avatar || '👩‍🍳'}</Text>
+                </TouchableOpacity>
+                <View>
+                  <Text style={{ fontSize: 12, color: t.sub, fontWeight: '600' }}>Good Morning,</Text>
+                  <Text style={{ fontSize: 20, fontWeight: '900', color: t.text, marginTop: 1 }}>{user.name || 'Bhargav'} 👋</Text>
+                </View>
+              </View>
 
-        {/* Pinterest Style Tabs Toggle: Recipes | Customize */}
-        <View style={{ 
-          flexDirection: 'row', 
-          justifyContent: 'center', 
-          alignItems: 'center', 
-          marginVertical: 14,
-          paddingHorizontal: 20
-        }}>
-          <View style={{ 
-            flexDirection: 'row', 
-            backgroundColor: t.card, 
-            borderRadius: 25, 
-            padding: 4, 
-            borderWidth: 1.5, 
-            borderColor: t.border,
-            width: '80%'
-          }}>
-            <TouchableOpacity 
-              onPress={() => setMenuActiveTab('recipes')}
-              style={{ 
-                flex: 1, 
-                paddingVertical: 10, 
-                borderRadius: 20, 
-                backgroundColor: menuActiveTab === 'recipes' ? B.orange : 'transparent',
-                alignItems: 'center'
-              }}
-            >
-              <Text style={{ fontSize: 13, fontWeight: '900', color: menuActiveTab === 'recipes' ? '#FFFFFF' : t.sub }}>Recipes</Text>
-            </TouchableOpacity>
-            
-            <View style={{ width: 1, height: 20, backgroundColor: t.border, alignSelf: 'center' }} />
-            
-            <TouchableOpacity 
-              onPress={() => setMenuActiveTab('customize')}
-              style={{ 
-                flex: 1, 
-                paddingVertical: 10, 
-                borderRadius: 20, 
-                backgroundColor: menuActiveTab === 'customize' ? B.orange : 'transparent',
-                alignItems: 'center'
-              }}
-            >
-              <Text style={{ fontSize: 13, fontWeight: '900', color: menuActiveTab === 'customize' ? '#FFFFFF' : t.sub }}>Customize</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {menuActiveTab === 'recipes' ? (
-          <View
-            onTouchStart={handleTouchStart}
-            onStartShouldSetResponder={() => false}
-            onMoveShouldSetResponder={handleMoveShouldSetResponder}
-            onResponderRelease={handleResponderRelease}
-            style={{ flex: 1 }}
-          >
-            <ScrollView contentContainerStyle={{ paddingBottom: 110 }} showsVerticalScrollIndicator={false}>
-            {/* Filter Pill Row */}
-            <View style={{ flexDirection: 'row', paddingHorizontal: 20, marginTop: 4, gap: 8 }}>
-              {['All', 'Veg', 'Non-Veg', 'Egg'].map(f => {
-                const isSelected = selectedFilter === f;
-                return (
-                  <TouchableOpacity
-                    key={f}
-                    style={{
-                      paddingHorizontal: 16,
-                      paddingVertical: 8,
-                      borderRadius: 14,
-                      borderWidth: 1.5,
-                      borderColor: isSelected ? B.orange : t.border,
-                      backgroundColor: isSelected ? B.orangeL : t.card
-                    }}
-                    onPress={() => setSelectedFilter(f)}
-                  >
-                    <Text style={{ fontSize: 11, fontWeight: '900', color: isSelected ? B.orange : t.text }}>
-                      {f}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
+              {/* Delivery Location Selector */}
+              <TouchableOpacity
+                onPress={() => setShowSearchModal(true)}
+                style={{ flexDirection: 'row', alignItems: 'center', marginTop: 10, alignSelf: 'flex-start', paddingVertical: 4 }}
+              >
+                <MapPin size={13} color={B.orange} style={{ marginRight: 4 }} />
+                <Text style={{ fontSize: 12, fontWeight: '700', color: t.text }}>
+                  {getShortAddress(selectedAddress)}
+                </Text>
+                <ChevronDown size={14} color={t.muted} style={{ marginLeft: 3 }} />
+              </TouchableOpacity>
             </View>
 
-            {/* Horizontal Food Categories Carousel */}
-            <View style={{ marginTop: 12 }}>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, gap: 8 }}>
-                {categoryList.map(cat => {
-                  const isSelected = selectedCategory === cat || (cat === 'All Menu' && selectedCategory === 'All Categories');
+            {/* Header Right Wallet & Notification buttons */}
+            <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+              <TouchableOpacity
+                style={{
+                  paddingHorizontal: 12,
+                  height: 40,
+                  borderRadius: 20,
+                  backgroundColor: t.card,
+                  borderWidth: 1,
+                  borderColor: t.border,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 6,
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.03,
+                  shadowRadius: 4,
+                  elevation: 1
+                }}
+                onPress={() => go('payments')}
+              >
+                <Wallet size={15} color={B.orange} />
+                <Text style={{ fontSize: 13, fontWeight: '900', color: t.text }}>₹0</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 20,
+                  backgroundColor: t.card,
+                  borderWidth: 1,
+                  borderColor: t.border,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.03,
+                  shadowRadius: 4,
+                  elevation: 1
+                }}
+                onPress={() => go('notifications')}
+              >
+                <Bell size={18} color={t.text} />
+                <View style={{ position: 'absolute', top: 10, right: 10, width: 7, height: 7, borderRadius: 3.5, backgroundColor: '#EF4444' }} />
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Hero Card: Today's Menu */}
+          <View style={{ paddingHorizontal: 16, marginTop: 20 }}>
+            <View
+              style={{
+                backgroundColor: isDark ? 'rgba(233, 106, 46, 0.12)' : '#FFF6EE',
+                borderRadius: 28,
+                borderWidth: 1,
+                borderColor: isDark ? 'rgba(233, 106, 46, 0.2)' : '#FFEAD9',
+                padding: 20,
+                shadowColor: B.orange,
+                shadowOffset: { width: 0, height: 12 },
+                shadowOpacity: 0.04,
+                shadowRadius: 20,
+                elevation: 3,
+                overflow: 'hidden'
+              }}
+            >
+              {/* Layout: Content on Left, Round image overlapping slightly on Right */}
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                <View style={{ flex: 1, paddingRight: 10 }}>
+                  <Text style={{ fontSize: 11, fontWeight: '900', color: B.orange, letterSpacing: 1.5, textTransform: 'uppercase' }}>
+                    TODAY • MONDAY
+                  </Text>
+                  <Text style={{ fontSize: 22, fontWeight: '900', color: t.text, marginTop: 4 }}>
+                    Today's Menu
+                  </Text>
+                  <Text style={{ fontSize: 12, color: t.sub, marginTop: 4, fontWeight: '500' }}>
+                    Freshly cooked. Delivered with care.
+                  </Text>
+                </View>
+
+                {/* Overlapping circle food image */}
+                <View style={{
+                  width: 100,
+                  height: 100,
+                  borderRadius: 50,
+                  overflow: 'hidden',
+                  borderWidth: 3,
+                  borderColor: '#FFFFFF',
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 6 },
+                  shadowOpacity: 0.15,
+                  shadowRadius: 10,
+                  elevation: 5
+                }}>
+                  <Image
+                    source={{ uri: IMG.curry }}
+                    style={{ width: '100%', height: '100%', resizeMode: 'cover' }}
+                  />
+                </View>
+              </View>
+
+              {/* Filter chips inside Hero Card */}
+              <View style={{ flexDirection: 'row', gap: 8, marginTop: 18 }}>
+                {[
+                  { label: 'Veg 🌱', value: 'Veg' },
+                  { label: 'Non-Veg 🍗', value: 'Non-Veg' },
+                  { label: 'Both 🍱', value: 'Both' }
+                ].map((chip) => {
+                  const isActive = selectedFilter === chip.value;
                   return (
                     <TouchableOpacity
-                      key={cat}
+                      key={chip.value}
+                      onPress={() => setSelectedFilter(chip.value)}
                       style={{
                         paddingHorizontal: 16,
                         paddingVertical: 8,
-                        borderRadius: 20,
-                        borderWidth: 1.5,
-                        borderColor: isSelected ? B.orange : t.border,
-                        backgroundColor: isSelected ? B.orange : t.card
+                        borderRadius: 14,
+                        backgroundColor: isActive ? B.orange : t.card,
+                        borderWidth: 1,
+                        borderColor: isActive ? B.orange : t.border,
+                        shadowColor: isActive ? B.orange : '#000',
+                        shadowOffset: { width: 0, height: 4 },
+                        shadowOpacity: isActive ? 0.2 : 0.02,
+                        shadowRadius: 6,
+                        elevation: isActive ? 2 : 1
                       }}
-                      onPress={() => setSelectedCategory(cat === 'All Menu' ? 'All Categories' : cat)}
                     >
-                      <Text style={{ fontSize: 11, fontWeight: '900', color: isSelected ? '#FFFFFF' : t.sub }}>
-                        {cat}
+                      <Text style={{
+                        fontSize: 12,
+                        fontWeight: '800',
+                        color: isActive ? '#FFFFFF' : t.text
+                      }}>
+                        {chip.label}
                       </Text>
                     </TouchableOpacity>
                   );
                 })}
-              </ScrollView>
+              </View>
             </View>
-
-            {filteredMeals.length > 0 ? (
-              <View style={{ marginTop: 20, alignItems: 'center' }}>
-                {/* Plate Carousel Box */}
-                <View 
-                  style={{ height: 230, width: '100%', flexDirection: 'row', justifyContent: 'center', alignItems: 'center', position: 'relative', overflow: 'hidden' }}
-                >
-                  
-                  {/* Glow effect behind the active circular plate */}
-                  <View 
-                    pointerEvents="none"
-                    style={{
-                      position: 'absolute',
-                      width: 220,
-                      height: 220,
-                      borderRadius: 110,
-                      backgroundColor: B.orange,
-                      opacity: isDark ? 0.08 : 0.05,
-                      zIndex: 1
-                    }} 
-                  />
-
-                  {/* Previous Plate (Left Peek) */}
-                  {filteredMeals.length > 1 && (
-                    <View 
-                      pointerEvents="none"
-                      style={{
-                        position: 'absolute',
-                        left: -50,
-                        opacity: 0.35,
-                        zIndex: 2,
-                        transform: [{ scale: 0.8 }]
-                      }}
-                    >
-                      <Image 
-                        source={{ uri: prevMeal.img }} 
-                        style={{ width: 110, height: 110, borderRadius: 55, borderWidth: 3, borderColor: t.border }} 
-                      />
-                    </View>
-                  )}
-
-                  {/* Active Plate (Centered Spotlight) */}
-                  <Animated.View 
-                    pointerEvents="none"
-                    style={{
-                      width: 190,
-                      height: 190,
-                      borderRadius: 95,
-                      zIndex: 10,
-                      elevation: 8,
-                      shadowColor: '#000',
-                      shadowOffset: { width: 0, height: 8 },
-                      shadowOpacity: 0.18,
-                      shadowRadius: 12,
-                      borderWidth: 4,
-                      borderColor: t.border,
-                      overflow: 'hidden',
-                      transform: [
-                        { scale: plateScale },
-                        { rotate: rotateInterpolated }
-                      ],
-                      opacity: plateFade
-                    }}
-                  >
-                    <Image source={{ uri: activeMeal.img }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
-                  </Animated.View>
-
-                  {/* Next Plate (Right Peek) */}
-                  {filteredMeals.length > 1 && (
-                    <View 
-                      pointerEvents="none"
-                      style={{
-                        position: 'absolute',
-                        right: -50,
-                        opacity: 0.35,
-                        zIndex: 2,
-                        transform: [{ scale: 0.8 }]
-                      }}
-                    >
-                      <Image 
-                        source={{ uri: nextMeal.img }} 
-                        style={{ width: 110, height: 110, borderRadius: 55, borderWidth: 3, borderColor: t.border }} 
-                      />
-                    </View>
-                  )}
-                </View>
-
-                {/* Swiper Indicators */}
-                {filteredMeals.length > 1 && (
-                  <View style={{ flexDirection: 'row', gap: 6, marginTop: 10 }}>
-                    {filteredMeals.map((_, i) => (
-                      <View 
-                        key={i} 
-                        style={{ 
-                          width: activeMealIndex === i ? 20 : 6, 
-                          height: 6, 
-                          borderRadius: 3, 
-                          backgroundColor: activeMealIndex === i ? B.orange : t.muted 
-                        }} 
-                      />
-                    ))}
-                  </View>
-                )}
-
-                {/* Details Sheet Section */}
-                <View style={{ width: '100%', paddingHorizontal: 20, marginTop: 16, alignItems: 'center' }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                    <VegPill veg={activeMeal.type === 'veg'} />
-                    <View style={{ backgroundColor: B.orangeL, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                      <Star size={10} color={B.orange} />
-                      <Text style={{ fontSize: 9, fontWeight: '900', color: B.orange }}>{activeMeal.rating}</Text>
-                    </View>
-                  </View>
-
-                  <Text style={{ fontSize: 20, fontWeight: '900', color: t.text, marginTop: 8, textAlign: 'center' }}>
-                    {activeMeal.name.toUpperCase()}
-                  </Text>
-                  
-                  <Text style={{ fontSize: 13, color: t.sub, marginTop: 4, textAlign: 'center', paddingHorizontal: 16 }} numberOfLines={2}>
-                    {activeMeal.desc}
-                  </Text>
-
-                  <Text style={{ fontSize: 24, fontWeight: '900', color: B.orange, marginTop: 12 }}>
-                    {activeMeal.price}
-                  </Text>
-
-                  {/* Nutrition stats grid */}
-                  <View style={{ 
-                    flexDirection: 'row', 
-                    backgroundColor: t.card, 
-                    borderRadius: 20, 
-                    padding: 14, 
-                    marginTop: 16, 
-                    justifyContent: 'space-between', 
-                    alignItems: 'center',
-                    borderWidth: 1.5,
-                    borderColor: t.border,
-                    width: '100%'
-                  }}>
-                    <View style={{ alignItems: 'center', flex: 1 }}>
-                      <Text style={{ fontSize: 13, fontWeight: '900', color: t.text }}>{activeMeal.cal} kcal</Text>
-                      <Text style={{ fontSize: 9, color: t.muted, marginTop: 2 }}>Calories</Text>
-                    </View>
-                    <View style={{ width: 1.5, height: 20, backgroundColor: t.border }} />
-                    <View style={{ alignItems: 'center', flex: 1 }}>
-                      <Text style={{ fontSize: 13, fontWeight: '900', color: t.text }}>{activeMeal.protein}g</Text>
-                      <Text style={{ fontSize: 9, color: t.muted, marginTop: 2 }}>Protein</Text>
-                    </View>
-                    <View style={{ width: 1.5, height: 20, backgroundColor: t.border }} />
-                    <View style={{ alignItems: 'center', flex: 1 }}>
-                      <Text style={{ fontSize: 13, fontWeight: '900', color: t.text }}>{activeMeal.carbs}g</Text>
-                      <Text style={{ fontSize: 9, color: t.muted, marginTop: 2 }}>Carbs</Text>
-                    </View>
-                    <View style={{ width: 1.5, height: 20, backgroundColor: t.border }} />
-                    <View style={{ alignItems: 'center', flex: 1 }}>
-                      <Text style={{ fontSize: 13, fontWeight: '900', color: t.text }}>{activeMeal.fat}g</Text>
-                      <Text style={{ fontSize: 9, color: t.muted, marginTop: 2 }}>Fats</Text>
-                    </View>
-                  </View>
-
-                  {/* Chef Bio Details Card (like Pinterest's bottom info tile) */}
-                  <View style={{
-                    width: '100%',
-                    backgroundColor: t.card,
-                    borderRadius: 24,
-                    borderWidth: 1.5,
-                    borderColor: t.border,
-                    padding: 16,
-                    marginTop: 16,
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 12
-                  }}>
-                    <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: B.orangeL, justifyContent: 'center', alignItems: 'center', borderWidth: 1.5, borderColor: B.orange }}>
-                      <Text style={{ fontSize: 20 }}>👩‍🍳</Text>
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={{ fontSize: 13, fontWeight: '900', color: t.text }}>{activeMeal.chef}</Text>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 }}>
-                        <Text style={{ fontSize: 10, color: t.sub }}>Central Kitchen Specialist</Text>
-                        <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: t.muted }} />
-                        <Text style={{ fontSize: 10, fontWeight: 'bold', color: B.orange }}>Verified</Text>
-                      </View>
-                    </View>
-                    <View style={{ alignItems: 'flex-end' }}>
-                      <Text style={{ fontSize: 13, fontWeight: '900', color: t.text }}>9.4</Text>
-                      <Text style={{ fontSize: 8, color: t.muted, marginTop: 1 }}>Rating Index</Text>
-                    </View>
-                  </View>
-
-                  {/* Action Row */}
-                  <View style={{ flexDirection: 'row', gap: 10, marginTop: 20, width: '100%' }}>
-                    <TouchableOpacity
-                      style={{
-                        flex: 1.2,
-                        height: 52,
-                        borderRadius: 26,
-                        borderWidth: 1.5,
-                        borderColor: t.border,
-                        backgroundColor: t.card,
-                        justifyContent: 'center',
-                        alignItems: 'center'
-                      }}
-                      onPress={() => {
-                        setSelectedMealId(activeMeal.id);
-                        go('meal_detail');
-                      }}
-                    >
-                      <Text style={{ fontSize: 14, fontWeight: '900', color: t.text }}>Full Recipe</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                      style={{
-                        flex: 2,
-                        height: 52,
-                        borderRadius: 26,
-                        overflow: 'hidden',
-                        shadowColor: B.orange,
-                        shadowOffset: { width: 0, height: 4 },
-                        shadowOpacity: 0.15,
-                        shadowRadius: 8,
-                        elevation: 3
-                      }}
-                      onPress={() => {
-                        setToast(`Added ${activeMeal.name} to today's plate!`);
-                      }}
-                    >
-                      <LinearGradient colors={['#FF852C', '#FD4F1B']} style={{ flex: 1, justifyContent: 'center', alignItems: 'center', flexDirection: 'row', gap: 6 }}>
-                        <Plus size={16} color="#FFFFFF" />
-                        <Text style={{ color: '#FFFFFF', fontSize: 14, fontWeight: '900' }}>Add to Dabba</Text>
-                      </LinearGradient>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              </View>
-            ) : (
-              <View style={{ paddingVertical: 80, alignItems: 'center', justifyContent: 'center' }}>
-                <Text style={{ fontSize: 15, color: t.text, fontWeight: 'bold' }}>No Dabbas Found</Text>
-                <Text style={{ fontSize: 12, color: t.muted, marginTop: 4 }}>Try clearing selected filters</Text>
-              </View>
-            )}
-            </ScrollView>
           </View>
-        ) : (
-          /* Customize Workspace View: setup preferences and subscription packages */
-          <ScrollView contentContainerStyle={{ paddingBottom: 110, paddingHorizontal: 20 }} showsVerticalScrollIndicator={false}>
-            {/* Target Calorie Output widget */}
-            <View style={{ 
-              backgroundColor: t.card,
-              borderRadius: 28,
-              borderWidth: 1.5,
-              borderColor: t.border,
-              padding: 20,
-              marginTop: 10,
-              alignItems: 'center'
-            }}>
-              <Text style={{ fontSize: 12, fontWeight: 'bold', color: B.orange, letterSpacing: 1 }}>YOUR ADAPTIVE CALORIE BUDGET</Text>
-              <Text style={{ fontSize: 36, fontWeight: '900', color: t.text, marginTop: 8 }}>{calorieCalc} kcal</Text>
-              <Text style={{ fontSize: 11, color: t.sub, marginTop: 4, textAlign: 'center', lineHeight: 15 }}>
-                Adapts dynamically based on your height ({user.height || 178}cm), weight ({user.weight || 74}kg) & activity factor.
-              </Text>
-              <View style={{ height: 1.5, width: '80%', backgroundColor: t.border, marginVertical: 14 }} />
-              <View style={{ flexDirection: 'row', width: '100%', justifyContent: 'space-between' }}>
-                <View style={{ alignItems: 'center', flex: 1 }}>
-                  <Text style={{ fontSize: 12, fontWeight: 'bold', color: t.text }}>{Math.round(calorieCalc * 0.15)}g</Text>
-                  <Text style={{ fontSize: 9, color: t.muted, marginTop: 2 }}>Target Protein</Text>
-                </View>
-                <View style={{ width: 1.5, height: 18, backgroundColor: t.border }} />
-                <View style={{ alignItems: 'center', flex: 1 }}>
-                  <Text style={{ fontSize: 12, fontWeight: 'bold', color: t.text }}>{Math.round(calorieCalc * 0.5 / 4)}g</Text>
-                  <Text style={{ fontSize: 9, color: t.muted, marginTop: 2 }}>Target Carbs</Text>
-                </View>
-                <View style={{ width: 1.5, height: 18, backgroundColor: t.border }} />
-                <View style={{ alignItems: 'center', flex: 1 }}>
-                  <Text style={{ fontSize: 12, fontWeight: 'bold', color: t.text }}>{Math.round(calorieCalc * 0.3 / 9)}g</Text>
-                  <Text style={{ fontSize: 9, color: t.muted, marginTop: 2 }}>Target Fats</Text>
-                </View>
-              </View>
-            </View>
 
-            {/* Custom spice levels */}
-            <Text style={{ fontSize: 15, fontWeight: '900', color: t.text, marginTop: 24, marginBottom: 12 }}>Custom Spice Profile</Text>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-              {['🌶 Mild', '🌶🌶 Medium', '🌶🌶🌶 Spicy', '🔥 Extra Hot'].map(level => {
-                const cleanName = level.split(' ').slice(1).join(' ');
-                const isSelected = user.spiceLevel === cleanName || (user.spiceLevel === 'Medium' && cleanName === 'Medium');
+          {/* Today's Meals Section */}
+          <View style={{ marginTop: 24 }}>
+            <Text style={{ fontSize: 18, fontWeight: '900', color: t.text, paddingHorizontal: 16, marginBottom: 12 }}>
+              Today's Meals
+            </Text>
+
+            {/* Tabs for Lunch & Dinner */}
+            <View style={{ flexDirection: 'row', paddingHorizontal: 16, gap: 12, marginBottom: 16 }}>
+              {[
+                { id: 'lunch', label: 'Lunch', sub: '12:00 PM – 2:30 PM', icon: Sun },
+                { id: 'dinner', label: 'Dinner', sub: '7:00 PM – 9:30 PM', icon: Moon }
+              ].map((tab) => {
+                const isActive = newUserHomeMealTab === tab.id;
                 return (
                   <TouchableOpacity
-                    key={level}
+                    key={tab.id}
+                    onPress={() => setNewUserHomeMealTab(tab.id as 'lunch' | 'dinner')}
                     style={{
-                      paddingHorizontal: 16,
-                      paddingVertical: 10,
-                      borderRadius: 16,
+                      flex: 1,
+                      backgroundColor: isActive ? B.orangeL : t.card,
+                      borderRadius: 18,
                       borderWidth: 1.5,
-                      borderColor: isSelected ? B.orange : t.border,
-                      backgroundColor: isSelected ? B.orangeL : t.card,
+                      borderColor: isActive ? B.orange : t.border,
+                      padding: 12,
                       flexDirection: 'row',
                       alignItems: 'center',
-                      gap: 4
-                    }}
-                    onPress={() => {
-                      setUser(prev => ({ ...prev, spiceLevel: cleanName }));
-                      setToast(`Spice tolerance updated to: ${cleanName}`);
+                      gap: 10,
+                      shadowColor: isActive ? B.orange : '#000',
+                      shadowOffset: { width: 0, height: 4 },
+                      shadowOpacity: isActive ? 0.04 : 0.01,
+                      shadowRadius: 8,
+                      elevation: isActive ? 1 : 0
                     }}
                   >
-                    <Text style={{ fontSize: 12, fontWeight: 'bold', color: isSelected ? B.orange : t.text }}>{level}</Text>
+                    <tab.icon size={18} color={isActive ? B.orange : t.muted} />
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontSize: 14, fontWeight: '900', color: isActive ? B.orange : t.text }}>
+                        {tab.label}
+                      </Text>
+                      <Text style={{ fontSize: 9.5, fontWeight: '600', color: isActive ? B.orange : t.sub, marginTop: 1 }}>
+                        {tab.sub}
+                      </Text>
+                    </View>
                   </TouchableOpacity>
                 );
               })}
             </View>
 
-            {/* Subscription Packages Selection */}
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 28, marginBottom: 12 }}>
-              <Text style={{ fontSize: 15, fontWeight: '900', color: t.text }}>Choose Custom Dabba Plan</Text>
-              <TouchableOpacity onPress={() => go('plans')}>
-                <Text style={{ fontSize: 11, fontWeight: 'bold', color: B.orange }}>View All Tiers →</Text>
+            {/* Side-by-side Veg & Non-Veg details */}
+            <View style={{ flexDirection: 'row', paddingHorizontal: 16, gap: 12 }}>
+              {/* Veg Card */}
+              <View
+                style={{
+                  flex: 1,
+                  backgroundColor: isDark ? 'rgba(59, 167, 106, 0.08)' : B.greenL,
+                  borderRadius: 20,
+                  borderWidth: 1,
+                  borderColor: isDark ? 'rgba(59, 167, 106, 0.2)' : '#D6ECD9',
+                  padding: 14,
+                  justifyContent: 'space-between'
+                }}
+              >
+                <View>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 12 }}>
+                    <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: B.green }} />
+                    <Text style={{ fontSize: 11, fontWeight: '900', color: B.green, letterSpacing: 0.5 }}>VEG</Text>
+                  </View>
+                  
+                  {newUserHomeMealTab === 'lunch' ? (
+                    <View style={{ gap: 6 }}>
+                      {['Dal Tadka', 'Steamed Rice', 'Mix Veg Sabzi', 'Roti'].map((item, index) => (
+                        <Text key={index} style={{ fontSize: 12, fontWeight: '700', color: t.text }}>• {item}</Text>
+                      ))}
+                    </View>
+                  ) : (
+                    <View style={{ gap: 6 }}>
+                      {['Paneer Curry', 'Jeera Rice', 'Cucumber Raita'].map((item, index) => (
+                        <Text key={index} style={{ fontSize: 12, fontWeight: '700', color: t.text }}>• {item}</Text>
+                      ))}
+                    </View>
+                  )}
+                </View>
+
+                {/* Soup Bowl vector graphic at bottom right */}
+                <View style={{ alignSelf: 'flex-end', marginTop: 12, opacity: 0.7 }}>
+                  <Svg width={36} height={36} viewBox="0 0 24 24" fill="none" stroke={B.green} strokeWidth={1.5}>
+                    <Path d="M2 12h20M12 2v3M9 3v2M15 3v2" strokeLinecap="round" />
+                    <Path d="M4 12c0 4.4 3.6 8 8 8s8-3.6 8-8H4z" fill={`${B.green}10`} strokeLinecap="round" strokeLinejoin="round" />
+                  </Svg>
+                </View>
+              </View>
+
+              {/* Non-Veg Card */}
+              <View
+                style={{
+                  flex: 1,
+                  backgroundColor: isDark ? 'rgba(239, 68, 68, 0.08)' : '#FFF0EE',
+                  borderRadius: 20,
+                  borderWidth: 1,
+                  borderColor: isDark ? 'rgba(239, 68, 68, 0.2)' : '#FDD6D0',
+                  padding: 14,
+                  justifyContent: 'space-between'
+                }}
+              >
+                <View>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 12 }}>
+                    <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#EF4444' }} />
+                    <Text style={{ fontSize: 11, fontWeight: '900', color: '#EF4444', letterSpacing: 0.5 }}>NON-VEG</Text>
+                  </View>
+
+                  {newUserHomeMealTab === 'lunch' ? (
+                    <View style={{ gap: 6 }}>
+                      {['Andhra Chicken Curry', 'Steamed Rice', 'Salad', 'Roti'].map((item, index) => (
+                        <Text key={index} style={{ fontSize: 12, fontWeight: '700', color: t.text }}>• {item}</Text>
+                      ))}
+                    </View>
+                  ) : (
+                    <View style={{ gap: 6 }}>
+                      {['Chicken Fry', 'Chapati', 'Onion Salad'].map((item, index) => (
+                        <Text key={index} style={{ fontSize: 12, fontWeight: '700', color: t.text }}>• {item}</Text>
+                      ))}
+                    </View>
+                  )}
+                </View>
+
+                {/* Chicken leg vector graphic at bottom right */}
+                <View style={{ alignSelf: 'flex-end', marginTop: 12, opacity: 0.7 }}>
+                  <Svg width={36} height={36} viewBox="0 0 24 24" fill="none" stroke={B.orange} strokeWidth={1.5}>
+                    <Path d="M15 3c-2.8 0-5 2.2-5 5v1.2c0 .3-.1.6-.3.8L5.3 14.4c-.6.6-.6 1.5 0 2.1l1.1 1.1c.6.6 1.5.6 2.1 0l4.4-4.4c.2-.2.5-.3.8-.3H15c2.8 0 5-2.2 5-5s-2.2-5-5-5z" fill={`${B.orange}10`} strokeLinecap="round" strokeLinejoin="round" />
+                    <Path d="M4 20a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z" strokeLinecap="round" strokeLinejoin="round" />
+                    <Path d="M8 20a1.5 1.5 0 1 0-3 0 1.5 1.5 0 0 0 3 0z" strokeLinecap="round" strokeLinejoin="round" />
+                  </Svg>
+                </View>
+              </View>
+            </View>
+
+            {/* Explore Today's Menu Button */}
+            <View style={{ paddingHorizontal: 16, marginTop: 14 }}>
+              <TouchableOpacity
+                onPress={() => go('meals')}
+                style={{
+                  height: 48,
+                  borderRadius: 24,
+                  borderWidth: 1.5,
+                  borderColor: B.orange,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  backgroundColor: 'transparent'
+                }}
+              >
+                <Text style={{ color: B.orange, fontSize: 14, fontWeight: '900' }}>
+                  Explore Today's Menu →
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Category Section */}
+          <View style={{ marginTop: 28 }}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ paddingHorizontal: 16, gap: 10 }}
+            >
+              {categories.map((cat) => (
+                <TouchableOpacity
+                  key={cat.id}
+                  onPress={() => {
+                    if (cat.id === 'Veg' || cat.id === 'Non-Veg' || cat.id === 'Both') {
+                      setSelectedFilter(cat.id);
+                    }
+                    go('meals');
+                  }}
+                  style={{
+                    backgroundColor: t.card,
+                    borderWidth: 1,
+                    borderColor: t.border,
+                    borderRadius: 16,
+                    paddingHorizontal: 16,
+                    paddingVertical: 10,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 8,
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 2 },
+                    shadowOpacity: 0.01,
+                    shadowRadius: 4,
+                    elevation: 1
+                  }}
+                >
+                  <View style={{ width: 28, height: 28, borderRadius: 8, backgroundColor: cat.bg, justifyContent: 'center', alignItems: 'center' }}>
+                    <cat.icon size={14} color={cat.color} />
+                  </View>
+                  <Text style={{ fontSize: 13, fontWeight: '800', color: t.text }}>{cat.label}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+
+          {/* Subscription Banner */}
+          <View style={{ paddingHorizontal: 16, marginTop: 28 }}>
+            <View
+              style={{
+                backgroundColor: t.card,
+                borderRadius: 28,
+                borderWidth: 1,
+                borderColor: t.border,
+                padding: 20,
+                shadowColor: B.orange,
+                shadowOffset: { width: 0, height: 8 },
+                shadowOpacity: 0.04,
+                shadowRadius: 16,
+                elevation: 3,
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                overflow: 'hidden'
+              }}
+            >
+              {/* Steel Lunchbox Image */}
+              <View style={{ width: 100, height: 90, marginRight: 12 }}>
+                <Image
+                  source={require('./assets/premium_steel_dabba.png')}
+                  style={{ width: '100%', height: '100%', resizeMode: 'contain' }}
+                />
+              </View>
+
+              {/* Banner Text + CTA */}
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 16, fontWeight: '900', color: t.text }}>
+                  Start Your Dabba Journey
+                </Text>
+                <Text style={{ fontSize: 10.5, color: t.sub, marginTop: 4, fontWeight: '600', lineHeight: 15 }}>
+                  Choose a subscription plan and enjoy fresh home-cooked meals every day.
+                </Text>
+                <TouchableOpacity
+                  onPress={() => go('plans')}
+                  style={{
+                    backgroundColor: B.orange,
+                    borderRadius: 14,
+                    paddingHorizontal: 14,
+                    paddingVertical: 7,
+                    alignSelf: 'flex-start',
+                    marginTop: 12,
+                    shadowColor: B.orange,
+                    shadowOffset: { width: 0, height: 4 },
+                    shadowOpacity: 0.15,
+                    shadowRadius: 6,
+                    elevation: 2
+                  }}
+                >
+                  <Text style={{ color: '#FFFFFF', fontSize: 11, fontWeight: '900' }}>
+                    View Plans →
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+
+          {/* Popular Dishes */}
+          <View style={{ marginTop: 28 }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, marginBottom: 12 }}>
+              <Text style={{ fontSize: 18, fontWeight: '900', color: t.text }}>
+                Popular Dishes
+              </Text>
+              <TouchableOpacity onPress={() => go('meals')}>
+                <Text style={{ fontSize: 12, fontWeight: '800', color: B.orange }}>View all →</Text>
               </TouchableOpacity>
             </View>
 
-            {/* Package Cards */}
-            <View style={{ gap: 12 }}>
-              {PLANS.map(plan => {
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ paddingHorizontal: 16, gap: 14 }}
+            >
+              {[
+                { id: 2, name: 'Paneer Butter Masala', rating: '4.8', price: '₹149', type: 'veg', img: IMG.paneer },
+                { id: 3, name: 'Chicken Curry Thali', rating: '4.7', price: '₹169', type: 'non-veg', img: IMG.chicken },
+                { id: 7, name: 'Veg Pulao', rating: '4.6', price: '₹129', type: 'veg', img: IMG.rice },
+                { id: 1, name: 'Dal Tadka + Rice', rating: '4.8', price: '₹119', type: 'veg', img: IMG.dal }
+              ].map((dish) => (
+                <TouchableOpacity
+                  key={dish.id}
+                  onPress={() => {
+                    setSelectedMealId(dish.id);
+                    go('meal_detail');
+                  }}
+                  style={{
+                    width: 140,
+                    backgroundColor: t.card,
+                    borderWidth: 1,
+                    borderColor: t.border,
+                    borderRadius: 20,
+                    overflow: 'hidden',
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 3 },
+                    shadowOpacity: 0.02,
+                    shadowRadius: 6,
+                    elevation: 1
+                  }}
+                >
+                  {/* Dish Image */}
+                  <View style={{ width: '100%', height: 95 }}>
+                    <Image source={{ uri: dish.img }} style={{ width: '100%', height: '100%', resizeMode: 'cover' }} />
+                    {/* Badge Overlay */}
+                    <View style={{ position: 'absolute', top: 6, right: 6, backgroundColor: dish.type === 'veg' ? B.green : '#EF4444', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 }}>
+                      <Text style={{ fontSize: 8, fontWeight: '900', color: '#FFFFFF', letterSpacing: 0.5 }}>
+                        {dish.type.toUpperCase()}
+                      </Text>
+                    </View>
+                  </View>
+
+                  {/* Info */}
+                  <View style={{ padding: 10 }}>
+                    <Text numberOfLines={1} style={{ fontSize: 12, fontWeight: '900', color: t.text }}>
+                      {dish.name}
+                    </Text>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 6 }}>
+                      <Text style={{ fontSize: 10.5, fontWeight: '800', color: t.sub }}>⭐ {dish.rating}</Text>
+                      <Text style={{ fontSize: 11, fontWeight: '900', color: t.text }}>{dish.price}</Text>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+
+          {/* Why Choose Koi Koi Dabba */}
+          <View style={{ marginTop: 28, paddingHorizontal: 16 }}>
+            <Text style={{ fontSize: 18, fontWeight: '900', color: t.text, marginBottom: 12 }}>
+              Why Choose Koi Koi Dabba
+            </Text>
+
+            <View style={{ gap: 10 }}>
+              {[
+                { title: '🏠 Home-Cooked with Love', desc: 'Fresh meals prepared daily.' },
+                { title: '🥗 Fresh & Hygienic', desc: 'Premium ingredients.' },
+                { title: '🚚 Delivered Fresh', desc: 'Hot meals delivered on time.' }
+              ].map((card, idx) => (
+                <View
+                  key={idx}
+                  style={{
+                    backgroundColor: t.card,
+                    borderWidth: 1,
+                    borderColor: t.border,
+                    borderRadius: 18,
+                    padding: 12,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 12,
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 2 },
+                    shadowOpacity: 0.01,
+                    shadowRadius: 4,
+                    elevation: 1
+                  }}
+                >
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 14, fontWeight: '900', color: t.text }}>{card.title}</Text>
+                    <Text style={{ fontSize: 11, color: t.sub, marginTop: 2, fontWeight: '500' }}>{card.desc}</Text>
+                  </View>
+                </View>
+              ))}
+            </View>
+          </View>
+
+        </ScrollView>
+
+        {/* Floating Bottom Navigation */}
+        <BottomTabNav active="home" />
+      </SafeAreaView>
+    );
+  }
+
+  // 8. Meals Screen (Daily Menu & Customized Setup)
+  function RenderMeals() {
+    const weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    
+    // Filter logic
+    const filteredMeals = mealsList.filter(m => {
+      // 1. Filter by top pill type
+      let matchesType = true;
+      if (selectedFilter === 'Veg') matchesType = m.type === 'veg';
+      else if (selectedFilter === 'Non-Veg') matchesType = m.type === 'non-veg' || m.type === 'egg';
+
+      // 2. Filter by left sidebar day
+      let matchesDay = true;
+      if (selectedCategory !== 'All Categories' && selectedCategory !== 'All Menu') {
+        matchesDay = m.day === selectedCategory;
+      }
+
+      return matchesType && matchesDay;
+    });
+
+    const handleSelectDay = (day: string) => {
+      setSelectedCategory(day);
+      setActiveMealIndex(0);
+    };
+
+    const handleSelectFilter = (f: string) => {
+      setSelectedFilter(f);
+      setActiveMealIndex(0);
+    };
+
+    const lunchMeals = filteredMeals.filter(m => m.when === 'lunch');
+    const dinnerMeals = filteredMeals.filter(m => m.when === 'dinner');
+
+    const renderMealCard = (item: Meal) => {
+      const typeColor = item.type === 'veg' ? '#2E7D32' : item.type === 'non-veg' ? '#D32F2F' : '#F59E0B';
+      const typeBg = item.type === 'veg' ? '#EAF7EE' : item.type === 'non-veg' ? '#FFEBEE' : '#FEF3C7';
+      return (
+        <View 
+          key={item.id}
+          style={{
+            backgroundColor: t.card,
+            borderRadius: 20,
+            borderWidth: 1.5,
+            borderColor: t.border,
+            marginBottom: 16,
+            overflow: 'hidden',
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.05,
+            shadowRadius: 10,
+            elevation: 3
+          }}
+        >
+          {/* Meal Image with absolute tags */}
+          <View style={{ height: 160, position: 'relative', width: '100%' }}>
+            <Image source={{ uri: item.img }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+            
+            {/* Top-Left Type Badge */}
+            <View style={{
+              position: 'absolute',
+              top: 10,
+              left: 10,
+              backgroundColor: typeBg,
+              paddingHorizontal: 8,
+              paddingVertical: 4,
+              borderRadius: 6,
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 4
+            }}>
+              <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: typeColor }} />
+              <Text style={{ fontSize: 9, fontWeight: '900', color: typeColor, textTransform: 'uppercase' }}>
+                {item.type}
+              </Text>
+            </View>
+
+            {/* Bottom-Left Day Badge */}
+            <View style={{
+              position: 'absolute',
+              bottom: 10,
+              left: 10,
+              backgroundColor: 'rgba(0,0,0,0.6)',
+              paddingHorizontal: 8,
+              paddingVertical: 4,
+              borderRadius: 6
+            }}>
+              <Text style={{ fontSize: 9, fontWeight: '900', color: '#FFFFFF', textTransform: 'uppercase' }}>
+                {item.day} {item.when}
+              </Text>
+            </View>
+
+            {/* Bottom-Right Rating */}
+            <View style={{
+              position: 'absolute',
+              bottom: 10,
+              right: 10,
+              backgroundColor: 'rgba(0,0,0,0.6)',
+              paddingHorizontal: 8,
+              paddingVertical: 4,
+              borderRadius: 6,
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 4
+            }}>
+              <Text style={{ fontSize: 9, fontWeight: '900', color: '#F59E0B' }}>★</Text>
+              <Text style={{ fontSize: 9, fontWeight: '900', color: '#FFFFFF' }}>{item.rating}</Text>
+            </View>
+          </View>
+
+          {/* Content Details */}
+          <View style={{ padding: 14 }}>
+            <Text style={{ fontSize: 15, fontWeight: '900', color: t.text }}>{item.name}</Text>
+            <Text style={{ fontSize: 11.5, color: t.muted, marginTop: 4, lineHeight: 16 }} numberOfLines={2}>
+              {item.desc}
+            </Text>
+
+            {/* Macro Nutrition Row */}
+            <View style={{
+              flexDirection: 'row',
+              backgroundColor: isDark ? 'rgba(255,255,255,0.02)' : '#FFFDF9',
+              borderWidth: 1,
+              borderColor: t.border,
+              borderRadius: 12,
+              paddingVertical: 8,
+              paddingHorizontal: 10,
+              marginTop: 12,
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
+              <View style={{ alignItems: 'center', flex: 1 }}>
+                <Text style={{ fontSize: 12, fontWeight: '900', color: '#DF7E2C' }}>{item.cal}</Text>
+                <Text style={{ fontSize: 8, fontWeight: 'bold', color: t.muted, marginTop: 2 }}>KCAL</Text>
+              </View>
+              <View style={{ width: 1, height: 20, backgroundColor: t.border }} />
+              <View style={{ alignItems: 'center', flex: 1 }}>
+                <Text style={{ fontSize: 12, fontWeight: '900', color: '#3B82F6' }}>{item.protein}g</Text>
+                <Text style={{ fontSize: 8, fontWeight: 'bold', color: t.muted, marginTop: 2 }}>PROT</Text>
+              </View>
+              <View style={{ width: 1, height: 20, backgroundColor: t.border }} />
+              <View style={{ alignItems: 'center', flex: 1 }}>
+                <Text style={{ fontSize: 12, fontWeight: '900', color: '#10B981' }}>{item.carbs}g</Text>
+                <Text style={{ fontSize: 8, fontWeight: 'bold', color: t.muted, marginTop: 2 }}>CARB</Text>
+              </View>
+              <View style={{ width: 1, height: 20, backgroundColor: t.border }} />
+              <View style={{ alignItems: 'center', flex: 1 }}>
+                <Text style={{ fontSize: 12, fontWeight: '900', color: '#EF4444' }}>{item.fat}g</Text>
+                <Text style={{ fontSize: 8, fontWeight: 'bold', color: t.muted, marginTop: 2 }}>FAT</Text>
+              </View>
+            </View>
+
+            {/* Footer Price & Buttons */}
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 14 }}>
+              <Text style={{ fontSize: 16, fontWeight: '900', color: B.orange }}>{item.price}</Text>
+              
+              <TouchableOpacity
+                onPress={() => {
+                  setSelectedMealId(item.id);
+                  go('meal_detail');
+                }}
+                style={{
+                  paddingHorizontal: 16,
+                  paddingVertical: 8,
+                  borderRadius: 14,
+                  backgroundColor: B.orange
+                }}
+              >
+                <Text style={{ fontSize: 11, fontWeight: '900', color: '#FFFFFF' }}>DETAILS</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      );
+    };
+
+    return (
+      <SafeAreaView style={[styles.safeArea, { backgroundColor: t.bg, paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 24) : 0 }]}>
+        <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={t.bg} />
+
+        {/* Top Header Bar */}
+        <View style={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: 8, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: t.border, backgroundColor: t.surface }}>
+          <View>
+            <Text style={{ fontSize: 18, fontWeight: '900', color: t.text, letterSpacing: -0.5 }}>Daily Menu</Text>
+            <Text style={{ fontSize: 11, color: t.muted, marginTop: 2 }}>Subscribe or order single dabbas</Text>
+          </View>
+          <TouchableOpacity onPress={() => go('notifications')} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.card, borderWidth: 1, borderColor: t.border, justifyContent: 'center', alignItems: 'center' }}>
+            <Bell size={16} color={t.text} />
+          </TouchableOpacity>
+        </View>
+
+        {/* Top Type Filter Pills Row (Both, Veg, Non-Veg) */}
+        <View style={{ 
+          flexDirection: 'row', 
+          paddingVertical: 12, 
+          paddingHorizontal: 16, 
+          gap: 10, 
+          justifyContent: 'center', 
+          backgroundColor: t.surface,
+          borderBottomWidth: 1,
+          borderBottomColor: t.border
+        }}>
+          {/* BOTH Pill */}
+          <TouchableOpacity
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              paddingHorizontal: 16,
+              paddingVertical: 8,
+              borderRadius: 22,
+              borderWidth: 1.5,
+              borderColor: selectedFilter === 'Both' ? t.text : t.border,
+              backgroundColor: selectedFilter === 'Both' ? (isDark ? '#333' : '#F5F5F5') : t.card,
+              height: 40
+            }}
+            onPress={() => handleSelectFilter('Both')}
+          >
+            <Text style={{ fontSize: 11, fontWeight: '900', color: t.text }}>BOTH</Text>
+          </TouchableOpacity>
+
+          {/* VEG Pill */}
+          <TouchableOpacity
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              paddingHorizontal: 14,
+              paddingVertical: 8,
+              borderRadius: 22,
+              borderWidth: 1.5,
+              borderColor: selectedFilter === 'Veg' ? '#2E7D32' : t.border,
+              backgroundColor: selectedFilter === 'Veg' ? (isDark ? 'rgba(46, 125, 50, 0.15)' : '#EAF7EE') : t.card,
+              gap: 6,
+              height: 40
+            }}
+            onPress={() => handleSelectFilter('Veg')}
+          >
+            <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#2E7D32' }} />
+            <Text style={{ fontSize: 11, fontWeight: '900', color: selectedFilter === 'Veg' ? '#2E7D32' : t.text }}>VEG</Text>
+          </TouchableOpacity>
+
+          {/* NON-VEG Pill */}
+          <TouchableOpacity
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              paddingHorizontal: 14,
+              paddingVertical: 8,
+              borderRadius: 22,
+              borderWidth: 1.5,
+              borderColor: selectedFilter === 'Non-Veg' ? '#D32F2F' : t.border,
+              backgroundColor: selectedFilter === 'Non-Veg' ? (isDark ? 'rgba(211, 47, 47, 0.15)' : '#FFEBEE') : t.card,
+              gap: 6,
+              height: 40
+            }}
+            onPress={() => handleSelectFilter('Non-Veg')}
+          >
+            <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#D32F2F' }} />
+            <Text style={{ fontSize: 11, fontWeight: '900', color: selectedFilter === 'Non-Veg' ? '#D32F2F' : t.text }}>NON-VEG</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Main Split Screen Area */}
+        <View style={{ flex: 1, flexDirection: 'row' }}>
+          {/* Left Vertical Sidebar */}
+          <View style={{ 
+            width: 100, 
+            borderRightWidth: 1, 
+            borderRightColor: t.border, 
+            backgroundColor: t.surface,
+            paddingVertical: 10 
+          }}>
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 110 }}>
+              {/* All Menu */}
+              <TouchableOpacity
+                onPress={() => handleSelectDay('All Menu')}
+                style={{
+                  paddingVertical: 14,
+                  paddingHorizontal: 12,
+                  marginVertical: 4,
+                  borderLeftWidth: 3,
+                  borderLeftColor: (selectedCategory === 'All Menu' || selectedCategory === 'All Categories') ? B.orange : 'transparent',
+                  backgroundColor: (selectedCategory === 'All Menu' || selectedCategory === 'All Categories') ? (isDark ? 'rgba(233, 106, 46, 0.1)' : '#FFF4EC') : 'transparent'
+                }}
+              >
+                <Text style={{ 
+                  fontSize: 12, 
+                  fontWeight: (selectedCategory === 'All Menu' || selectedCategory === 'All Categories') ? '900' : '600', 
+                  color: (selectedCategory === 'All Menu' || selectedCategory === 'All Categories') ? B.orange : t.text 
+                }}>
+                  All Menu
+                </Text>
+              </TouchableOpacity>
+
+              {/* Weekdays */}
+              {weekdays.map(day => {
+                const isSelected = selectedCategory === day;
                 return (
                   <TouchableOpacity
-                    key={plan.id}
+                    key={day}
+                    onPress={() => handleSelectDay(day)}
                     style={{
-                      backgroundColor: t.card,
-                      borderRadius: 24,
-                      borderWidth: 1.5,
-                      borderColor: t.border,
-                      padding: 16,
-                      position: 'relative',
-                      overflow: 'hidden'
-                    }}
-                    onPress={() => {
-                      go('subscribe_flow');
+                      paddingVertical: 14,
+                      paddingHorizontal: 12,
+                      marginVertical: 4,
+                      borderLeftWidth: 3,
+                      borderLeftColor: isSelected ? B.orange : 'transparent',
+                      backgroundColor: isSelected ? (isDark ? 'rgba(233, 106, 46, 0.1)' : '#FFF4EC') : 'transparent'
                     }}
                   >
-                    {plan.badge ? (
-                      <View style={{
-                        position: 'absolute',
-                        top: 0,
-                        right: 16,
-                        backgroundColor: plan.color,
-                        paddingHorizontal: 10,
-                        paddingVertical: 4,
-                        borderBottomLeftRadius: 10,
-                        borderBottomRightRadius: 10
-                      }}>
-                        <Text style={{ fontSize: 8, fontWeight: '900', color: '#FFFFFF', letterSpacing: 0.5 }}>{plan.badge}</Text>
-                      </View>
-                    ) : null}
-
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <View>
-                        <Text style={{ fontSize: 16, fontWeight: '900', color: t.text }}>{plan.name} Dabba</Text>
-                        <Text style={{ fontSize: 11, color: t.sub, marginTop: 4 }}>{plan.sub}</Text>
-                      </View>
-                      <View style={{ alignItems: 'flex-end' }}>
-                        <Text style={{ fontSize: 18, fontWeight: '900', color: B.orange }}>{plan.price}</Text>
-                        <Text style={{ fontSize: 9, color: t.muted, marginTop: 2 }}>{plan.unit}</Text>
-                      </View>
-                    </View>
-
-                    <View style={{ height: 1, backgroundColor: t.border, marginVertical: 12 }} />
-
-                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 14 }}>
-                      {plan.perks.map((perk, i) => (
-                        <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                          <Check size={12} color={B.green} />
-                          <Text style={{ fontSize: 10, color: t.sub }}>{perk}</Text>
-                        </View>
-                      ))}
-                    </View>
+                    <Text style={{ 
+                      fontSize: 12, 
+                      fontWeight: isSelected ? '900' : '600', 
+                      color: isSelected ? B.orange : t.sub 
+                    }}>
+                      {day}
+                    </Text>
                   </TouchableOpacity>
                 );
               })}
-            </View>
-          </ScrollView>
-        )}
+            </ScrollView>
+          </View>
+
+          {/* Right Vertical Meals List */}
+          <View style={{ flex: 1, backgroundColor: t.bg }}>
+            <ScrollView contentContainerStyle={{ padding: 12, paddingBottom: 120 }} showsVerticalScrollIndicator={false}>
+              {/* Lunch Section */}
+              {lunchMeals.length > 0 && (
+                <View>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 8, gap: 8 }}>
+                    <Sun size={14} color="#DF7E2C" />
+                    <Text style={{ fontSize: 11, fontWeight: '900', color: '#DF7E2C', letterSpacing: 1.2 }}>LUNCH MENU</Text>
+                  </View>
+                  {lunchMeals.map(item => renderMealCard(item))}
+                </View>
+              )}
+
+              {/* Dinner Section */}
+              {dinnerMeals.length > 0 && (
+                <View style={{ marginTop: lunchMeals.length > 0 ? 16 : 0 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 8, gap: 8 }}>
+                    <Moon size={14} color="#6366F1" />
+                    <Text style={{ fontSize: 11, fontWeight: '900', color: '#6366F1', letterSpacing: 1.2 }}>DINNER MENU</Text>
+                  </View>
+                  {dinnerMeals.map(item => renderMealCard(item))}
+                </View>
+              )}
+
+              {filteredMeals.length === 0 && (
+                <View style={{ alignItems: 'center', marginTop: 60, paddingHorizontal: 20 }}>
+                  <Text style={{ color: t.muted, fontSize: 14, fontWeight: '700', textAlign: 'center' }}>
+                    No meals found for this selection
+                  </Text>
+                </View>
+              )}
+            </ScrollView>
+          </View>
+        </View>
 
         <BottomTabNav active="meals" />
       </SafeAreaView>
     );
   }
-
   // 9. Kitchen Screen (Live Webcast & Sourcing Documentary)
   function RenderKitchen() {
     const spaces = [
@@ -4962,8 +6479,21 @@ export default function App() {
   function RenderMealDetail() {
     const meal = mealsList.find(m => m.id === selectedMealId) || mealsList[0];
 
+    const ingredientsTable = [
+      { category: 'Cooking Base Oil', item: meal.ingredients.oil, quantity: '12 ml' },
+      meal.ingredients.rice ? { category: 'Primary Grain (Rice)', item: meal.ingredients.rice, quantity: '180g cooked' } : null,
+      meal.ingredients.flour ? { category: 'Primary Grain (Wheat)', item: meal.ingredients.flour, quantity: '3 Rotis (120g)' } : null,
+      meal.ingredients.dal ? { category: 'Lentils / Grains', item: meal.ingredients.dal, quantity: '120g portion' } : null,
+      meal.ingredients.meat ? { category: 'Protein (Halal Meat)', item: meal.ingredients.meat, quantity: '150g portion' } : null,
+      meal.ingredients.dairy ? { category: 'Dairy / Cream', item: meal.ingredients.dairy.join(', '), quantity: '40g portion' } : null,
+      { category: 'Fresh Vegetables', item: meal.ingredients.veg.join(', '), quantity: '150g fresh' },
+      { category: 'Sourced Masala Spices', item: meal.ingredients.spices.join(', '), quantity: '8g authentic' },
+    ].filter(Boolean) as { category: string; item: string; quantity: string }[];
+
     return (
-      <SafeAreaView style={[styles.safeArea, { backgroundColor: t.bg }]}>
+      <SafeAreaView style={[styles.safeArea, { backgroundColor: t.bg, paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 24) : 0 }]}>
+        <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={t.bg} />
+        
         <View style={styles.headerBar}>
           <TouchableOpacity onPress={back} style={[styles.backIconCircle, { backgroundColor: t.surface }]}>
             <ArrowLeft size={16} color={t.text} />
@@ -4996,18 +6526,32 @@ export default function App() {
               <ProgressRing pct={(meal.fat / 40) * 100} label={`${meal.fat}g`} sub="Fat" color="#EC4899" theme={t} />
             </View>
 
-            {/* Ingredients table */}
-            <Text style={[styles.sectionSubTitle, { color: t.text, marginTop: 24, marginBottom: 8 }]}>Ingredients Sourced</Text>
-            <View style={[styles.ingredientsBox, { backgroundColor: t.card, borderColor: t.border }]}>
-              {[
-                { k: 'Base Oil', v: meal.ingredients.oil },
-                { k: 'Veg Used', v: meal.ingredients.veg.join(', ') },
-                { k: 'Masala Spices', v: meal.ingredients.spices.join(', ') },
-                { k: 'Dairy Component', v: meal.ingredients.dairy?.join(', ') || 'None' }
-              ].map((ing, i) => (
-                <View key={i} style={[styles.ingRow, i > 0 && { borderTopWidth: 1, borderTopColor: t.border }]}>
-                  <Text style={[styles.ingKey, { color: t.muted }]}>{ing.k}</Text>
-                  <Text style={[styles.ingVal, { color: t.text }]}>{ing.v}</Text>
+            {/* Ingredients table with quantities */}
+            <Text style={[styles.sectionSubTitle, { color: t.text, marginTop: 24, marginBottom: 12 }]}>Ingredients Used & Quantity</Text>
+            <View style={{ borderRadius: 16, overflow: 'hidden', borderWidth: 1.5, borderColor: t.border, backgroundColor: t.card }}>
+              {/* Header row */}
+              <View style={{ flexDirection: 'row', backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : '#F5F5F5', paddingVertical: 12, paddingHorizontal: 16, borderBottomWidth: 1.5, borderBottomColor: t.border }}>
+                <Text style={{ flex: 1.2, fontSize: 11, fontWeight: '900', color: t.text, textTransform: 'uppercase', letterSpacing: 0.5 }}>Ingredient</Text>
+                <Text style={{ flex: 2, fontSize: 11, fontWeight: '900', color: t.text, textTransform: 'uppercase', letterSpacing: 0.5, paddingHorizontal: 8 }}>Details</Text>
+                <Text style={{ flex: 1, fontSize: 11, fontWeight: '900', color: t.text, textTransform: 'uppercase', letterSpacing: 0.5, textAlign: 'right' }}>Serving Qty</Text>
+              </View>
+
+              {/* Data rows */}
+              {ingredientsTable.map((ing, idx) => (
+                <View 
+                  key={idx} 
+                  style={{ 
+                    flexDirection: 'row', 
+                    paddingVertical: 14, 
+                    paddingHorizontal: 16, 
+                    borderBottomWidth: idx < ingredientsTable.length - 1 ? 1 : 0, 
+                    borderBottomColor: t.border,
+                    alignItems: 'center'
+                  }}
+                >
+                  <Text style={{ flex: 1.2, fontSize: 12, fontWeight: '800', color: t.text }}>{ing.category}</Text>
+                  <Text style={{ flex: 2, fontSize: 12, color: t.sub, paddingHorizontal: 8 }} numberOfLines={2}>{ing.item}</Text>
+                  <Text style={{ flex: 1, fontSize: 12, fontWeight: '900', color: B.orange, textAlign: 'right' }}>{ing.quantity}</Text>
                 </View>
               ))}
             </View>
@@ -5030,7 +6574,6 @@ export default function App() {
       </SafeAreaView>
     );
   }
-
   // 12. Live Delivery Tracking Screen
   function RenderTracking() {
     return (
@@ -5264,20 +6807,50 @@ export default function App() {
           <Text style={[styles.headerTitle, { color: t.text }]}>My Addresses</Text>
         </View>
         <ScrollView contentContainerStyle={{ padding: 16 }}>
-          <View style={[styles.addressCard, { backgroundColor: t.card, borderColor: t.border }]}>
-            <MapPin size={18} color={B.orange} />
-            <View style={{ flex: 1, marginLeft: 12 }}>
-              <Text style={{ fontSize: 14, fontWeight: 'bold', color: t.text }}>{user.addressLabel} Address</Text>
-              <Text style={{ fontSize: 12, color: t.muted, marginTop: 2 }}>{user.address}</Text>
-            </View>
+          <View style={{ gap: 12 }}>
+            {addressesList.map((addr) => (
+              <View 
+                key={addr.id}
+                style={[
+                  styles.addressCard, 
+                  { 
+                    backgroundColor: t.card, 
+                    borderColor: t.border,
+                    flexDirection: 'column',
+                    alignItems: 'stretch',
+                    gap: 10,
+                    padding: 16
+                  }
+                ]}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                  <MapPin size={18} color={B.orange} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 14, fontWeight: 'bold', color: t.text }}>{addr.label} Address</Text>
+                    <Text style={{ fontSize: 12, color: t.muted, marginTop: 2 }}>{addr.address}</Text>
+                  </View>
+                </View>
+
+                {/* Receiver Info */}
+                <View style={{ borderTopWidth: 1, borderTopColor: t.border, paddingTop: 10, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Text style={{ fontSize: 12, color: t.sub }}>Receiver: <Text style={{ fontWeight: 'bold', color: t.text }}>{addr.name}</Text></Text>
+                  <Text style={{ fontSize: 12, color: t.sub }}>Phone: <Text style={{ fontWeight: 'bold', color: t.text }}>{addr.phone}</Text></Text>
+                </View>
+
+                {/* Building/Door image preview if exists */}
+                {addr.image ? (
+                  <View style={{ height: 80, borderRadius: 10, overflow: 'hidden', marginTop: 4 }}>
+                    <Image source={{ uri: addr.image }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+                  </View>
+                ) : null}
+              </View>
+            ))}
           </View>
         </ScrollView>
       </SafeAreaView>
     );
   }
-
-  // 19. Payments Screen
-  function RenderPayments() {
+function RenderPayments() {
     return (
       <SafeAreaView style={[styles.safeArea, { backgroundColor: t.bg }]}>
         <View style={styles.headerBar}>
@@ -6061,6 +7634,7 @@ export default function App() {
                 elevation: 4
               }}
               onPress={() => {
+                setSubscribed(true);
                 setToast(`${selectedPlan.name} Subscription Activated Successfully!`);
                 go('home');
               }}
@@ -6274,7 +7848,7 @@ export default function App() {
 
   return (
     <View style={{ flex: 1, backgroundColor: t.bg }}>
-      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
+      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor="transparent" translucent />
 
       {/* Decorative Warm Organic Background Shapes */}
       <View style={{ position: 'absolute', top: -100, right: -100, width: 350, height: 350, borderRadius: 175, backgroundColor: isDark ? 'rgba(233, 106, 46, 0.08)' : 'rgba(244, 179, 106, 0.25)', zIndex: 0 }} />
@@ -6346,6 +7920,11 @@ export default function App() {
       })()}
       </View>
 
+      {/* Location Search selector modal */}
+      {SelectLocationSearchModal()}
+      {/* Location Accuracy Permission Dialog modal */}
+      {LocationAccuracyDialog()}
+
       {/* Floating Action Toast Alert */}
       {toast && (
         <View style={styles.toastContainer}>
@@ -6364,6 +7943,7 @@ export default function App() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
+    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 24) : 0,
   },
   screenContainer: {
     flex: 1,
