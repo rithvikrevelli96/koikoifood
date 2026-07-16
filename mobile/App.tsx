@@ -20,7 +20,7 @@ import {
   PanResponder
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import Svg, { Circle, Path, Rect, Ellipse, Defs, LinearGradient as SvgLinearGradient, Stop } from 'react-native-svg';
+import Svg, { Circle, Path, Rect, Ellipse, Defs, LinearGradient as SvgLinearGradient, Stop, Line, Text as SvgText } from 'react-native-svg';
 import {
   Home as HomeIcon,
   LayoutGrid,
@@ -5058,14 +5058,190 @@ function RenderSetup3() {
     );
   }
 
+  function PremiumSteelDabbaSvg() {
+    return (
+      <Svg width={90} height={90} viewBox="0 0 100 100">
+        <Defs>
+          {/* Steel cylinder gradient for metallic reflections */}
+          <SvgLinearGradient id="steel" x1="0%" y1="0%" x2="100%" y2="0%">
+            <Stop offset="0%" stopColor="#D9D9D9" />
+            <Stop offset="20%" stopColor="#ECECEC" />
+            <Stop offset="40%" stopColor="#FFFFFF" />
+            <Stop offset="60%" stopColor="#EAEAEA" />
+            <Stop offset="80%" stopColor="#CCCCCC" />
+            <Stop offset="100%" stopColor="#B3B3B3" />
+          </SvgLinearGradient>
+          
+          {/* Darker metallic gradient for rims and joints */}
+          <SvgLinearGradient id="steelDark" x1="0%" y1="0%" x2="100%" y2="0%">
+            <Stop offset="0%" stopColor="#999999" />
+            <Stop offset="50%" stopColor="#E0E0E0" />
+            <Stop offset="100%" stopColor="#777777" />
+          </SvgLinearGradient>
+
+          {/* Brand Accent Orange Gradient for clips */}
+          <SvgLinearGradient id="accentGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+            <Stop offset="0%" stopColor="#FF852C" />
+            <Stop offset="100%" stopColor="#E96A2E" />
+          </SvgLinearGradient>
+
+          {/* Soft shadow underneath */}
+          <SvgLinearGradient id="shadowGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+            <Stop offset="0%" stopColor="rgba(0,0,0,0.15)" />
+            <Stop offset="100%" stopColor="rgba(0,0,0,0)" />
+          </SvgLinearGradient>
+        </Defs>
+
+        {/* Ground Shadow */}
+        <Ellipse cx={50} cy={88} rx={32} ry={6} fill="url(#shadowGrad)" />
+
+        {/* Tiffin Carrier Handle (Top Loop) */}
+        <Path
+          d="M 32 30 C 32 12, 68 12, 68 30"
+          fill="none"
+          stroke="url(#steelDark)"
+          strokeWidth={5}
+          strokeLinecap="round"
+        />
+        <Path
+          d="M 32 30 C 32 12, 68 12, 68 30"
+          fill="none"
+          stroke="url(#steel)"
+          strokeWidth={3}
+          strokeLinecap="round"
+        />
+
+        {/* Top Handle Grip */}
+        <Rect x={40} y={12} width={20} height={5} rx={2.5} fill="#444444" />
+
+        {/* 3-Tier Dabba Stack */}
+        {/* Tier 1 (Top) */}
+        <Rect x={26} y={32} width={48} height={15} rx={3} fill="url(#steel)" stroke="#B3B3B3" strokeWidth={0.5} />
+        <Line x1={26} y1={47} x2={74} y2={47} stroke="url(#steelDark)" strokeWidth={1} />
+
+        {/* Tier 2 (Middle) */}
+        <Rect x={26} y={48} width={48} height={16} rx={1} fill="url(#steel)" stroke="#B3B3B3" strokeWidth={0.5} />
+        <Line x1={26} y1={64} x2={74} y2={64} stroke="url(#steelDark)" strokeWidth={1} />
+
+        {/* Tier 3 (Bottom) */}
+        <Rect x={26} y={65} width={48} height={17} rx={3} fill="url(#steel)" stroke="#B3B3B3" strokeWidth={0.5} />
+
+        {/* Horizontal Groove Rings on Tiers for premium detail */}
+        <Line x1={27} y1={39} x2={73} y2={39} stroke="#FFFFFF" strokeWidth={0.8} opacity={0.6} />
+        <Line x1={27} y1={40} x2={73} y2={40} stroke="#CCCCCC" strokeWidth={0.8} opacity={0.8} />
+
+        <Line x1={27} y1={56} x2={73} y2={56} stroke="#FFFFFF" strokeWidth={0.8} opacity={0.6} />
+        <Line x1={27} y1={57} x2={73} y2={57} stroke="#CCCCCC" strokeWidth={0.8} opacity={0.8} />
+
+        <Line x1={27} y1={73} x2={73} y2={73} stroke="#FFFFFF" strokeWidth={0.8} opacity={0.6} />
+        <Line x1={27} y1={74} x2={73} y2={74} stroke="#CCCCCC" strokeWidth={0.8} opacity={0.8} />
+
+        {/* Vertical Lock Bars (Left & Right Side Brackets) */}
+        {/* Left Frame Bar */}
+        <Rect x={22} y={30} width={4} height={52} rx={1.5} fill="url(#steelDark)" />
+        <Rect x={22} y={30} width={2} height={52} rx={1} fill="url(#steel)" opacity={0.8} />
+
+        {/* Right Frame Bar */}
+        <Rect x={74} y={30} width={4} height={52} rx={1.5} fill="url(#steelDark)" />
+        <Rect x={74} y={30} width={2} height={52} rx={1} fill="url(#steel)" opacity={0.8} />
+
+        {/* Clasp Locks / Side Latches */}
+        {/* Left Latch lock */}
+        <Rect x={20} y={49} width={3} height={14} rx={1} fill="url(#accentGrad)" />
+        {/* Right Latch lock */}
+        <Rect x={77} y={49} width={3} height={14} rx={1} fill="url(#accentGrad)" />
+
+        {/* Brand Label Accent on Middle Tier */}
+        <Rect x={41} y={53} width={18} height={6} rx={1} fill="url(#accentGrad)" opacity={0.95} />
+        <SvgText x={50} y={57.5} fontSize={3.2} fontWeight="900" fill="#FFFFFF" textAnchor="middle" letterSpacing={0.2}>
+          KOI KOI
+        </SvgText>
+      </Svg>
+    );
+  }
+
+  function LiveKitchenThumbnailSvg() {
+    return (
+      <Svg width={70} height={45} viewBox="0 0 70 45">
+        <Defs>
+          <SvgLinearGradient id="kitchenBg" x1="0%" y1="0%" x2="100%" y2="100%">
+            <Stop offset="0%" stopColor="#2A1A12" />
+            <Stop offset="100%" stopColor="#1E140F" />
+          </SvgLinearGradient>
+        </Defs>
+        <Rect width={70} height={45} rx={8} fill="url(#kitchenBg)" />
+        {/* Draw a table line */}
+        <Line x1={5} y1={35} x2={65} y2={35} stroke="#5C4033" strokeWidth={2} strokeLinecap="round" />
+        {/* Draw a simple pot with steam */}
+        <Rect x={20} y={20} width={16} height={12} rx={2} fill="#777777" />
+        <Path d="M18 20h20M24 20v-2c0-.5.5-1 1-1h6c.5 0 1 .5 1 1v2" stroke="#777777" strokeWidth={1} />
+        {/* Steam lines */}
+        <Path d="M25 14c0-2 2-2 2-4M31 14c0-2 2-2 2-4" stroke="#FFF4EC" strokeWidth={1} strokeLinecap="round" opacity={0.6} />
+        {/* Play button circle */}
+        <Circle cx={35} cy={22.5} r={8} fill="rgba(233, 106, 46, 0.9)" />
+        <Path d="M33 19.5 L39 22.5 L33 25.5 Z" fill="#FFFFFF" />
+      </Svg>
+    );
+  }
+
+  function StyledAvatarSvg({ color }: { color: string }) {
+    return (
+      <Svg width={22} height={22} viewBox="0 0 24 24">
+        <Circle cx={12} cy={12} r={12} fill={color} />
+        <Circle cx={12} cy={8} r={3} fill="#FFE2D1" />
+        <Path d="M6 17c0-2 2-3 6-3s6 1 6 3v2H6v-2z" fill="#FFE2D1" />
+      </Svg>
+    );
+  }
+
+  function OverlappingAvatars() {
+    const colors = ['#FF852C', '#3BA76A', '#F59E0B', '#6366F1'];
+    return (
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        {colors.map((color, idx) => (
+          <View
+            key={idx}
+            style={{
+              marginLeft: idx === 0 ? 0 : -8,
+              zIndex: 4 - idx,
+              borderWidth: 1.5,
+              borderColor: '#FFFFFF',
+              borderRadius: 12,
+              overflow: 'hidden'
+            }}
+          >
+            <StyledAvatarSvg color={color} />
+          </View>
+        ))}
+      </View>
+    );
+  }
+
+  function LeafBranchSvg() {
+    return (
+      <Svg width={120} height={120} viewBox="0 0 100 100" style={{ position: 'absolute', right: -10, top: 20, opacity: 0.12 }}>
+        <Path d="M90 10 Q60 40 10 90" fill="none" stroke="#3BA76A" strokeWidth={1.5} />
+        <Path d="M75 25 Q70 15 80 15 Q85 25 75 25" fill="#3BA76A" />
+        <Path d="M65 35 Q55 30 60 20 Q70 30 65 35" fill="#3BA76A" />
+        <Path d="M55 45 Q45 40 50 30 Q60 40 55 45" fill="#3BA76A" />
+        <Path d="M45 55 Q35 50 40 40 Q50 50 45 55" fill="#3BA76A" />
+        <Path d="M35 65 Q25 60 30 50 Q40 60 35 65" fill="#3BA76A" />
+        
+        <Path d="M78 28 Q88 33 83 43 Q73 38 78 28" fill="#3BA76A" />
+        <Path d="M68 38 Q78 43 73 53 Q63 48 68 38" fill="#3BA76A" />
+        <Path d="M58 48 Q68 53 63 63 Q53 58 58 48" fill="#3BA76A" />
+        <Path d="M48 58 Q58 63 53 73 Q43 68 48 58" fill="#3BA76A" />
+      </Svg>
+    );
+  }
+
   function RenderNewUserHome() {
     const categories = [
       { id: 'All Menu', label: 'All Menu', icon: LayoutGrid, color: B.orange, bg: `${B.orange}10` },
-      { id: 'Veg', label: 'Veg', icon: Leaf, color: B.green, bg: `${B.green}10` },
-      { id: 'Non-Veg', label: 'Non-Veg', icon: Flame, color: '#EF4444', bg: '#FEE2E2' },
-      { id: 'Both', label: 'Both', icon: UtensilsCrossed, color: '#F59E0B', bg: '#FEF3C7' },
-      { id: 'Lunch', label: 'Lunch', icon: Sun, color: '#10B981', bg: '#D1FAE5' },
-      { id: 'Dinner', label: 'Dinner', icon: Moon, color: '#6366F1', bg: '#E0E7FF' },
+      { id: 'Healthy', label: 'Healthy', icon: Heart, color: B.green, bg: `${B.green}10` },
+      { id: 'Chef Special', label: 'Chef Special', icon: ChefHat, color: B.orange, bg: `${B.orange}10` },
+      { id: 'Top Rated', label: 'Top Rated', icon: Star, color: '#F59E0B', bg: '#FEF3C7' },
+      { id: 'Thalis', label: 'Thalis', icon: UtensilsCrossed, color: '#6366F1', bg: '#E0E7FF' },
     ];
 
     const getShortAddress = (addr: string) => {
@@ -5079,6 +5255,9 @@ function RenderSetup3() {
     return (
       <SafeAreaView style={[styles.safeArea, { backgroundColor: 'transparent' }]}>
         <ScrollView contentContainerStyle={{ paddingBottom: 110 }} showsVerticalScrollIndicator={false}>
+          
+          {/* Leaf backdrop branch */}
+          <LeafBranchSvg />
           
           {/* Header Row */}
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', paddingHorizontal: 16, paddingTop: 16 }}>
@@ -5172,6 +5351,59 @@ function RenderSetup3() {
             </View>
           </View>
 
+          {/* Search Bar / Filter Icon Row */}
+          <View style={{ flexDirection: 'row', paddingHorizontal: 16, marginTop: 16, gap: 10, alignItems: 'center' }}>
+            <View style={{
+              flex: 1,
+              flexDirection: 'row',
+              alignItems: 'center',
+              backgroundColor: t.input,
+              borderRadius: 16,
+              paddingHorizontal: 12,
+              height: 46,
+              borderWidth: 1.5,
+              borderColor: t.border
+            }}>
+              <Search size={18} color={t.muted} style={{ marginRight: 8 }} />
+              <TextInput
+                style={{ flex: 1, fontSize: 13.5, color: t.text, height: '100%' }}
+                placeholder="Search meals, cuisines, ingredients..."
+                placeholderTextColor={t.muted}
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+              />
+              {searchQuery ? (
+                <TouchableOpacity onPress={() => setSearchQuery("")}>
+                  <X size={18} color={t.muted} />
+                </TouchableOpacity>
+              ) : null}
+            </View>
+            <TouchableOpacity
+              style={{
+                flexDirection: 'row',
+                paddingHorizontal: 14,
+                height: 46,
+                borderRadius: 14,
+                backgroundColor: t.card,
+                borderWidth: 1.5,
+                borderColor: t.border,
+                alignItems: 'center',
+                gap: 6,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.02,
+                shadowRadius: 4,
+                elevation: 1
+              }}
+              onPress={() => go('meals')}
+            >
+              <Svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke={B.orange} strokeWidth={2.5}>
+                <Path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6" strokeLinecap="round" strokeLinejoin="round" />
+              </Svg>
+              <Text style={{ fontSize: 12.5, fontWeight: '700', color: t.text }}>Filter</Text>
+            </TouchableOpacity>
+          </View>
+
           {/* Hero Card: Today's Menu */}
           <View style={{ paddingHorizontal: 16, marginTop: 20 }}>
             <View
@@ -5180,7 +5412,7 @@ function RenderSetup3() {
                 borderRadius: 28,
                 borderWidth: 1,
                 borderColor: isDark ? 'rgba(233, 106, 46, 0.2)' : '#FFEAD9',
-                padding: 20,
+                padding: 16,
                 shadowColor: B.orange,
                 shadowOffset: { width: 0, height: 12 },
                 shadowOpacity: 0.04,
@@ -5190,15 +5422,17 @@ function RenderSetup3() {
               }}
             >
               {/* Layout: Content on Left, Round image overlapping slightly on Right */}
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 4 }}>
                 <View style={{ flex: 1, paddingRight: 10 }}>
                   <Text style={{ fontSize: 11, fontWeight: '900', color: B.orange, letterSpacing: 1.5, textTransform: 'uppercase' }}>
                     TODAY • MONDAY
                   </Text>
+                  
                   <Text style={{ fontSize: 22, fontWeight: '900', color: t.text, marginTop: 4 }}>
-                    Today's Menu
+                    Today's Fresh Menu
                   </Text>
-                  <Text style={{ fontSize: 12, color: t.sub, marginTop: 4, fontWeight: '500' }}>
+
+                  <Text style={{ fontSize: 12, color: t.sub, marginTop: 6, fontWeight: '600' }}>
                     Freshly cooked. Delivered with care.
                   </Text>
                 </View>
@@ -5218,14 +5452,14 @@ function RenderSetup3() {
                   elevation: 5
                 }}>
                   <Image
-                    source={{ uri: IMG.curry }}
+                    source={{ uri: IMG.thali }}
                     style={{ width: '100%', height: '100%', resizeMode: 'cover' }}
                   />
                 </View>
               </View>
 
               {/* Filter chips inside Hero Card */}
-              <View style={{ flexDirection: 'row', gap: 8, marginTop: 18 }}>
+              <View style={{ flexDirection: 'row', gap: 8, marginTop: 16, paddingHorizontal: 4 }}>
                 {[
                   { label: 'Veg 🌱', value: 'Veg' },
                   { label: 'Non-Veg 🍗', value: 'Non-Veg' },
@@ -5261,168 +5495,91 @@ function RenderSetup3() {
                   );
                 })}
               </View>
-            </View>
-          </View>
 
-          {/* Today's Meals Section */}
-          <View style={{ marginTop: 24 }}>
-            <Text style={{ fontSize: 18, fontWeight: '900', color: t.text, paddingHorizontal: 16, marginBottom: 12 }}>
-              Today's Meals
-            </Text>
-
-            {/* Tabs for Lunch & Dinner */}
-            <View style={{ flexDirection: 'row', paddingHorizontal: 16, gap: 12, marginBottom: 16 }}>
-              {[
-                { id: 'lunch', label: 'Lunch', sub: '12:00 PM – 2:30 PM', icon: Sun },
-                { id: 'dinner', label: 'Dinner', sub: '7:00 PM – 9:30 PM', icon: Moon }
-              ].map((tab) => {
-                const isActive = newUserHomeMealTab === tab.id;
-                return (
-                  <TouchableOpacity
-                    key={tab.id}
-                    onPress={() => setNewUserHomeMealTab(tab.id as 'lunch' | 'dinner')}
-                    style={{
-                      flex: 1,
-                      backgroundColor: isActive ? B.orangeL : t.card,
-                      borderRadius: 18,
-                      borderWidth: 1.5,
-                      borderColor: isActive ? B.orange : t.border,
-                      padding: 12,
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      gap: 10,
-                      shadowColor: isActive ? B.orange : '#000',
-                      shadowOffset: { width: 0, height: 4 },
-                      shadowOpacity: isActive ? 0.04 : 0.01,
-                      shadowRadius: 8,
-                      elevation: isActive ? 1 : 0
-                    }}
-                  >
-                    <tab.icon size={18} color={isActive ? B.orange : t.muted} />
-                    <View style={{ flex: 1 }}>
-                      <Text style={{ fontSize: 14, fontWeight: '900', color: isActive ? B.orange : t.text }}>
-                        {tab.label}
-                      </Text>
-                      <Text style={{ fontSize: 9.5, fontWeight: '600', color: isActive ? B.orange : t.sub, marginTop: 1 }}>
-                        {tab.sub}
-                      </Text>
-                    </View>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-
-            {/* Side-by-side Veg & Non-Veg details */}
-            <View style={{ flexDirection: 'row', paddingHorizontal: 16, gap: 12 }}>
-              {/* Veg Card */}
-              <View
-                style={{
-                  flex: 1,
-                  backgroundColor: isDark ? 'rgba(59, 167, 106, 0.08)' : B.greenL,
-                  borderRadius: 20,
-                  borderWidth: 1,
-                  borderColor: isDark ? 'rgba(59, 167, 106, 0.2)' : '#D6ECD9',
-                  padding: 14,
-                  justifyContent: 'space-between'
-                }}
-              >
-                <View>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 12 }}>
-                    <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: B.green }} />
-                    <Text style={{ fontSize: 11, fontWeight: '900', color: B.green, letterSpacing: 0.5 }}>VEG</Text>
-                  </View>
-                  
-                  {newUserHomeMealTab === 'lunch' ? (
-                    <View style={{ gap: 6 }}>
-                      {['Dal Tadka', 'Steamed Rice', 'Mix Veg Sabzi', 'Roti'].map((item, index) => (
-                        <Text key={index} style={{ fontSize: 12, fontWeight: '700', color: t.text }}>• {item}</Text>
-                      ))}
-                    </View>
-                  ) : (
-                    <View style={{ gap: 6 }}>
-                      {['Paneer Curry', 'Jeera Rice', 'Cucumber Raita'].map((item, index) => (
-                        <Text key={index} style={{ fontSize: 12, fontWeight: '700', color: t.text }}>• {item}</Text>
-                      ))}
-                    </View>
-                  )}
+              {/* Combined Meals Menu white card wrapper inside Hero card */}
+              <View style={{
+                backgroundColor: '#FFFFFF',
+                borderRadius: 24,
+                borderWidth: 1,
+                borderColor: '#FFEAD9',
+                padding: 16,
+                marginTop: 16
+              }}>
+                {/* LUNCH SLOT */}
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+                  <Text style={{ fontSize: 11, fontWeight: '900', color: B.orange, letterSpacing: 0.5 }}>LUNCH</Text>
+                  <Text style={{ fontSize: 10, color: t.sub, fontWeight: '600' }}>12:00 PM – 2:30 PM</Text>
                 </View>
 
-                {/* Soup Bowl vector graphic at bottom right */}
-                <View style={{ alignSelf: 'flex-end', marginTop: 12, opacity: 0.7 }}>
-                  <Svg width={36} height={36} viewBox="0 0 24 24" fill="none" stroke={B.green} strokeWidth={1.5}>
-                    <Path d="M2 12h20M12 2v3M9 3v2M15 3v2" strokeLinecap="round" />
-                    <Path d="M4 12c0 4.4 3.6 8 8 8s8-3.6 8-8H4z" fill={`${B.green}10`} strokeLinecap="round" strokeLinejoin="round" />
-                  </Svg>
-                </View>
-              </View>
-
-              {/* Non-Veg Card */}
-              <View
-                style={{
-                  flex: 1,
-                  backgroundColor: isDark ? 'rgba(239, 68, 68, 0.08)' : '#FFF0EE',
-                  borderRadius: 20,
-                  borderWidth: 1,
-                  borderColor: isDark ? 'rgba(239, 68, 68, 0.2)' : '#FDD6D0',
-                  padding: 14,
-                  justifyContent: 'space-between'
-                }}
-              >
-                <View>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 12 }}>
-                    <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#EF4444' }} />
-                    <Text style={{ fontSize: 11, fontWeight: '900', color: '#EF4444', letterSpacing: 0.5 }}>NON-VEG</Text>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 12, marginBottom: 12 }}>
+                  {/* Lunch Veg */}
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 11, fontWeight: '900', color: B.green, marginBottom: 6 }}>VEG 🌿</Text>
+                    {['Dal Tadka', 'Steamed Rice', 'Mix Veg Sabzi', 'Roti'].map((item, idx) => (
+                      <Text key={idx} style={{ fontSize: 11, color: t.text, fontWeight: '700', lineHeight: 16 }}>• {item}</Text>
+                    ))}
                   </View>
 
-                  {newUserHomeMealTab === 'lunch' ? (
-                    <View style={{ gap: 6 }}>
-                      {['Andhra Chicken Curry', 'Steamed Rice', 'Salad', 'Roti'].map((item, index) => (
-                        <Text key={index} style={{ fontSize: 12, fontWeight: '700', color: t.text }}>• {item}</Text>
-                      ))}
-                    </View>
-                  ) : (
-                    <View style={{ gap: 6 }}>
-                      {['Chicken Fry', 'Chapati', 'Onion Salad'].map((item, index) => (
-                        <Text key={index} style={{ fontSize: 12, fontWeight: '700', color: t.text }}>• {item}</Text>
-                      ))}
-                    </View>
-                  )}
+                  {/* Lunch Non-Veg */}
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 11, fontWeight: '900', color: '#EF4444', marginBottom: 6 }}>NON-VEG 🍗</Text>
+                    {['Andhra Chicken Curry', 'Steamed Rice', 'Salad', 'Roti'].map((item, idx) => (
+                      <Text key={idx} style={{ fontSize: 11, color: t.text, fontWeight: '700', lineHeight: 16 }}>• {item}</Text>
+                    ))}
+                  </View>
                 </View>
 
-                {/* Chicken leg vector graphic at bottom right */}
-                <View style={{ alignSelf: 'flex-end', marginTop: 12, opacity: 0.7 }}>
-                  <Svg width={36} height={36} viewBox="0 0 24 24" fill="none" stroke={B.orange} strokeWidth={1.5}>
-                    <Path d="M15 3c-2.8 0-5 2.2-5 5v1.2c0 .3-.1.6-.3.8L5.3 14.4c-.6.6-.6 1.5 0 2.1l1.1 1.1c.6.6 1.5.6 2.1 0l4.4-4.4c.2-.2.5-.3.8-.3H15c2.8 0 5-2.2 5-5s-2.2-5-5-5z" fill={`${B.orange}10`} strokeLinecap="round" strokeLinejoin="round" />
-                    <Path d="M4 20a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z" strokeLinecap="round" strokeLinejoin="round" />
-                    <Path d="M8 20a1.5 1.5 0 1 0-3 0 1.5 1.5 0 0 0 3 0z" strokeLinecap="round" strokeLinejoin="round" />
-                  </Svg>
+                {/* Dashed Line Separator */}
+                <View style={{ height: 1.5, backgroundColor: '#FFEAD9', marginVertical: 12 }} />
+
+                {/* DINNER SLOT */}
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+                  <Text style={{ fontSize: 11, fontWeight: '900', color: B.orange, letterSpacing: 0.5 }}>DINNER</Text>
+                  <Text style={{ fontSize: 10, color: t.sub, fontWeight: '600' }}>7:00 PM – 9:30 PM</Text>
                 </View>
+
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 12 }}>
+                  {/* Dinner Veg */}
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 11, fontWeight: '900', color: B.green, marginBottom: 6 }}>VEG 🌿</Text>
+                    {['Paneer Butter Masala', 'Jeera Rice', 'Cucumber Raita'].map((item, idx) => (
+                      <Text key={idx} style={{ fontSize: 11, color: t.text, fontWeight: '700', lineHeight: 16 }}>• {item}</Text>
+                    ))}
+                  </View>
+
+                  {/* Dinner Non-Veg */}
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 11, fontWeight: '900', color: '#EF4444', marginBottom: 6 }}>NON-VEG 🍗</Text>
+                    {['Chicken Fry', 'Chapati', 'Onion Salad'].map((item, idx) => (
+                      <Text key={idx} style={{ fontSize: 11, color: t.text, fontWeight: '700', lineHeight: 16 }}>• {item}</Text>
+                    ))}
+                  </View>
+                </View>
+
+                {/* View Full Today's Menu Button */}
+                <TouchableOpacity
+                  onPress={() => go('meals')}
+                  style={{
+                    height: 40,
+                    borderRadius: 20,
+                    borderWidth: 1.5,
+                    borderColor: B.orange,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    backgroundColor: 'transparent',
+                    marginTop: 18
+                  }}
+                >
+                  <Text style={{ color: B.orange, fontSize: 12, fontWeight: '900' }}>
+                    View Full Today's Menu →
+                  </Text>
+                </TouchableOpacity>
               </View>
-            </View>
-
-            {/* Explore Today's Menu Button */}
-            <View style={{ paddingHorizontal: 16, marginTop: 14 }}>
-              <TouchableOpacity
-                onPress={() => go('meals')}
-                style={{
-                  height: 48,
-                  borderRadius: 24,
-                  borderWidth: 1.5,
-                  borderColor: B.orange,
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  backgroundColor: 'transparent'
-                }}
-              >
-                <Text style={{ color: B.orange, fontSize: 14, fontWeight: '900' }}>
-                  Explore Today's Menu →
-                </Text>
-              </TouchableOpacity>
             </View>
           </View>
 
           {/* Category Section */}
-          <View style={{ marginTop: 28 }}>
+          <View style={{ marginTop: 24 }}>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -5439,7 +5596,7 @@ function RenderSetup3() {
                   }}
                   style={{
                     backgroundColor: t.card,
-                    borderWidth: 1,
+                    borderWidth: 1.5,
                     borderColor: t.border,
                     borderRadius: 16,
                     paddingHorizontal: 16,
@@ -5454,10 +5611,10 @@ function RenderSetup3() {
                     elevation: 1
                   }}
                 >
-                  <View style={{ width: 28, height: 28, borderRadius: 8, backgroundColor: cat.bg, justifyContent: 'center', alignItems: 'center' }}>
-                    <cat.icon size={14} color={cat.color} />
+                  <View style={{ width: 26, height: 26, borderRadius: 8, backgroundColor: cat.bg, justifyContent: 'center', alignItems: 'center' }}>
+                    <cat.icon size={13} color={cat.color} />
                   </View>
-                  <Text style={{ fontSize: 13, fontWeight: '800', color: t.text }}>{cat.label}</Text>
+                  <Text style={{ fontSize: 12.5, fontWeight: '800', color: t.text }}>{cat.label}</Text>
                 </TouchableOpacity>
               ))}
             </ScrollView>
@@ -5483,20 +5640,17 @@ function RenderSetup3() {
                 overflow: 'hidden'
               }}
             >
-              {/* Steel Lunchbox Image */}
-              <View style={{ width: 100, height: 90, marginRight: 12 }}>
-                <Image
-                  source={require('./assets/premium_steel_dabba.png')}
-                  style={{ width: '100%', height: '100%', resizeMode: 'contain' }}
-                />
+              {/* Steel Lunchbox Svg */}
+              <View style={{ width: 90, height: 90, marginRight: 10, justifyContent: 'center', alignItems: 'center' }}>
+                <PremiumSteelDabbaSvg />
               </View>
 
               {/* Banner Text + CTA */}
-              <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 16, fontWeight: '900', color: t.text }}>
-                  Start Your Dabba Journey
+              <View style={{ flex: 1, marginRight: 4 }}>
+                <Text style={{ fontSize: 15, color: t.text, fontWeight: '600' }}>
+                  Start Your <Text style={{ color: B.orange, fontWeight: '900' }}>Dabba Journey</Text>
                 </Text>
-                <Text style={{ fontSize: 10.5, color: t.sub, marginTop: 4, fontWeight: '600', lineHeight: 15 }}>
+                <Text style={{ fontSize: 10.5, color: t.sub, marginTop: 4, fontWeight: '600', lineHeight: 14 }}>
                   Choose a subscription plan and enjoy fresh home-cooked meals every day.
                 </Text>
                 <TouchableOpacity
@@ -5507,7 +5661,7 @@ function RenderSetup3() {
                     paddingHorizontal: 14,
                     paddingVertical: 7,
                     alignSelf: 'flex-start',
-                    marginTop: 12,
+                    marginTop: 10,
                     shadowColor: B.orange,
                     shadowOffset: { width: 0, height: 4 },
                     shadowOpacity: 0.15,
@@ -5519,6 +5673,24 @@ function RenderSetup3() {
                     View Plans →
                   </Text>
                 </TouchableOpacity>
+              </View>
+
+              {/* Dashed Circle pricing badge (Green) */}
+              <View style={{
+                borderWidth: 1.5,
+                borderColor: B.green,
+                borderStyle: 'dashed',
+                borderRadius: 14,
+                paddingHorizontal: 8,
+                paddingVertical: 10,
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: 'rgba(59, 167, 106, 0.05)',
+                marginLeft: 10
+              }}>
+                <Text style={{ fontSize: 7.5, color: B.green, fontWeight: '800', textAlign: 'center' }}>Meals start from</Text>
+                <Text style={{ fontSize: 18, fontWeight: '900', color: B.green, marginTop: 2 }}>₹99</Text>
+                <Text style={{ fontSize: 8.5, color: B.green, fontWeight: '800', marginTop: 1 }}>per day</Text>
               </View>
             </View>
           </View>
@@ -5540,10 +5712,10 @@ function RenderSetup3() {
               contentContainerStyle={{ paddingHorizontal: 16, gap: 14 }}
             >
               {[
-                { id: 2, name: 'Paneer Butter Masala', rating: '4.8', price: '₹149', type: 'veg', img: IMG.paneer },
-                { id: 3, name: 'Chicken Curry Thali', rating: '4.7', price: '₹169', type: 'non-veg', img: IMG.chicken },
-                { id: 7, name: 'Veg Pulao', rating: '4.6', price: '₹129', type: 'veg', img: IMG.rice },
-                { id: 1, name: 'Dal Tadka + Rice', rating: '4.8', price: '₹119', type: 'veg', img: IMG.dal }
+                { id: 2, name: 'Paneer Butter Masala', rating: '4.8 (120)', price: '₹149', type: 'veg', img: IMG.paneer },
+                { id: 3, name: 'Chicken Curry Thali', rating: '4.7 (98)', price: '₹169', type: 'non-veg', img: IMG.chicken },
+                { id: 7, name: 'Veg Pulao', rating: '4.6 (86)', price: '₹129', type: 'veg', img: IMG.rice },
+                { id: 1, name: 'Dal Tadka + Rice', rating: '4.8 (140)', price: '₹119', type: 'veg', img: IMG.dal }
               ].map((dish) => (
                 <TouchableOpacity
                   key={dish.id}
@@ -5569,11 +5741,34 @@ function RenderSetup3() {
                   <View style={{ width: '100%', height: 95 }}>
                     <Image source={{ uri: dish.img }} style={{ width: '100%', height: '100%', resizeMode: 'cover' }} />
                     {/* Badge Overlay */}
-                    <View style={{ position: 'absolute', top: 6, right: 6, backgroundColor: dish.type === 'veg' ? B.green : '#EF4444', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 }}>
+                    <View style={{ position: 'absolute', top: 6, left: 6, backgroundColor: dish.type === 'veg' ? B.green : '#EF4444', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 }}>
                       <Text style={{ fontSize: 8, fontWeight: '900', color: '#FFFFFF', letterSpacing: 0.5 }}>
                         {dish.type.toUpperCase()}
                       </Text>
                     </View>
+                    
+                    {/* Heart Button Overlay */}
+                    <TouchableOpacity
+                      style={{
+                        position: 'absolute',
+                        top: 6,
+                        right: 6,
+                        width: 26,
+                        height: 26,
+                        borderRadius: 13,
+                        backgroundColor: '#FFFFFF',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        shadowColor: '#000',
+                        shadowOffset: { width: 0, height: 2 },
+                        shadowOpacity: 0.1,
+                        shadowRadius: 4,
+                        elevation: 2
+                      }}
+                      onPress={() => setToast("Added to Favorites!")}
+                    >
+                      <Heart size={12} color="#EF4444" fill="#EF4444" />
+                    </TouchableOpacity>
                   </View>
 
                   {/* Info */}
@@ -5597,41 +5792,136 @@ function RenderSetup3() {
               Why Choose Koi Koi Dabba
             </Text>
 
-            <View style={{ gap: 10 }}>
+            <View style={{
+              flexDirection: 'row',
+              backgroundColor: t.card,
+              borderWidth: 1,
+              borderColor: t.border,
+              borderRadius: 20,
+              paddingVertical: 14,
+              paddingHorizontal: 8,
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.01,
+              shadowRadius: 4,
+              elevation: 1
+            }}>
               {[
-                { title: '🏠 Home-Cooked with Love', desc: 'Fresh meals prepared daily.' },
-                { title: '🥗 Fresh & Hygienic', desc: 'Premium ingredients.' },
-                { title: '🚚 Delivered Fresh', desc: 'Hot meals delivered on time.' }
-              ].map((card, idx) => (
-                <View
-                  key={idx}
-                  style={{
-                    backgroundColor: t.card,
-                    borderWidth: 1,
-                    borderColor: t.border,
-                    borderRadius: 18,
-                    padding: 12,
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 12,
-                    shadowColor: '#000',
-                    shadowOffset: { width: 0, height: 2 },
-                    shadowOpacity: 0.01,
-                    shadowRadius: 4,
-                    elevation: 1
-                  }}
-                >
-                  <View style={{ flex: 1 }}>
-                    <Text style={{ fontSize: 14, fontWeight: '900', color: t.text }}>{card.title}</Text>
-                    <Text style={{ fontSize: 11, color: t.sub, marginTop: 2, fontWeight: '500' }}>{card.desc}</Text>
+                { title: 'Steel Dabbas', desc: 'Safe & hygienic', icon: Package },
+                { title: 'Fresh Ingredients', desc: 'Carefully selected', icon: Leaf },
+                { title: 'Expert Chefs', desc: 'Experienced cooks', icon: ChefHat },
+                { title: 'On-time Delivery', desc: 'Hot & fresh meals', icon: Bike }
+              ].map((item, idx) => (
+                <React.Fragment key={idx}>
+                  {idx > 0 && <View style={{ width: 1, height: 32, backgroundColor: t.border }} />}
+                  <View style={{ flex: 1, alignItems: 'center' }}>
+                    <View style={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: 18,
+                      backgroundColor: B.orangeL,
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      marginBottom: 6
+                    }}>
+                      <item.icon size={15} color={B.orange} />
+                    </View>
+                    <Text style={{ fontSize: 8.5, fontWeight: '900', color: t.text, textAlign: 'center' }} numberOfLines={1}>
+                      {item.title}
+                    </Text>
+                    <Text style={{ fontSize: 7, color: t.sub, fontWeight: '600', textAlign: 'center', marginTop: 1 }} numberOfLines={1}>
+                      {item.desc}
+                    </Text>
                   </View>
-                </View>
+                </React.Fragment>
               ))}
             </View>
           </View>
 
-        </ScrollView>
+          {/* Live Kitchen & Trusted Families (Side-by-Side) */}
+          <View style={{ flexDirection: 'row', paddingHorizontal: 16, gap: 12, marginTop: 24 }}>
+            {/* Live Kitchen Card */}
+            <View style={{
+              flex: 1,
+              backgroundColor: t.card,
+              borderWidth: 1,
+              borderColor: t.border,
+              borderRadius: 24,
+              padding: 14,
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.01,
+              shadowRadius: 8,
+              elevation: 1,
+              justifyContent: 'space-between'
+            }}>
+              <View>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
+                  <Text style={{ fontSize: 14, fontWeight: '900', color: t.text }}>Live Kitchen</Text>
+                  <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#3BA76A', marginLeft: 6 }} />
+                </View>
+                
+                {/* Drawn Video Thumbnail */}
+                <View style={{ marginVertical: 6, alignSelf: 'center' }}>
+                  <LiveKitchenThumbnailSvg />
+                </View>
+                
+                <Text style={{ fontSize: 10.5, color: t.sub, fontWeight: '600', lineHeight: 14, marginTop: 6 }}>
+                  Watch our chefs prepare today's meals live.
+                </Text>
+              </View>
+              
+              <TouchableOpacity onPress={() => go('kitchen')} style={{ marginTop: 8 }}>
+                <Text style={{ fontSize: 11, fontWeight: '900', color: B.orange }}>Watch Now →</Text>
+              </TouchableOpacity>
+            </View>
 
+            {/* Trusted Families Card */}
+            <View style={{
+              flex: 1,
+              backgroundColor: t.card,
+              borderWidth: 1,
+              borderColor: t.border,
+              borderRadius: 24,
+              padding: 14,
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.01,
+              shadowRadius: 8,
+              elevation: 1,
+              justifyContent: 'space-between'
+            }}>
+              <View>
+                <Text style={{ fontSize: 13, fontWeight: '900', color: t.text, marginBottom: 8 }}>
+                  Trusted by 4,200+ Families
+                </Text>
+                
+                {/* Face avatars drawn with initials */}
+                <View style={{ marginVertical: 4 }}>
+                  <OverlappingAvatars />
+                </View>
+                
+                {/* Stars and score */}
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 8 }}>
+                  <View style={{ flexDirection: 'row' }}>
+                    {[1, 2, 3, 4, 5].map((s) => (
+                      <Star key={s} size={11} color="#F59E0B" fill="#F59E0B" />
+                    ))}
+                  </View>
+                  <Text style={{ fontSize: 11, fontWeight: '900', color: t.text }}>4.8</Text>
+                </View>
+              </View>
+              
+              <Text style={{ fontSize: 9.5, color: t.sub, fontWeight: '600', marginTop: 8 }}>
+                Based on 1,250+ reviews
+              </Text>
+            </View>
+          </View>
+
+        </ScrollView>
+        
         {/* Floating Bottom Navigation */}
         <BottomTabNav active="home" />
       </SafeAreaView>
