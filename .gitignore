@@ -22,3 +22,9 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Expo
+.expo
+.expo/
+mobile/.expo/
+
