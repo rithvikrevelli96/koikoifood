@@ -118,7 +118,7 @@ interface FluidAnimationsDemoProps {
 
 export default function FluidAnimationsDemo({ onBack }: FluidAnimationsDemoProps) {
   const scrollX = useSharedValue(0);
-  
+
   // Bottom sheet animated states
   const sheetY = useSharedValue(0);
   const sheetOpacity = useSharedValue(1);
@@ -150,7 +150,7 @@ export default function FluidAnimationsDemo({ onBack }: FluidAnimationsDemoProps
   const scrollHandler = useAnimatedScrollHandler({
     onScroll: (event) => {
       scrollX.value = event.contentOffset.x;
-      
+
       // Calculate how far away we are from a snapped index
       const exactIndex = scrollX.value / ITEM_WIDTH;
       const diff = Math.abs(exactIndex - Math.round(exactIndex));
@@ -339,10 +339,10 @@ export default function FluidAnimationsDemo({ onBack }: FluidAnimationsDemoProps
           // Inner hook representing each customizer particle trajectory
           const particleAnimatedStyle = useAnimatedStyle(() => {
             const progress = p.progress.value;
-            
+
             // Central coordinates of landing plate center
             const targetX = SCREEN_WIDTH / 2;
-            const targetY = 230; 
+            const targetY = 230;
 
             // Bezier/Dual-axis curve calculation
             const currentX = p.startX + (targetX - p.startX) * progress;
