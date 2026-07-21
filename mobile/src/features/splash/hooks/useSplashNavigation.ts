@@ -23,7 +23,7 @@ export function useSplashNavigation({
   onResumeAnimations,
   trackSplashEvent,
 }: SplashNavigationProps): UseSplashNavigationResult {
-  const { go } = useAppContext();
+  const { go, user, subscribed } = useAppContext();
   const hasCompletedRef = useRef(false);
   const appStateRef = useRef(AppState.currentState);
 
@@ -46,7 +46,19 @@ export function useSplashNavigation({
     if (hasCompletedRef.current) return;
     hasCompletedRef.current = true;
 
-    const target = NAVIGATION_CONFIG.defaultTarget;
+    let target: any = NAVIGATION_CONFIG.defaultTarget;
+    if (user && user.profileCompleted && user.locationCompleted) {
+      target = 'home';
+    } else if (user && user.phone) {
+      if (user.profileCompleted) {
+        target = 'setup2';
+      } else {
+        target = 'setup1';
+      }
+    } else {
+      target = 'ob1';
+    }
+
     trackSplashEvent('Navigation Started', { target });
 
     if (onAnimationComplete) {

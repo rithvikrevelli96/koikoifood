@@ -8,4 +8,10 @@ export const spacing = {
   xl: foundationSpacing.xl,
   xxl: foundationSpacing.xxl,
   outer: foundationSpacing.outer,
+  
+  // Dedicated layout tokens v2
+  screenHorizontal: foundationSpacing.screenHorizontal,
+  screenVertical: foundationSpacing.screenVertical,
+  sectionGap: foundationSpacing.sectionGap,
+  cardGap: foundationSpacing.cardGap,
 };

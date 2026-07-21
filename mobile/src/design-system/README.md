@@ -19,56 +19,83 @@ We blend details from:
 
 ```
 src/design-system/
-├── foundation/           # Raw design values
+├── foundation/           # Immutable raw design values & layout dimensions
 │   ├── colors.ts         # Base hex codes
 │   ├── typography.ts     # Font families
 │   ├── spacing.ts        # 8-point layout grid
 │   ├── radius.ts         # Border radius curves
 │   ├── shadows.ts        # Shadow parameters
 │   ├── gradients.ts      # Linear overlay properties
-│   └── motion.ts         # Spring timings & physics curves
+│   ├── motion.ts         # Spring timings & physics curves
+│   ├── zIndex.ts         # Centralized z-index layers
+│   ├── breakpoints.ts    # Device size triggers
+│   └── sizes.ts          # Core layout component sizes (Avatar, Button heights, etc.)
 │
 ├── tokens/               # Semantic layer mapping foundations to roles
-│   └── index.ts          # Semantic Light/Dark theme mappings
+│   ├── colors.ts         # Brand, Chip presets, Light/Dark mappings
+│   ├── typography.ts     # Display, heading, mono presets
+│   └── ...
 │
-├── theme/                # Backward compatibility bridge
+├── theme/                # Dynamic theme mappings & backward compatibility
+│   ├── light.ts          # Light theme configurations
+│   ├── dark.ts           # Dark theme configurations
 │   └── index.ts          # Integrates design tokens with legacy theme hooks
 │
-├── components/           # Base interactive primitive controls
-│   ├── Button.tsx        # Standard button states
-│   ├── Input.tsx         # Unified inline validation error input
-│   ├── PhoneInput.tsx    # Gated numeric format selector
-│   ├── DateInput.tsx     # Calendar numeric string filter
-│   ├── OTPInput.tsx      # 6 split input cells
-│   ├── Modal.tsx         # Dialog alerts
-│   ├── BottomSheet.tsx   # Swipe-to-dismiss bottom drawer
-│   └── ...               # Checkboxes, badges, cards, skeletons
-│
-├── hooks/                # Interactive UX helpers
-│   ├── useForm.ts        # Form state validation
-│   ├── useValidation.ts  # Input regex triggers
-│   └── useKeyboard.ts    # Viewport sizing offsets
-│
+├── components/           # Base interactive primitive controls (Text, Button, Card, EmptyState)
+├── hooks/                # Interactive UX helpers (useForm, useKeyboard)
+├── patterns/             # Shared reusable layouts (FeatureCard)
+├── assets/               # Centralized brand visual assets
 └── index.ts              # Main design system exports
 ```
 
 ---
 
-## 3. Token Hierarchy & Standards
+## 3. Component & Design Hierarchy
+
+We enforce a strict downward hierarchy flow. Lower layers must consume only elements exported by the layers above:
 
 ```
-  FOUNDATION                        SEMANTIC TOKENS                 THEME MAP
-[Raw HEX Code]                      [Functional Role]            [AppTheme State]
-#4B5D3A (Moss Green)    ------>     theme.colors.primary    ---> Light / Dark Mode
-#C96B3C (Terracotta)    ------>     theme.colors.secondary  ---> Light / Dark Mode
+Foundation (Raw units)
+  ↓
+Tokens (Semantic roles)
+  ↓
+Theme (lightTheme, darkTheme)
+  ↓
+Primitives (Text, Button, Card, Layouts)
+  ↓
+Components (MealCard, PlanCard, ProfileCard)
+  ↓
+Patterns (MealSelection, HeaderRow)
+  ↓
+Features (Meals, Auth, Plans modules)
+  ↓
+Screens (MealsScreen, AuthScreen, HomeScreen)
 ```
 
-### Colors
-* **Primary (Moss Green - `#4B5D3A`)**: Visual prominence for titles and brand identity.
-* **Secondary (Terracotta Orange - `#C96B3C`)**: Primary action indicators, buttons, highlights.
-* **Accent (Wheat Gold - `#D9B65A`)**: Special highlights and subscription milestones.
-* **Background (Soft Cream - `#FCFAF6`)**: Warm page viewport backing.
-* **Surface (Eggshell Warmth - `#F4EFE6`)**: Card layers and contact info sheets.
+---
+
+## 4. Feature Folder Layout Standard
+
+Every feature module in the repository must be isolated and structured uniformly:
+
+```
+feature/
+├── README.md             # Technical purpose & dependency notes
+├── index.ts              # Public API barrel exports
+├── screens/              # Top-level route containers
+├── components/           # Feature-isolated view items
+├── patterns/             # Symmetrical page templates
+├── hooks/                # Local logic hook files
+├── services/             # API request wrappers
+├── constants/            # Hardcoded configurations
+├── types/                # TypeScript interface declarations
+├── utils/                # Helper functions
+└── assets/               # Feature-exclusive graphics/media
+```
+
+---
+
+## 5. Token Hierarchy & Standards
 
 ### Spacing (8-Point Grid)
 Layouts must *only* align elements using our 8-point spatial grid values. Never hardcode arbitrary padding or margins:
@@ -76,80 +103,67 @@ Layouts must *only* align elements using our 8-point spatial grid values. Never 
 * `sm`: 8px
 * `md`: 12px
 * `lg`: 16px
-* `xl`: 24px
-* `xxl`: 32px
+* `xl`: 20px
+* `xxl`: 24px (Outer screen padding)
+* `xxxl`: 32px
 
 ### Corner Radius Curves
-* `control`: 12px (inputs, text fields, buttons)
-* `card`: 16px (meal cards, banners)
-* `dialog`: 24px (confirmation modals)
-* `sheet`: 28px (bottom drawers)
-* `max`: 9999px (capsules, chips, badges)
+* `small`: 8px
+* `medium`: 14px
+* `control`: 18px (inputs, text fields, buttons)
+* `card`: 24px (meal cards, banners)
+* `dialog`: 28px (confirmation modals)
+* `sheet`: 32px (bottom sheets)
+* `pill` / `max`: 999px (capsules, chips, badges)
+
+### Size Tokens (Eliminating Magic Numbers)
+All layout-specific dimensions are structured in [foundation/sizes.ts](file:///c:/projects/koikoi/mobile/src/design-system/foundation/sizes.ts):
+* **Avatar Sizes**: `sm: 32`, `md: 44`, `lg: 48`, `xl: 64`, `xxl: 90`
+* **Button Heights**: `small: 32`, `medium: 44`, `large: 54`
+* **Input Heights**: `standard: 46`, `multiline: 120`
+* **Navigation Heights**: `header: 56`, `tabBar: 70`
+* **Icon Sizes**: `xs: 12`, `sm: 14`, `md: 16`, `lg: 18`, `xl: 20`, `xxl: 24`
 
 ---
 
-## 4. Typography Rules
+## 6. Typography & Typography Presets
 
-| Font Family | Component Target | Allowed Weights |
-| :--- | :--- | :--- |
-| **General Sans** | Headings, Screen Titles, Hero headers | `600` (SemiBold), `700` (Bold) |
-| **Inter** | Descriptions, forms, text labels, actions | `400` (Regular), `500` (Medium) |
-| **IBM Plex Mono** | Prices, calories, scores, times, numeric metrics | `500` (Medium), `700` (Bold) |
-
-> [!IMPORTANT]
-> Never use standard default font families. Always route numeric data through `IBM Plex Mono` to ensure tabular alignment and numerical consistency.
+| Font Family | Component Target | Allowed Weights | Mapped Variant |
+| :--- | :--- | :--- | :--- |
+| **General Sans** | Display titles, screen titles, banners | `600`, `700`, `800` | `display`, `headingXl`, `headingL`, `headingM`, `title`, `subtitle` |
+| **Inter** | Descriptions, form labels, paragraph body | `400`, `500` | `bodyL`, `body`, `caption`, `label` |
+| **Improve Numbers** | Prices, calories, ratings, timers, date fields | `500`, `700` | `mono` |
 
 ---
 
-## 5. Component Lifecycle Guideline
+## 7. Shared States (Reusable Patterns)
 
-Before creating a new UI component, follow the decision tree:
-
-1. **Does the component already exist in `src/design-system/components/`?**
-   * *Yes*: Import and reuse it. Do not rewrite.
-   * *No*: Move to step 2.
-2. **Is the component feature-specific (e.g. `MealHero`, `SubscriptionBanner`)?**
-   * *Yes*: Place it in the feature's pattern folder (e.g., `src/features/meals/patterns/`). Do not mix it into the global Design System.
-   * *No (Generic)*: Implement it inside `src/design-system/components/` following our tokens, export it in `src/design-system/index.ts`, and update the status matrix in `ChangelogScreen.tsx`.
+Avoid duplicating logic for screens lifecycle states. Import and mount:
+* **`Skeleton`**: For standard load steps and placeholders.
+* **`EmptyState`**: Mapped with descriptive icons and primary buttons when lists contain no data.
+* **`ErrorState` / `OfflineState`**: Handled via global toast notifications.
 
 ---
 
-## 6. Accessibility & Motion Guidelines
+## 8. Animation & Motion Rules
 
-### Accessibility (WCAG AAA)
-* **Touch Targets**: All clickable components must scale to a minimum tap boundary box of $48 \times 48\text{ dp}$.
-* **Labeling**: Every action button must declare descriptive `accessibilityLabel` properties.
-* **Dynamic Type**: Container heights should use flexible measurements (`minHeight` and relative flex parameters) to prevent text clipping when OS font scaling is increased.
-
-### Motion Curves
-* **Spring Curve**: All physical object presses must align to `friction: 4, tension: 40`.
-* **Timings**:
-  * Shakes (form errors): 240ms sequence.
-  * Transitions (pages): 350ms back-out easing.
-  * Drawer Slides (bottom sheet): 250ms ease-out.
+All transitions and animations must read timings and easing functions directly from `theme.motion`:
+* **Page Transitions**: 350ms back-out easing curve.
+* **Card Lift / Hover**: Scale spring animation with scale feedback: `0.97` on tap.
+* **Button Press**: 800ms throttle timer block to avoid duplicate api clicks.
+* **Form Errors**: 240ms horizontal shake sequence.
+* **Drawers**: 250ms bottom-up slide curve.
 
 ---
 
-## 7. PR Review Checklist
+## 9. Screen Quality Checklist & Definition of Done
 
-Developers must check the following list before submitting code for review:
+Every screen redesign is complete only when:
+* [ ] Extends `PageLayout` or `ScrollableLayout` to handle safe areas.
 * [ ] No raw hex codes used (all colors read from `theme.colors`).
-* [ ] Typography mappings match rules (General Sans for Headings, Inter for Body, Mono for Numbers).
 * [ ] Padding/margins align to 8-point spatial multiples (`theme.spacing`).
-* [ ] Dynamic text container limits verified (no font size clipping).
-* [ ] Tap targets meet the minimum $48 \times 48\text{ dp}$ check.
-* [ ] Accessibility label attributes are configured for non-text action targets.
-
----
-
-## 8. Version Changelog & Roadmap
-
-### v1.0.0 (Released July 2026)
-* Complete foundation, semantic token layers, and theme compatibility bridges.
-* Base controls catalog (Buttons, Inputs, Date/Phone validation cells, OTP split boxes, Modals, Drawers).
-* Gated Developer Mode diagnostics and playground.
-
-### Future Roadmap
-* **v1.1.0**: Integrate centralized SearchBar, FilterChips, and WalletCard templates.
-* **v1.2.0**: Implement live Kitchen streams visual elements and AI Meal Recommendation modules.
-* **v2.0.0**: Dynamic theme styling improvements and multilingual translations backend localization integration.
+* [ ] Font family mappings match rules (General Sans, Inter, IBM Plex Mono).
+* [ ] No other icon packages used (Lucide React Native is the only choice).
+* [ ] All clickable elements scale to a minimum tap boundary of $48 \times 48\text{ dp}$.
+* [ ] Accessible labels are declared for buttons and form fields.
+* [ ] Build compiles successfully via `npm run ts:check`.

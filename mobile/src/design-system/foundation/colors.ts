@@ -19,16 +19,16 @@ export const colors = {
   textDark: '#F7F4EF',
   subLight: '#8A857B',
   subDark: '#B5AF9F',
-  mutedLight: '#BDB8AE',
+  mutedLight: '#8A857B',
   mutedDark: '#7E7769',
   borderLight: '#E8E2D8',
   borderDark: '#3E3A33',
 
   // Semantics
-  success: '#4B5D3A',
+  success: '#4B8B5A',
   warning: '#D9B65A',
   error: '#D64545',
-  info: '#4A90E2',
+  info: '#5B7FD9',
   disabled: '#BDB8AE',
 
   // Chip Presets

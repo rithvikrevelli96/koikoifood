@@ -10,6 +10,9 @@ export interface AppContextType {
   setScreenStack: React.Dispatch<React.SetStateAction<Screen[]>>;
   go: (s: Screen) => void;
   back: () => void;
+  activeTab: string | null;
+  switchTab: (tabId: string) => void;
+  resetNavigation: (screen: Screen) => void;
   isDark: boolean;
   t: T;
   

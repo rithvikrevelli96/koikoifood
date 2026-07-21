@@ -1,53 +1,17 @@
 import React from 'react';
-import {
-  StyleSheet,
-  View,
-  Platform,
-  TouchableOpacity,
-  ScrollView,
-  SafeAreaView,
-  StatusBar,
-  Image
-} from 'react-native';
-import { Bell, Sun, Moon, UtensilsCrossed } from 'lucide-react-native';
+import { View, TouchableOpacity, ScrollView, Image, StyleSheet, Dimensions } from 'react-native';
+import { Bell, Sun, Moon, Star, ChevronRight, Flame, Leaf } from 'lucide-react-native';
 import { useAppContext } from '../../app/context';
-import { theme, F } from '../../design-system';
-import { Text as RNText } from 'react-native';
-
-const B = {
-  orange: theme.colors.secondary,
-  orangeL: 'rgba(201, 107, 60, 0.08)',
-  green: theme.colors.success,
-  greenL: 'rgba(75, 93, 58, 0.08)',
-  cream: theme.colors.light.surface,
-  creamL: theme.colors.light.bg,
-};
-
-function Text({ style, ...props }: any) {
-  const flatStyle = StyleSheet.flatten(style || {});
-  let fontFamily = F.body;
-  const content = String(props.children || '');
-  const isNumeric = /[₹\d]/.test(content) && (
-    /^[₹\d\s★%\-.:\+a-zA-Z\s]+$/.test(content) ||
-    content.includes('kcal') ||
-    content.includes('protein') ||
-    content.includes('Carbs') ||
-    content.includes('₹') ||
-    content.includes('min') ||
-    content.includes('km')
-  );
-
-  if (flatStyle.fontFamily) {
-    fontFamily = flatStyle.fontFamily;
-  } else if (flatStyle.fontSize >= 15 && (flatStyle.fontWeight === '900' || flatStyle.fontWeight === '800' || flatStyle.fontWeight === 'bold')) {
-    fontFamily = isNumeric ? F.mono : F.heading;
-  } else if (isNumeric) {
-    fontFamily = F.mono;
-  }
-  return <RNText style={[{ fontFamily }, style]} {...props} />;
-}
+import {
+  theme,
+  Text,
+  PageLayout,
+} from '../../design-system';
 import { Meal } from '../../core/constants/types';
 import { BottomTabNav } from '../../core/components/BottomTabNav';
+
+const { width: SCREEN_W } = Dimensions.get('window');
+const PLATE_SIZE = SCREEN_W * 0.38;
 
 export default function MealsScreen() {
   const {
@@ -59,13 +23,11 @@ export default function MealsScreen() {
     setActiveMealIndex,
     setSelectedMealId,
     go,
-    t,
     isDark
   } = useAppContext();
 
   const weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-  
-  // Filter logic
+
   const filteredMeals = mealsList.filter(m => {
     let matchesType = true;
     if (selectedFilter === 'Veg') matchesType = m.type === 'veg';
@@ -92,316 +54,516 @@ export default function MealsScreen() {
   const lunchMeals = filteredMeals.filter(m => m.when === 'lunch');
   const dinnerMeals = filteredMeals.filter(m => m.when === 'dinner');
 
-  const renderMealCard = (item: Meal) => {
-    const typeColor = item.type === 'veg' ? '#4B5D3A' : item.type === 'non-veg' ? '#C96B3C' : '#D9B65A';
-    const typeBg = item.type === 'veg' ? '#E8F3E6' : item.type === 'non-veg' ? '#FBE8E0' : '#F7F0D8';
+  /* ─── Premium Menu Card (alternating layout) ─── */
+  const renderMenuItem = (item: Meal, index: number) => {
+    const isEven = index % 2 === 0;
+    const typeColor = item.type === 'veg' ? '#4B5D3A' : '#C96B3C';
+    const typeIcon = item.type === 'veg' ? '🌱' : '🍗';
+
     return (
-      <View 
+      <TouchableOpacity
         key={item.id}
-        style={{
-          backgroundColor: t.card,
-          borderRadius: 20,
-          borderWidth: 1.5,
-          borderColor: t.border,
-          marginBottom: 16,
-          overflow: 'hidden',
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.05,
-          shadowRadius: 10,
-          elevation: 3
+        activeOpacity={0.85}
+        onPress={() => {
+          setSelectedMealId(item.id);
+          go('meal_detail');
         }}
+        style={[
+          styles.menuItem,
+          isEven ? styles.menuItemLeft : styles.menuItemRight,
+        ]}
       >
-        <View style={{ height: 160, position: 'relative', width: '100%' }}>
-          <Image source={{ uri: item.img }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+        {/* Plate Image Side */}
+        <View style={[
+          styles.plateContainer,
+          isEven ? styles.plateLeft : styles.plateRight,
+        ]}>
+          <View style={styles.plateShadow}>
+            <View style={styles.plateRing}>
+              <Image
+                source={{ uri: item.img }}
+                style={styles.plateImage}
+                resizeMode="cover"
+              />
+            </View>
+          </View>
+          {/* Type badge on plate */}
+          <View style={[styles.typeBadgeOnPlate, { backgroundColor: typeColor }]}>
+            <Text style={styles.typeBadgeText}>{typeIcon}</Text>
+          </View>
+        </View>
+
+        {/* Text Info Side */}
+        <View style={[
+          styles.menuTextContainer,
+          isEven ? styles.menuTextRight : styles.menuTextLeft,
+        ]}>
+          <Text style={styles.menuItemName}>{item.name}</Text>
+          <Text style={styles.menuItemDesc} numberOfLines={2}>{item.desc}</Text>
           
-          <View style={{
-            position: 'absolute',
-            top: 10,
-            left: 10,
-            backgroundColor: typeBg,
-            paddingHorizontal: 8,
-            paddingVertical: 4,
-            borderRadius: 6,
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 4
-          }}>
-            <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: typeColor }} />
-            <Text style={{ fontSize: 9, fontWeight: '900', color: typeColor, textTransform: 'uppercase' }}>
-              {item.type}
-            </Text>
+          {/* Macros Row */}
+          <View style={styles.macrosRow}>
+            <View style={styles.macroChip}>
+              <Flame size={10} color="#C96B3C" />
+              <Text style={styles.macroVal}>{item.cal}</Text>
+            </View>
+            <View style={styles.macroDot} />
+            <Text style={styles.macroLabel}>{item.protein}g prot</Text>
           </View>
 
-          <View style={{
-            position: 'absolute',
-            bottom: 10,
-            left: 10,
-            backgroundColor: 'rgba(0,0,0,0.6)',
-            paddingHorizontal: 8,
-            paddingVertical: 4,
-            borderRadius: 6
-          }}>
-            <Text style={{ fontSize: 9, fontWeight: '900', color: '#FFFFFF', textTransform: 'uppercase' }}>
-              {item.day} {item.when}
-            </Text>
-          </View>
-
-          <View style={{
-            position: 'absolute',
-            bottom: 10,
-            right: 10,
-            backgroundColor: 'rgba(0,0,0,0.6)',
-            paddingHorizontal: 8,
-            paddingVertical: 4,
-            borderRadius: 6,
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 4
-          }}>
-            <Text style={{ fontSize: 9, fontWeight: '900', color: '#F59E0B' }}>★</Text>
-            <Text style={{ fontSize: 9, fontWeight: '900', color: '#FFFFFF' }}>{item.rating}</Text>
+          {/* Price + Rating Row */}
+          <View style={styles.priceRatingRow}>
+            <Text style={styles.menuItemPrice}>{item.price}</Text>
+            <View style={styles.ratingBadge}>
+              <Star size={10} color="#D9B65A" fill="#D9B65A" />
+              <Text style={styles.ratingText}>{item.rating}</Text>
+            </View>
           </View>
         </View>
-
-        <View style={{ padding: 14 }}>
-          <Text style={{ fontSize: 15, fontWeight: '900', color: t.text }}>{item.name}</Text>
-          <Text style={{ fontSize: 11.5, color: t.muted, marginTop: 4, lineHeight: 16 }} numberOfLines={2}>
-            {item.desc}
-          </Text>
-
-          <View style={{
-            flexDirection: 'row',
-            backgroundColor: isDark ? 'rgba(255,255,255,0.02)' : '#FFFDF9',
-            borderWidth: 1,
-            borderColor: t.border,
-            borderRadius: 12,
-            paddingVertical: 8,
-            paddingHorizontal: 10,
-            marginTop: 12,
-            justifyContent: 'space-between',
-            alignItems: 'center'
-          }}>
-            <View style={{ alignItems: 'center', flex: 1 }}>
-              <Text style={{ fontSize: 12, fontWeight: '900', color: '#DF7E2C' }}>{item.cal}</Text>
-              <Text style={{ fontSize: 8, fontWeight: 'bold', color: t.muted, marginTop: 2 }}>KCAL</Text>
-            </View>
-            <View style={{ width: 1, height: 20, backgroundColor: t.border }} />
-            <View style={{ alignItems: 'center', flex: 1 }}>
-              <Text style={{ fontSize: 12, fontWeight: '900', color: '#3B82F6' }}>{item.protein}g</Text>
-              <Text style={{ fontSize: 8, fontWeight: 'bold', color: t.muted, marginTop: 2 }}>PROT</Text>
-            </View>
-            <View style={{ width: 1, height: 20, backgroundColor: t.border }} />
-            <View style={{ alignItems: 'center', flex: 1 }}>
-              <Text style={{ fontSize: 12, fontWeight: '900', color: '#10B981' }}>{item.carbs}g</Text>
-              <Text style={{ fontSize: 8, fontWeight: 'bold', color: t.muted, marginTop: 2 }}>CARB</Text>
-            </View>
-            <View style={{ width: 1, height: 20, backgroundColor: t.border }} />
-            <View style={{ alignItems: 'center', flex: 1 }}>
-              <Text style={{ fontSize: 12, fontWeight: '900', color: '#EF4444' }}>{item.fat}g</Text>
-              <Text style={{ fontSize: 8, fontWeight: 'bold', color: t.muted, marginTop: 2 }}>FAT</Text>
-            </View>
-          </View>
-
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 14 }}>
-            <Text style={{ fontSize: 16, fontWeight: '900', color: B.orange }}>{item.price}</Text>
-            
-            <TouchableOpacity
-              onPress={() => {
-                setSelectedMealId(item.id);
-                go('meal_detail');
-              }}
-              style={{
-                paddingHorizontal: 16,
-                paddingVertical: 8,
-                borderRadius: 14,
-                backgroundColor: theme.colors.secondary
-              }}
-            >
-              <Text style={{ fontSize: 11, fontWeight: '900', color: '#FFFFFF' }}>DETAILS</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </View>
+      </TouchableOpacity>
     );
   };
 
+  /* ─── Section Header ─── */
+  const renderSectionHeader = (icon: React.ReactNode, label: string, color: string) => (
+    <View style={styles.sectionHeaderRow}>
+      <View style={[styles.sectionIconCircle, { backgroundColor: color + '14' }]}>
+        {icon}
+      </View>
+      <Text style={[styles.sectionHeaderText, { color }]}>{label}</Text>
+      <View style={[styles.sectionLine, { backgroundColor: color + '20' }]} />
+    </View>
+  );
+
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: t.bg, paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 24) : 0 }}>
-      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={t.bg} />
-
-      {/* Top Header Bar */}
-      <View style={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: 8, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: t.border, backgroundColor: t.surface }}>
+    <PageLayout style={{ paddingHorizontal: 0 }} background="organic" backgroundVariant="minimal">
+      
+      {/* ── Header ── */}
+      <View style={styles.headerContainer}>
         <View>
-          <Text style={{ fontSize: 18, fontWeight: '900', color: t.text, letterSpacing: -0.5 }}>Daily Menu</Text>
-          <Text style={{ fontSize: 11, color: t.muted, marginTop: 2 }}>Subscribe or order single dabbas</Text>
+          <Text style={styles.headerTitle}>Daily Menu</Text>
+          <Text style={styles.headerSubtitle}>Fresh home-cooked meals, daily</Text>
         </View>
-        <TouchableOpacity onPress={() => go('notifications')} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.card, borderWidth: 1, borderColor: t.border, justifyContent: 'center', alignItems: 'center' }}>
-          <Bell size={16} color={t.text} />
+        <TouchableOpacity
+          onPress={() => go('notifications')}
+          style={styles.bellBtn}
+          activeOpacity={0.7}
+        >
+          <Bell size={16} color="#1F1F1F" />
         </TouchableOpacity>
       </View>
 
-      {/* Top Type Filter Pills Row (Both, Veg, Non-Veg) */}
-      <View style={{ 
-        flexDirection: 'row', 
-        paddingVertical: 12, 
-        paddingHorizontal: 16, 
-        gap: 10, 
-        justifyContent: 'center', 
-        backgroundColor: t.surface,
-        borderBottomWidth: 1,
-        borderBottomColor: t.border
-      }}>
-        <TouchableOpacity
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            paddingHorizontal: 16,
-            paddingVertical: 8,
-            borderRadius: 22,
-            borderWidth: 1.5,
-            borderColor: selectedFilter === 'Both' ? t.text : t.border,
-            backgroundColor: selectedFilter === 'Both' ? (isDark ? '#333' : '#F5F5F5') : t.card,
-            height: 40
-          }}
-          onPress={() => handleSelectFilter('Both')}
-        >
-          <Text style={{ fontSize: 11, fontWeight: '900', color: t.text }}>BOTH</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            paddingHorizontal: 14,
-            paddingVertical: 8,
-            borderRadius: 22,
-            borderWidth: 1.5,
-            borderColor: selectedFilter === 'Veg' ? '#4B5D3A' : t.border,
-            backgroundColor: selectedFilter === 'Veg' ? '#E8F3E6' : t.card,
-            gap: 6,
-            height: 40
-          }}
-          onPress={() => handleSelectFilter('Veg')}
-        >
-          <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#4B5D3A' }} />
-          <Text style={{ fontSize: 11, fontWeight: '900', color: selectedFilter === 'Veg' ? '#4B5D3A' : t.text }}>VEG</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            paddingHorizontal: 14,
-            paddingVertical: 8,
-            borderRadius: 22,
-            borderWidth: 1.5,
-            borderColor: selectedFilter === 'Non-Veg' ? '#C96B3C' : t.border,
-            backgroundColor: selectedFilter === 'Non-Veg' ? '#FBE8E0' : t.card,
-            gap: 6,
-            height: 40
-          }}
-          onPress={() => handleSelectFilter('Non-Veg')}
-        >
-          <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#C96B3C' }} />
-          <Text style={{ fontSize: 11, fontWeight: '900', color: selectedFilter === 'Non-Veg' ? '#C96B3C' : t.text }}>NON-VEG</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Main Split Screen Area */}
-      <View style={{ flex: 1, flexDirection: 'row' }}>
-        {/* Left Vertical Sidebar */}
-        <View style={{ 
-          width: 100, 
-          borderRightWidth: 1, 
-          borderRightColor: t.border, 
-          backgroundColor: t.surface,
-          paddingVertical: 10 
-        }}>
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 110 }}>
+      {/* ── Type Filter Pills ── */}
+      <View style={styles.filterRow}>
+        {['Both', 'Veg', 'Non-Veg'].map(f => {
+          const isActive = selectedFilter === f;
+          return (
             <TouchableOpacity
-              onPress={() => handleSelectDay('All Menu')}
-              style={{
-                paddingVertical: 14,
-                paddingHorizontal: 12,
-                marginVertical: 4,
-                borderLeftWidth: 3,
-                borderLeftColor: (selectedCategory === 'All Menu' || selectedCategory === 'All Categories') ? B.orange : 'transparent',
-                backgroundColor: (selectedCategory === 'All Menu' || selectedCategory === 'All Categories') ? (isDark ? 'rgba(233, 106, 46, 0.1)' : '#FFF4EC') : 'transparent'
-              }}
+              key={f}
+              onPress={() => handleSelectFilter(f)}
+              activeOpacity={0.7}
+              style={[
+                styles.filterChip,
+                isActive && styles.filterChipActive,
+              ]}
             >
-              <Text style={{ 
-                fontSize: 12, 
-                fontWeight: (selectedCategory === 'All Menu' || selectedCategory === 'All Categories') ? '900' : '600', 
-                color: (selectedCategory === 'All Menu' || selectedCategory === 'All Categories') ? B.orange : t.text 
-              }}>
-                All Menu
+              <Text style={[
+                styles.filterChipText,
+                isActive && styles.filterChipTextActive,
+              ] as any}>
+                {f === 'Veg' ? '🌱 Veg' : f === 'Non-Veg' ? '🍗 Non-Veg' : '🍱 All'}
               </Text>
             </TouchableOpacity>
-
-            {weekdays.map(day => {
-              const isSelected = selectedCategory === day;
-              return (
-                <TouchableOpacity
-                  key={day}
-                  onPress={() => handleSelectDay(day)}
-                  style={{
-                    paddingVertical: 14,
-                    paddingHorizontal: 12,
-                    marginVertical: 4,
-                    borderLeftWidth: 3,
-                    borderLeftColor: isSelected ? B.orange : 'transparent',
-                    backgroundColor: isSelected ? (isDark ? 'rgba(233, 106, 46, 0.1)' : '#FFF4EC') : 'transparent'
-                  }}
-                >
-                  <Text style={{ 
-                    fontSize: 12, 
-                    fontWeight: isSelected ? '900' : '600', 
-                    color: isSelected ? B.orange : t.sub 
-                  }}>
-                    {day}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
-        </View>
-
-        {/* Right Vertical Meals List */}
-        <View style={{ flex: 1, backgroundColor: t.bg }}>
-          <ScrollView contentContainerStyle={{ padding: 12, paddingBottom: 120 }} showsVerticalScrollIndicator={false}>
-            {lunchMeals.length > 0 && (
-              <View>
-                <View style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 8, gap: 8 }}>
-                  <Sun size={14} color="#DF7E2C" />
-                  <Text style={{ fontSize: 11, fontWeight: '900', color: '#DF7E2C', letterSpacing: 1.2 }}>LUNCH MENU</Text>
-                </View>
-                {lunchMeals.map(item => renderMealCard(item))}
-              </View>
-            )}
-
-            {dinnerMeals.length > 0 && (
-              <View style={{ marginTop: lunchMeals.length > 0 ? 16 : 0 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 8, gap: 8 }}>
-                  <Moon size={14} color="#6366F1" />
-                  <Text style={{ fontSize: 11, fontWeight: '900', color: '#6366F1', letterSpacing: 1.2 }}>DINNER MENU</Text>
-                </View>
-                {dinnerMeals.map(item => renderMealCard(item))}
-              </View>
-            )}
-
-            {filteredMeals.length === 0 && (
-              <View style={{ alignItems: 'center', marginTop: 60, paddingHorizontal: 20 }}>
-                <Text style={{ color: t.muted, fontSize: 14, fontWeight: '700', textAlign: 'center' }}>
-                  No meals found for this selection
-                </Text>
-              </View>
-            )}
-          </ScrollView>
-        </View>
+          );
+        })}
       </View>
 
+      {/* ── Day Selector ── */}
+      <View style={styles.dayRow}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.dayScrollContent}
+        >
+          {['All Menu', ...weekdays].map(day => {
+            const isActive = selectedCategory === day || (day === 'All Menu' && selectedCategory === 'All Categories');
+            return (
+              <TouchableOpacity
+                key={day}
+                onPress={() => handleSelectDay(day === 'All Menu' ? 'All Menu' : day)}
+                activeOpacity={0.7}
+                style={[
+                  styles.dayChip,
+                  isActive && styles.dayChipActive,
+                ]}
+              >
+                <Text style={[
+                  styles.dayChipText,
+                  isActive && styles.dayChipTextActive,
+                ] as any}>
+                  {day === 'All Menu' ? 'All' : day.slice(0, 3)}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      </View>
+
+      {/* ── Menu Content ── */}
+      <ScrollView
+        style={styles.scrollArea}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Lunch Section */}
+        {lunchMeals.length > 0 && (
+          <View style={styles.sectionContainer}>
+            {renderSectionHeader(
+              <Sun size={14} color="#C96B3C" />,
+              'LUNCH',
+              '#C96B3C'
+            )}
+            {lunchMeals.map((meal, i) => renderMenuItem(meal, i))}
+          </View>
+        )}
+
+        {/* Dinner Section */}
+        {dinnerMeals.length > 0 && (
+          <View style={styles.sectionContainer}>
+            {renderSectionHeader(
+              <Moon size={14} color="#4B5D3A" />,
+              'DINNER',
+              '#4B5D3A'
+            )}
+            {dinnerMeals.map((meal, i) => renderMenuItem(meal, i + 1))}
+          </View>
+        )}
+
+        {/* Empty State */}
+        {filteredMeals.length === 0 && (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyText}>No meals match your filters</Text>
+            <Text style={styles.emptySubtext}>Try adjusting your selection</Text>
+          </View>
+        )}
+      </ScrollView>
+
       <BottomTabNav active="meals" />
-    </SafeAreaView>
+    </PageLayout>
   );
 }
+
+/* ═══════════════════════════════════════════ */
+/*                  STYLES                     */
+/* ═══════════════════════════════════════════ */
+const styles = StyleSheet.create({
+  /* ── Header ── */
+  headerContainer: {
+    paddingHorizontal: 20,
+    paddingTop: 14,
+    paddingBottom: 10,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E8E2D8',
+    backgroundColor: '#F4EFE6',
+  },
+  headerTitle: {
+    fontFamily: theme.typography.headingFamily,
+    fontSize: 20,
+    color: '#4B5D3A',
+    fontWeight: '700',
+  },
+  headerSubtitle: {
+    fontFamily: theme.typography.bodyFamily,
+    fontSize: 12,
+    color: '#8A857B',
+    marginTop: 1,
+  },
+  bellBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#FCFAF6',
+    borderWidth: 1,
+    borderColor: '#E8E2D8',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  /* ── Filter Row ── */
+  filterRow: {
+    flexDirection: 'row',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    gap: 8,
+    backgroundColor: '#FCFAF6',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E8E2D8',
+  },
+  filterChip: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 8,
+    borderRadius: 12,
+    borderWidth: 1.2,
+    borderColor: '#E8E2D8',
+    backgroundColor: '#F4EFE6',
+  },
+  filterChipActive: {
+    backgroundColor: '#4B5D3A',
+    borderColor: '#4B5D3A',
+  },
+  filterChipText: {
+    fontFamily: theme.typography.bodyFamily,
+    fontSize: 12.5,
+    color: '#1F1F1F',
+    fontWeight: '700',
+  },
+  filterChipTextActive: {
+    color: '#FFFFFF',
+  },
+
+  /* ── Day Selector ── */
+  dayRow: {
+    backgroundColor: '#F4EFE6',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E8E2D8',
+  },
+  dayScrollContent: {
+    paddingHorizontal: 16,
+    gap: 6,
+  },
+  dayChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#E8E2D8',
+    backgroundColor: '#FCFAF6',
+  },
+  dayChipActive: {
+    backgroundColor: '#4B5D3A',
+    borderColor: '#4B5D3A',
+  },
+  dayChipText: {
+    fontFamily: theme.typography.bodyFamily,
+    fontSize: 12,
+    color: '#1F1F1F',
+    fontWeight: '600',
+  },
+  dayChipTextActive: {
+    color: '#FFFFFF',
+  },
+
+  /* ── Scroll ── */
+  scrollArea: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 100,
+    paddingTop: 8,
+  },
+
+  /* ── Section ── */
+  sectionContainer: {
+    paddingHorizontal: 16,
+    marginTop: 12,
+  },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 16,
+    paddingHorizontal: 4,
+  },
+  sectionIconCircle: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  sectionHeaderText: {
+    fontFamily: theme.typography.headingFamily,
+    fontSize: 13,
+    fontWeight: '800',
+    letterSpacing: 1.5,
+  },
+  sectionLine: {
+    flex: 1,
+    height: 1,
+    marginLeft: 8,
+  },
+
+  /* ── Menu Item (Alternating Plate Layout) ── */
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+    gap: 14,
+  },
+  menuItemLeft: {
+    flexDirection: 'row',
+  },
+  menuItemRight: {
+    flexDirection: 'row-reverse',
+  },
+
+  /* ── Plate ── */
+  plateContainer: {
+    position: 'relative',
+  },
+  plateLeft: {},
+  plateRight: {},
+  plateShadow: {
+    width: PLATE_SIZE,
+    height: PLATE_SIZE,
+    borderRadius: PLATE_SIZE / 2,
+    backgroundColor: '#1F1F1F',
+    padding: 6,
+    elevation: 8,
+    shadowColor: '#1F1F1F',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+  },
+  plateRing: {
+    flex: 1,
+    borderRadius: PLATE_SIZE / 2,
+    overflow: 'hidden',
+    borderWidth: 2,
+    borderColor: '#E8E2D8',
+  },
+  plateImage: {
+    width: '100%',
+    height: '100%',
+  },
+  typeBadgeOnPlate: {
+    position: 'absolute',
+    bottom: 4,
+    right: 4,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#FCFAF6',
+  },
+  typeBadgeText: {
+    fontSize: 11,
+  },
+
+  /* ── Menu Text ── */
+  menuTextContainer: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  menuTextRight: {
+    alignItems: 'flex-start',
+  },
+  menuTextLeft: {
+    alignItems: 'flex-end',
+  },
+  menuItemName: {
+    fontFamily: theme.typography.headingFamily,
+    fontSize: 15,
+    color: '#1F1F1F',
+    fontWeight: '700',
+    lineHeight: 20,
+  },
+  menuItemDesc: {
+    fontFamily: theme.typography.bodyFamily,
+    fontSize: 11.5,
+    color: '#8A857B',
+    lineHeight: 16,
+    marginTop: 3,
+  },
+
+  /* ── Macros ── */
+  macrosRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 8,
+  },
+  macroChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    backgroundColor: 'rgba(201,107,60,0.08)',
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  macroVal: {
+    fontFamily: theme.typography.monoFamily,
+    fontSize: 10.5,
+    color: '#C96B3C',
+    fontWeight: '700',
+  },
+  macroDot: {
+    width: 3,
+    height: 3,
+    borderRadius: 1.5,
+    backgroundColor: '#E8E2D8',
+  },
+  macroLabel: {
+    fontFamily: theme.typography.monoFamily,
+    fontSize: 10.5,
+    color: '#8A857B',
+    fontWeight: '600',
+  },
+
+  /* ── Price + Rating ── */
+  priceRatingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 8,
+    width: '100%',
+  },
+  menuItemPrice: {
+    fontFamily: theme.typography.monoFamily,
+    fontSize: 16,
+    color: '#1F1F1F',
+    fontWeight: '800',
+  },
+  ratingBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    backgroundColor: 'rgba(217,182,90,0.12)',
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  ratingText: {
+    fontFamily: theme.typography.monoFamily,
+    fontSize: 11,
+    color: '#D9B65A',
+    fontWeight: '700',
+  },
+
+  /* ── Empty State ── */
+  emptyState: {
+    alignItems: 'center',
+    marginTop: 60,
+    paddingHorizontal: 40,
+  },
+  emptyText: {
+    fontFamily: theme.typography.headingFamily,
+    fontSize: 16,
+    color: '#1F1F1F',
+    fontWeight: '700',
+  },
+  emptySubtext: {
+    fontFamily: theme.typography.bodyFamily,
+    fontSize: 13,
+    color: '#8A857B',
+    marginTop: 4,
+  },
+});

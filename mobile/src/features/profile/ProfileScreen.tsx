@@ -1,286 +1,632 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
-  StyleSheet,
   View,
+  StyleSheet,
   TouchableOpacity,
   ScrollView,
-  SafeAreaView,
-  StatusBar
+  Animated,
+  Platform,
 } from 'react-native';
 import {
   User,
   Heart,
   MapPin,
   ChevronRight,
-  Award,
-  Wallet,
   Gift,
-  Tag,
-  Share2,
-  Sun,
+  LogOut,
+  Sliders,
   Bell,
+  LifeBuoy,
   HelpCircle,
   Info,
-  ShieldCheck,
-  LogOut
+  Sparkles,
+  Users,
+  ChefHat,
+  Star,
+  Edit3
 } from 'lucide-react-native';
 import { useAppContext } from '../../app/context';
-import { theme, F } from '../../design-system';
-import { Text as RNText } from 'react-native';
-
-const B = {
-  orange: theme.colors.secondary,
-  orangeL: 'rgba(201, 107, 60, 0.08)',
-  green: theme.colors.success,
-  greenL: 'rgba(75, 93, 58, 0.08)',
-  cream: theme.colors.light.surface,
-  creamL: theme.colors.light.bg,
-};
-
-function Text({ style, ...props }: any) {
-  const flatStyle = StyleSheet.flatten(style || {});
-  let fontFamily = F.body;
-  const content = String(props.children || '');
-  const isNumeric = /[₹\d]/.test(content) && (
-    /^[₹\d\s★%\-.:\+a-zA-Z\s]+$/.test(content) ||
-    content.includes('kcal') ||
-    content.includes('protein') ||
-    content.includes('Carbs') ||
-    content.includes('₹') ||
-    content.includes('min') ||
-    content.includes('km') ||
-    content.includes('pts')
-  );
-
-  if (flatStyle.fontFamily) {
-    fontFamily = flatStyle.fontFamily;
-  } else if (flatStyle.fontSize >= 15 && (flatStyle.fontWeight === '900' || flatStyle.fontWeight === '800' || flatStyle.fontWeight === 'bold')) {
-    fontFamily = isNumeric ? F.mono : F.heading;
-  } else if (isNumeric) {
-    fontFamily = F.mono;
-  }
-  return <RNText style={[{ fontFamily }, style]} {...props} />;
-}
-import { Screen } from '../../core/constants/types';
+import {
+  theme,
+  Text,
+  PageLayout,
+  HeroCard
+} from '../../design-system';
 import { BottomTabNav } from '../../core/components/BottomTabNav';
 
 export default function ProfileScreen() {
   const {
     user,
-    setUser,
-    currentScreen,
-    setCurrentScreen,
+    resetNavigation,
     setToast,
     go,
-    t
+    isDark
   } = useAppContext();
 
-  const handleLogout = () => {
-    setToast('Logged Out');
-    setCurrentScreen('auth');
+  // Active user profile values with default fallback requested in prompt
+  const userName = user.name || 'Bhargav';
+  const userPhone = user.phone || '+91 98765 43210';
+  const userEmail = user.email || 'bhargav.s@gmail.com';
+
+  const [vegPreference, setVegPreference] = useState<'veg' | 'non-veg'>('veg');
+  const [versionTaps, setVersionTaps] = useState(0);
+
+  // Smooth Entrance Animations
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(24)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 380,
+        useNativeDriver: true,
+      }),
+      Animated.spring(slideAnim, {
+        toValue: 0,
+        friction: 8,
+        tension: 45,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
+
+  const handleVegToggle = (pref: 'veg' | 'non-veg') => {
+    setVegPreference(pref);
+    setToast(`Preference updated to ${pref === 'veg' ? 'Pure Veg 🟢' : 'Non-Veg 🔴'}`);
   };
 
-  const [versionTaps, setVersionTaps] = React.useState(0);
+  const handleLogout = () => {
+    setToast('Logged out successfully');
+    resetNavigation('auth');
+  };
+
   const handleVersionTap = () => {
-    if (!__DEV__) return;
-    if (versionTaps >= 6) {
+    if (versionTaps >= 5) {
       setVersionTaps(0);
-      setToast("🛠️ Developer Sandbox Activated!");
+      setToast('🛠️ Developer Sandbox Activated!');
       go('dev_panel');
     } else {
       setVersionTaps(prev => prev + 1);
     }
   };
 
-  const firstLetter = (user.name || 'Bhargav').charAt(0).toUpperCase();
+  const dividerColor = isDark ? '#38342E' : '#E8E2D8';
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.light.bg }}>
-      <ScrollView contentContainerStyle={{ paddingBottom: 110 }} showsVerticalScrollIndicator={false}>
-        {/* User profile details header */}
-        <View style={{ paddingHorizontal: 20, paddingTop: 20, alignItems: 'center' }}>
-          <View style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: B.orange, justifyContent: 'center', alignItems: 'center', shadowColor: B.orange, shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.2, shadowRadius: 10, elevation: 4 }}>
-            <Text style={{ fontSize: 32, fontWeight: '900', color: '#FFFFFF' }}>{firstLetter}</Text>
-          </View>
-          <Text style={{ fontSize: 20, fontWeight: '900', color: t.text, marginTop: 12 }}>{user.name || 'Bhargav'}</Text>
-          <Text style={{ fontSize: 13, color: t.sub, marginTop: 2 }}>{user.phone || '+91 98765 43210'}</Text>
-          <Text style={{ fontSize: 13, color: t.sub, marginTop: 2 }}>{user.email || 'bhargav.s@gmail.com'}</Text>
-
-          {/* Active Plan Box */}
-          <View style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 12, paddingHorizontal: 20, borderRadius: 20, backgroundColor: t.card, borderWidth: 1.5, borderColor: t.border, marginTop: 20, width: '100%', justifyContent: 'space-between' }}>
-            <View>
-              <Text style={{ fontSize: 11, fontWeight: '900', color: t.muted, textTransform: 'uppercase', letterSpacing: 0.5 }}>Active Plan</Text>
-              <Text style={{ fontSize: 15, fontWeight: '900', color: t.text, marginTop: 2 }}>Monthly Veg Plan</Text>
-            </View>
-            <View style={{ backgroundColor: B.orangeL, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12 }}>
-              <Text style={{ fontSize: 11, fontWeight: '900', color: B.orange }}>1,250 pts · Gold</Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Account & Identity Section */}
-        <View style={{ marginTop: 16 }}>
-          <Text style={{ fontSize: 10, fontWeight: '900', color: t.sub, letterSpacing: 1.5, marginLeft: 24, marginBottom: 8 }}>ACCOUNT & IDENTITY</Text>
-          <View style={{ marginHorizontal: 16, borderRadius: 24, borderWidth: 1.5, borderColor: t.border, backgroundColor: t.card, overflow: 'hidden' }}>
-            {[
-              { title: 'Personal Details', sub: 'Name, email, phone number & gender', icon: User, screen: 'personal' },
-              { title: 'Health Info', sub: 'Nutrition goals, calories, allergies', icon: Heart, screen: 'health_info' },
-              { title: 'Saved Addresses', sub: 'Home, work & delivery instructions', icon: MapPin, screen: 'addresses' }
-            ].map((item, idx) => (
-              <TouchableOpacity
-                key={idx}
-                style={[{ flexDirection: 'row', alignItems: 'center', padding: 16 }, idx > 0 && { borderTopWidth: 1.5, borderTopColor: t.border }]}
-                onPress={() => go(item.screen as Screen)}
-              >
-                <View style={{ width: 36, height: 36, borderRadius: 12, backgroundColor: B.orangeL, justifyContent: 'center', alignItems: 'center' }}>
-                  <item.icon size={16} color={B.orange} />
+    <PageLayout style={{ paddingHorizontal: 0 }} background="organic" backgroundVariant="clean">
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
+          
+          {/* 1. HERO PROFILE CARD (SPECIFIC CONTENT HERO ONLY) */}
+          <View style={styles.heroContainer}>
+            <HeroCard style={styles.heroCard}>
+              <View style={styles.heroHeaderRow}>
+                {/* Avatar with initial B */}
+                <View style={styles.avatarWrapper}>
+                  <View style={styles.avatarCircle}>
+                    <Text style={styles.avatarInitial}>{userName.charAt(0).toUpperCase()}</Text>
+                  </View>
+                  <TouchableOpacity
+                    style={styles.editAvatarBadge}
+                    onPress={() => go('personal')}
+                    activeOpacity={0.8}
+                    accessibilityRole="button"
+                    accessibilityLabel="Edit Profile Details"
+                  >
+                    <Edit3 size={11} color="#FFFFFF" />
+                  </TouchableOpacity>
                 </View>
-                <View style={{ flex: 1, marginLeft: 14 }}>
-                  <Text style={{ fontSize: 14, fontWeight: 'bold', color: t.text }}>{item.title}</Text>
-                  <Text style={{ fontSize: 11, color: t.sub, marginTop: 2 }}>{item.sub}</Text>
-                </View>
-                <ChevronRight size={16} color={t.sub} />
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
 
-        {/* Preferences Section */}
-        <View style={{ marginTop: 24 }}>
-          <Text style={{ fontSize: 10, fontWeight: '900', color: t.sub, letterSpacing: 1.5, marginLeft: 24, marginBottom: 8 }}>PREFERENCES</Text>
-          <View style={{ marginHorizontal: 16, borderRadius: 24, borderWidth: 1.5, borderColor: t.border, backgroundColor: t.card, padding: 16 }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-              <View>
-                <Text style={{ fontSize: 14, fontWeight: 'bold', color: t.text }}>Meal Preference</Text>
-                <Text style={{ fontSize: 11, color: t.sub, marginTop: 2 }}>{user.foodPref} Preference</Text>
-              </View>
-              <View style={{ flexDirection: 'row', backgroundColor: t.surface, borderRadius: 12, padding: 3, borderWidth: 1, borderColor: t.border }}>
-                {['Veg', 'Non-Veg'].map(opt => {
-                  const isSelected = user.foodPref === opt;
-                  return (
+                {/* Profile Details */}
+                <View style={styles.profileDetails}>
+                  <Text variant="headingM" color="primary" style={{ fontWeight: '800' }}>{userName}</Text>
+                  <Text variant="mono" color="primary" style={{ fontSize: 13, fontWeight: '700', marginTop: 1 }}>{userPhone}</Text>
+                  <Text variant="caption" color="sub" style={{ marginTop: 1 }}>{userEmail}</Text>
+
+                  {/* Status Badges */}
+                  <View style={styles.badgeRow}>
+                    <View style={styles.activePlanBadge}>
+                      <View style={styles.pulseDot} />
+                      <Text style={styles.activePlanText}>Active Plan</Text>
+                    </View>
+
                     <TouchableOpacity
-                      key={opt}
-                      onPress={() => {
-                        setUser((prev: any) => ({ ...prev, foodPref: opt }));
-                        setToast(`Preference updated to: ${opt}`);
-                      }}
-                      style={{
-                        paddingHorizontal: 12,
-                        paddingVertical: 6,
-                        borderRadius: 8,
-                        backgroundColor: isSelected ? B.orange : 'transparent'
-                      }}
+                      onPress={() => go('rewards')}
+                      style={styles.tierBadge}
+                      activeOpacity={0.8}
                     >
-                      <Text style={{ fontSize: 10.5, fontWeight: '900', color: isSelected ? '#FFFFFF' : t.text }}>{opt}</Text>
+                      <Star size={11} color="#D9B65A" fill="#D9B65A" />
+                      <Text style={styles.tierBadgeText}>1,250 pts · Gold</Text>
                     </TouchableOpacity>
-                  );
-                })}
+                  </View>
+                </View>
+              </View>
+            </HeroCard>
+          </View>
+
+          {/* 2. ACCOUNT & IDENTITY (CLEAN NO-CARD SECTION) */}
+          <View style={styles.sectionWrapper}>
+            <Text variant="label" color="sub" style={styles.sectionHeader}>Account & Identity</Text>
+            <View style={styles.groupContainer}>
+              {/* Personal Details */}
+              <TouchableOpacity onPress={() => go('personal')} style={styles.cleanRowItem} activeOpacity={0.7}>
+                <View style={[styles.iconBox, { backgroundColor: 'rgba(75, 93, 58, 0.08)' }]}>
+                  <User size={18} color={isDark ? '#7FA457' : '#4B5D3A'} />
+                </View>
+                <View style={styles.rowContent}>
+                  <Text variant="body" color="text" style={{ fontWeight: '700' }}>Personal Details</Text>
+                  <Text variant="caption" color="sub" style={{ marginTop: 2 }}>Name, email, phone number & gender</Text>
+                </View>
+                <ChevronRight size={18} color={isDark ? '#A09B90' : '#8A857B'} />
+              </TouchableOpacity>
+
+              <View style={[styles.cleanDivider, { backgroundColor: dividerColor }]} />
+
+              {/* Health Info */}
+              <TouchableOpacity onPress={() => go('health_info')} style={styles.cleanRowItem} activeOpacity={0.7}>
+                <View style={[styles.iconBox, { backgroundColor: 'rgba(201, 107, 60, 0.08)' }]}>
+                  <Heart size={18} color="#C96B3C" />
+                </View>
+                <View style={styles.rowContent}>
+                  <Text variant="body" color="text" style={{ fontWeight: '700' }}>Health Info</Text>
+                  <Text variant="caption" color="sub" style={{ marginTop: 2 }}>Nutrition goals, calories, allergies</Text>
+                </View>
+                <ChevronRight size={18} color={isDark ? '#A09B90' : '#8A857B'} />
+              </TouchableOpacity>
+
+              <View style={[styles.cleanDivider, { backgroundColor: dividerColor }]} />
+
+              {/* Saved Addresses */}
+              <TouchableOpacity onPress={() => go('addresses')} style={styles.cleanRowItem} activeOpacity={0.7}>
+                <View style={[styles.iconBox, { backgroundColor: 'rgba(75, 93, 58, 0.08)' }]}>
+                  <MapPin size={18} color={isDark ? '#7FA457' : '#4B5D3A'} />
+                </View>
+                <View style={styles.rowContent}>
+                  <Text variant="body" color="text" style={{ fontWeight: '700' }}>Saved Addresses</Text>
+                  <Text variant="caption" color="sub" style={{ marginTop: 2 }}>Home, work & delivery instructions</Text>
+                </View>
+                <ChevronRight size={18} color={isDark ? '#A09B90' : '#8A857B'} />
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* 3. PREFERENCES (CLEAN NO-CARD SECTION) */}
+          <View style={styles.sectionWrapper}>
+            <Text variant="label" color="sub" style={styles.sectionHeader}>Preferences</Text>
+            <View style={styles.groupContainer}>
+              {/* Meal Preference Row */}
+              <TouchableOpacity onPress={() => go('meal_pref')} style={styles.cleanRowItem} activeOpacity={0.7}>
+                <View style={[styles.iconBox, { backgroundColor: 'rgba(201, 107, 60, 0.08)' }]}>
+                  <Sliders size={18} color="#C96B3C" />
+                </View>
+                <View style={styles.rowContent}>
+                  <Text variant="body" color="text" style={{ fontWeight: '700' }}>Meal Preference</Text>
+                  <Text variant="caption" color="sub" style={{ marginTop: 2 }}>Veg/Non-Veg, spice level & slot timing</Text>
+                </View>
+                <ChevronRight size={18} color={isDark ? '#A09B90' : '#8A857B'} />
+              </TouchableOpacity>
+
+              <View style={[styles.cleanDivider, { backgroundColor: dividerColor }]} />
+
+              {/* Interactive Quick Veg Preference Switcher */}
+              <View style={styles.prefToggleContainer}>
+                <View style={{ flex: 1 }}>
+                  <Text variant="body" color="text" style={{ fontWeight: '700' }}>Veg Preference</Text>
+                  <Text variant="caption" color="sub" style={{ marginTop: 2 }}>Quick toggle default meals</Text>
+                </View>
+
+                <View style={[styles.toggleSegment, { backgroundColor: isDark ? '#1F1C18' : '#FCFAF6', borderColor: dividerColor }]}>
+                  <TouchableOpacity
+                    onPress={() => handleVegToggle('veg')}
+                    style={[
+                      styles.toggleChip,
+                      vegPreference === 'veg' && styles.toggleChipVegActive
+                    ]}
+                    activeOpacity={0.8}
+                  >
+                    <View style={[
+                      styles.dotIndicator,
+                      { backgroundColor: vegPreference === 'veg' ? '#FFFFFF' : (isDark ? '#7FA457' : '#4B5D3A') }
+                    ]} />
+                    <Text style={[
+                      styles.toggleChipText,
+                      vegPreference === 'veg' && styles.toggleChipTextActive
+                    ]}>
+                      Veg
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    onPress={() => handleVegToggle('non-veg')}
+                    style={[
+                      styles.toggleChip,
+                      vegPreference === 'non-veg' && styles.toggleChipNonVegActive
+                    ]}
+                    activeOpacity={0.8}
+                  >
+                    <View style={[
+                      styles.dotIndicator,
+                      { backgroundColor: vegPreference === 'non-veg' ? '#FFFFFF' : '#C96B3C' }
+                    ]} />
+                    <Text style={[
+                      styles.toggleChipText,
+                      vegPreference === 'non-veg' && styles.toggleChipTextActive
+                    ]}>
+                      Non-Veg
+                    </Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
           </View>
-        </View>
 
-        {/* Subscription & Finances Section */}
-        <View style={{ marginTop: 24 }}>
-          <Text style={{ fontSize: 10, fontWeight: '900', color: t.sub, letterSpacing: 1.5, marginLeft: 24, marginBottom: 8 }}>SUBSCRIPTION & FINANCES</Text>
-          <View style={{ marginHorizontal: 16, borderRadius: 24, borderWidth: 1.5, borderColor: t.border, backgroundColor: t.card, overflow: 'hidden' }}>
-            {[
-              { title: 'Subscription Status', sub: 'Monthly Veg Plan · Active', icon: Award, screen: 'plans' },
-              { title: 'Wallet Balance', sub: '₹1,250.00 · View statements & add money', icon: Wallet, screen: 'payments' },
-              { title: 'Rewards & Points', sub: '1,250 pts · Gold Tier perks', icon: Gift, screen: 'rewards' },
-              { title: 'Offers & Coupons', sub: 'Explore dynamic coupons & offers', icon: Tag, screen: 'offers' },
-              { title: 'Referral Program', sub: 'Earn ₹100 per friend', icon: Share2, screen: 'refer' }
-            ].map((item, idx) => (
-              <TouchableOpacity
-                key={idx}
-                style={[{ flexDirection: 'row', alignItems: 'center', padding: 16 }, idx > 0 && { borderTopWidth: 1.5, borderTopColor: t.border }]}
-                onPress={() => go(item.screen as Screen)}
-              >
-                <View style={{ width: 36, height: 36, borderRadius: 12, backgroundColor: B.orangeL, justifyContent: 'center', alignItems: 'center' }}>
-                  <item.icon size={16} color={B.orange} />
+          {/* 4. SUBSCRIPTION & FINANCES (CLEAN NO-CARD SECTION) */}
+          <View style={styles.sectionWrapper}>
+            <Text variant="label" color="sub" style={styles.sectionHeader}>Subscription & Finances</Text>
+            <View style={styles.groupContainer}>
+              {/* Subscription Status */}
+              <TouchableOpacity onPress={() => go('plans')} style={styles.cleanRowItem} activeOpacity={0.7}>
+                <View style={[styles.iconBox, { backgroundColor: 'rgba(75, 93, 58, 0.08)' }]}>
+                  <ChefHat size={18} color={isDark ? '#7FA457' : '#4B5D3A'} />
                 </View>
-                <View style={{ flex: 1, marginLeft: 14 }}>
-                  <Text style={{ fontSize: 14, fontWeight: 'bold', color: t.text }}>{item.title}</Text>
-                  <Text style={{ fontSize: 11, color: t.sub, marginTop: 2 }}>{item.sub}</Text>
+                <View style={styles.rowContent}>
+                  <Text variant="body" color="text" style={{ fontWeight: '700' }}>Subscription Status</Text>
+                  <Text variant="caption" color="sub" style={{ marginTop: 2 }}>Monthly Veg Plan · Active</Text>
                 </View>
-                <ChevronRight size={16} color={t.sub} />
+                <ChevronRight size={18} color={isDark ? '#A09B90' : '#8A857B'} />
               </TouchableOpacity>
-            ))}
-          </View>
-        </View>
 
-        {/* App Settings Section */}
-        <View style={{ marginTop: 24 }}>
-          <Text style={{ fontSize: 10, fontWeight: '900', color: t.sub, letterSpacing: 1.5, marginLeft: 24, marginBottom: 8 }}>APP SETTINGS</Text>
-          <View style={{ marginHorizontal: 16, borderRadius: 24, borderWidth: 1.5, borderColor: t.border, backgroundColor: t.card, overflow: 'hidden' }}>
-            {[
-              { title: 'Appearance & Theme', sub: 'Light, Dark & System default', icon: Sun, screen: 'appearance' },
-              { title: 'Notifications', sub: 'Updates, alerts & promo preferences', icon: Bell, screen: 'notifications' }
-            ].map((item, idx) => (
-              <TouchableOpacity
-                key={idx}
-                style={[{ flexDirection: 'row', alignItems: 'center', padding: 16 }, idx > 0 && { borderTopWidth: 1.5, borderTopColor: t.border }]}
-                onPress={() => go(item.screen as Screen)}
-              >
-                <View style={{ width: 36, height: 36, borderRadius: 12, backgroundColor: B.orangeL, justifyContent: 'center', alignItems: 'center' }}>
-                  <item.icon size={16} color={B.orange} />
+              <View style={[styles.cleanDivider, { backgroundColor: dividerColor }]} />
+
+              {/* Rewards & Points */}
+              <TouchableOpacity onPress={() => go('rewards')} style={styles.cleanRowItem} activeOpacity={0.7}>
+                <View style={[styles.iconBox, { backgroundColor: 'rgba(217, 182, 90, 0.08)' }]}>
+                  <Gift size={18} color="#D9B65A" />
                 </View>
-                <View style={{ flex: 1, marginLeft: 14 }}>
-                  <Text style={{ fontSize: 14, fontWeight: 'bold', color: t.text }}>{item.title}</Text>
-                  <Text style={{ fontSize: 11, color: t.sub, marginTop: 2 }}>{item.sub}</Text>
+                <View style={styles.rowContent}>
+                  <Text variant="body" color="text" style={{ fontWeight: '700' }}>Rewards & Points</Text>
+                  <Text variant="caption" color="sub" style={{ marginTop: 2 }}>1,250 pts · Gold Tier perks</Text>
                 </View>
-                <ChevronRight size={16} color={t.sub} />
+                <ChevronRight size={18} color={isDark ? '#A09B90' : '#8A857B'} />
               </TouchableOpacity>
-            ))}
-          </View>
-        </View>
 
-        {/* Help & Support Section */}
-        <View style={{ marginTop: 24 }}>
-          <Text style={{ fontSize: 10, fontWeight: '900', color: t.sub, letterSpacing: 1.5, marginLeft: 24, marginBottom: 8 }}>HELP & SUPPORT</Text>
-          <View style={{ marginHorizontal: 16, borderRadius: 24, borderWidth: 1.5, borderColor: t.border, backgroundColor: t.card, overflow: 'hidden' }}>
-            {[
-              { title: 'Support Centre', sub: 'Live chat, phone call & tickets', icon: HelpCircle, screen: 'support' },
-              { title: 'Frequently Asked Questions', sub: 'Solve issues instantly', icon: Info, action: () => setToast("Opening FAQs Support Centre...") },
-              { title: 'About KOI KOI', sub: 'v4.0.0 · Active', icon: ShieldCheck, action: () => setToast("KOI KOI App version v4.0.0 is active & running.") }
-            ].map((item, idx) => (
-              <TouchableOpacity
-                key={idx}
-                style={[{ flexDirection: 'row', alignItems: 'center', padding: 16 }, idx > 0 && { borderTopWidth: 1.5, borderTopColor: t.border }]}
-                onPress={() => item.action ? item.action() : go(item.screen as Screen)}
-              >
-                <View style={{ width: 36, height: 36, borderRadius: 12, backgroundColor: B.orangeL, justifyContent: 'center', alignItems: 'center' }}>
-                  <item.icon size={16} color={B.orange} />
+              <View style={[styles.cleanDivider, { backgroundColor: dividerColor }]} />
+
+              {/* Offers & Coupons */}
+              <TouchableOpacity onPress={() => go('offers')} style={styles.cleanRowItem} activeOpacity={0.7}>
+                <View style={[styles.iconBox, { backgroundColor: 'rgba(201, 107, 60, 0.08)' }]}>
+                  <Sparkles size={18} color="#C96B3C" />
                 </View>
-                <View style={{ flex: 1, marginLeft: 14 }}>
-                  <Text style={{ fontSize: 14, fontWeight: 'bold', color: t.text }}>{item.title}</Text>
-                  <Text style={{ fontSize: 11, color: t.sub, marginTop: 2 }}>{item.sub}</Text>
+                <View style={styles.rowContent}>
+                  <Text variant="body" color="text" style={{ fontWeight: '700' }}>Offers & Coupons</Text>
+                  <Text variant="caption" color="sub" style={{ marginTop: 2 }}>Save on renewals & ad-hoc dabbas</Text>
                 </View>
-                <ChevronRight size={16} color={t.sub} />
+                <ChevronRight size={18} color={isDark ? '#A09B90' : '#8A857B'} />
               </TouchableOpacity>
-            ))}
+
+              <View style={[styles.cleanDivider, { backgroundColor: dividerColor }]} />
+
+              {/* Referral Program */}
+              <TouchableOpacity onPress={() => go('refer')} style={styles.cleanRowItem} activeOpacity={0.7}>
+                <View style={[styles.iconBox, { backgroundColor: 'rgba(75, 93, 58, 0.08)' }]}>
+                  <Users size={18} color={isDark ? '#7FA457' : '#4B5D3A'} />
+                </View>
+                <View style={styles.rowContent}>
+                  <Text variant="body" color="text" style={{ fontWeight: '700' }}>Referral Program</Text>
+                  <Text variant="caption" color="sub" style={{ marginTop: 2 }}>Earn ₹100 per friend</Text>
+                </View>
+                <ChevronRight size={18} color={isDark ? '#A09B90' : '#8A857B'} />
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
 
-        {/* Logout Button */}
-        <TouchableOpacity style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 32, paddingVertical: 12 }} onPress={handleLogout}>
-          <LogOut size={16} color="#EF4444" style={{ marginRight: 6 }} />
-          <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#EF4444' }}>Logout</Text>
-        </TouchableOpacity>
+          {/* 5. APP SETTINGS (CLEAN NO-CARD SECTION) */}
+          <View style={styles.sectionWrapper}>
+            <Text variant="label" color="sub" style={styles.sectionHeader}>App Settings</Text>
+            <View style={styles.groupContainer}>
+              {/* Appearance & Theme */}
+              <TouchableOpacity onPress={() => go('appearance')} style={styles.cleanRowItem} activeOpacity={0.7}>
+                <View style={[styles.iconBox, { backgroundColor: 'rgba(75, 93, 58, 0.08)' }]}>
+                  <Sliders size={18} color={isDark ? '#7FA457' : '#4B5D3A'} />
+                </View>
+                <View style={styles.rowContent}>
+                  <Text variant="body" color="text" style={{ fontWeight: '700' }}>Appearance & Theme</Text>
+                  <Text variant="caption" color="sub" style={{ marginTop: 2 }}>Light, Dark & System default</Text>
+                </View>
+                <ChevronRight size={18} color={isDark ? '#A09B90' : '#8A857B'} />
+              </TouchableOpacity>
 
-        <TouchableOpacity 
-          activeOpacity={__DEV__ ? 0.8 : 1}
-          disabled={!__DEV__}
-          onPress={handleVersionTap}
-          style={{ alignItems: 'center', marginTop: 24, marginBottom: 40 }}
-        >
-          <Text style={{ fontSize: 11, color: t.muted, fontWeight: '600', letterSpacing: 0.5 }}>
-            v1.0.0-dev (Stable)
-          </Text>
-        </TouchableOpacity>
+              <View style={[styles.cleanDivider, { backgroundColor: dividerColor }]} />
+
+              {/* Notifications */}
+              <TouchableOpacity onPress={() => go('notifications')} style={styles.cleanRowItem} activeOpacity={0.7}>
+                <View style={[styles.iconBox, { backgroundColor: 'rgba(201, 107, 60, 0.08)' }]}>
+                  <Bell size={18} color="#C96B3C" />
+                </View>
+                <View style={styles.rowContent}>
+                  <Text variant="body" color="text" style={{ fontWeight: '700' }}>Notifications</Text>
+                  <Text variant="caption" color="sub" style={{ marginTop: 2 }}>Updates, alerts & promo preferences</Text>
+                </View>
+                <ChevronRight size={18} color={isDark ? '#A09B90' : '#8A857B'} />
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* 6. HELP & SUPPORT (CLEAN NO-CARD SECTION) */}
+          <View style={styles.sectionWrapper}>
+            <Text variant="label" color="sub" style={styles.sectionHeader}>Help & Support</Text>
+            <View style={styles.groupContainer}>
+              {/* Support Centre */}
+              <TouchableOpacity onPress={() => go('support')} style={styles.cleanRowItem} activeOpacity={0.7}>
+                <View style={[styles.iconBox, { backgroundColor: 'rgba(75, 93, 58, 0.08)' }]}>
+                  <LifeBuoy size={18} color={isDark ? '#7FA457' : '#4B5D3A'} />
+                </View>
+                <View style={styles.rowContent}>
+                  <Text variant="body" color="text" style={{ fontWeight: '700' }}>Support Centre</Text>
+                  <Text variant="caption" color="sub" style={{ marginTop: 2 }}>Live chat, phone call & tickets</Text>
+                </View>
+                <ChevronRight size={18} color={isDark ? '#A09B90' : '#8A857B'} />
+              </TouchableOpacity>
+
+              <View style={[styles.cleanDivider, { backgroundColor: dividerColor }]} />
+
+              {/* Frequently Asked Questions */}
+              <TouchableOpacity onPress={() => go('support')} style={styles.cleanRowItem} activeOpacity={0.7}>
+                <View style={[styles.iconBox, { backgroundColor: 'rgba(201, 107, 60, 0.08)' }]}>
+                  <HelpCircle size={18} color="#C96B3C" />
+                </View>
+                <View style={styles.rowContent}>
+                  <Text variant="body" color="text" style={{ fontWeight: '700' }}>Frequently Asked Questions</Text>
+                  <Text variant="caption" color="sub" style={{ marginTop: 2 }}>Instant answers to common questions</Text>
+                </View>
+                <ChevronRight size={18} color={isDark ? '#A09B90' : '#8A857B'} />
+              </TouchableOpacity>
+
+              <View style={[styles.cleanDivider, { backgroundColor: dividerColor }]} />
+
+              {/* About KOI KOI */}
+              <TouchableOpacity onPress={() => go('about')} style={styles.cleanRowItem} activeOpacity={0.7}>
+                <View style={[styles.iconBox, { backgroundColor: 'rgba(138, 133, 123, 0.1)' }]}>
+                  <Info size={18} color="#8A857B" />
+                </View>
+                <View style={styles.rowContent}>
+                  <Text variant="body" color="text" style={{ fontWeight: '700' }}>About KOI KOI</Text>
+                  <Text variant="caption" color="sub" style={{ marginTop: 2 }}>v4.0.0 · Active</Text>
+                </View>
+                <ChevronRight size={18} color={isDark ? '#A09B90' : '#8A857B'} />
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* 7. LOGOUT & VERSION FOOTER */}
+          <View style={styles.logoutWrapper}>
+            <TouchableOpacity
+              onPress={handleLogout}
+              style={styles.logoutBtn}
+              activeOpacity={0.85}
+              accessibilityRole="button"
+              accessibilityLabel="Logout"
+            >
+              <LogOut size={18} color="#C96B3C" style={{ marginRight: 8 }} />
+              <Text style={styles.logoutBtnText}>Logout</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={handleVersionTap} activeOpacity={0.8}>
+              <Text variant="mono" color="sub" style={{ fontSize: 11, marginTop: 4 }}>KOI KOI DABBA • v4.0.0</Text>
+            </TouchableOpacity>
+          </View>
+
+        </Animated.View>
       </ScrollView>
-
       <BottomTabNav active="profile" />
-    </SafeAreaView>
+    </PageLayout>
   );
 }
+
+const styles = StyleSheet.create({
+  scrollContent: {
+    paddingBottom: 110,
+    paddingTop: theme.spacing.md,
+  },
+  heroContainer: {
+    paddingHorizontal: theme.spacing.screenHorizontal,
+    marginBottom: theme.spacing.lg,
+  },
+  heroCard: {
+    padding: theme.spacing.lg,
+  },
+  heroHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
+  avatarWrapper: {
+    position: 'relative',
+  },
+  avatarCircle: {
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    backgroundColor: '#4B5D3A',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2.5,
+    borderColor: '#D9B65A',
+  },
+  avatarInitial: {
+    fontFamily: theme.typography.monoFamily,
+    fontSize: 28,
+    fontWeight: '800',
+    color: '#FCFAF6',
+  },
+  editAvatarBadge: {
+    position: 'absolute',
+    bottom: -2,
+    right: -2,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#C96B3C',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#FCFAF6',
+  },
+  profileDetails: {
+    flex: 1,
+  },
+  badgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 8,
+    flexWrap: 'wrap',
+  },
+  activePlanBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(75, 93, 58, 0.12)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 12,
+    gap: 5,
+  },
+  pulseDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#4B5D3A',
+  },
+  activePlanText: {
+    fontFamily: theme.typography.bodyFamily,
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#4B5D3A',
+  },
+  tierBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(217, 182, 90, 0.15)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 12,
+    gap: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(217, 182, 90, 0.3)',
+  },
+  tierBadgeText: {
+    fontFamily: theme.typography.monoFamily,
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#1F1F1F',
+  },
+  sectionWrapper: {
+    paddingHorizontal: theme.spacing.screenHorizontal,
+    marginBottom: theme.spacing.lg,
+  },
+  sectionHeader: {
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+    marginBottom: 6,
+    marginLeft: 2,
+    fontWeight: '800',
+  },
+  groupContainer: {
+    width: '100%',
+  },
+  cleanRowItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 4,
+    gap: 14,
+  },
+  iconBox: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  rowContent: {
+    flex: 1,
+  },
+  cleanDivider: {
+    height: 1,
+    marginLeft: 52,
+    marginRight: 4,
+    opacity: 0.7,
+  },
+  prefToggleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    paddingHorizontal: 4,
+    gap: 12,
+  },
+  toggleSegment: {
+    flexDirection: 'row',
+    borderRadius: 14,
+    padding: 3,
+    borderWidth: 1,
+    gap: 2,
+  },
+  toggleChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 11,
+    gap: 4,
+  },
+  toggleChipVegActive: {
+    backgroundColor: '#4B5D3A',
+  },
+  toggleChipNonVegActive: {
+    backgroundColor: '#C96B3C',
+  },
+  dotIndicator: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  toggleChipText: {
+    fontFamily: theme.typography.bodyFamily,
+    fontSize: 11.5,
+    fontWeight: '700',
+    color: '#1F1F1F',
+  },
+  toggleChipTextActive: {
+    color: '#FFFFFF',
+  },
+  logoutWrapper: {
+    paddingHorizontal: theme.spacing.screenHorizontal,
+    marginTop: theme.spacing.xs,
+    marginBottom: theme.spacing.md,
+    alignItems: 'center',
+    gap: 12,
+  },
+  logoutBtn: {
+    flexDirection: 'row',
+    width: '100%',
+    borderColor: '#C96B3C',
+    borderWidth: 1.5,
+    height: 48,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(201, 107, 60, 0.04)',
+  },
+  logoutBtnText: {
+    fontFamily: theme.typography.bodyFamily,
+    fontSize: 14.5,
+    color: '#C96B3C',
+    fontWeight: '800',
+  },
+});

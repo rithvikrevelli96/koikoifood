@@ -6,40 +6,77 @@ export const typography = {
   bodyFamily: foundationTypography.body,
   monoFamily: foundationTypography.mono,
 
-  // Text Styles Preset
-  h1: {
+  // Frozen Typography Presets
+  display: {
     fontFamily: foundationTypography.heading,
-    fontSize: foundationTypography.sizes.huge,
-    fontWeight: foundationTypography.weights.bold,
+    fontSize: 56,
+    fontWeight: '800' as const,
   },
-  h2: {
+  headingXl: {
     fontFamily: foundationTypography.heading,
-    fontSize: foundationTypography.sizes.xxl,
-    fontWeight: foundationTypography.weights.semibold,
+    fontSize: 40,
+    fontWeight: '800' as const,
   },
-  h3: {
+  headingL: {
     fontFamily: foundationTypography.heading,
-    fontSize: foundationTypography.sizes.xl,
-    fontWeight: foundationTypography.weights.semibold,
+    fontSize: 32,
+    fontWeight: '800' as const,
+  },
+  headingM: {
+    fontFamily: foundationTypography.heading,
+    fontSize: 26,
+    fontWeight: '800' as const,
+  },
+  title: {
+    fontFamily: foundationTypography.heading,
+    fontSize: 22,
+    fontWeight: '700' as const,
+  },
+  subtitle: {
+    fontFamily: foundationTypography.heading,
+    fontSize: 18,
+    fontWeight: '600' as const,
+  },
+  bodyL: {
+    fontFamily: foundationTypography.body,
+    fontSize: 16,
+    fontWeight: '400' as const,
   },
   body: {
     fontFamily: foundationTypography.body,
-    fontSize: foundationTypography.sizes.base,
-    fontWeight: foundationTypography.weights.regular,
+    fontSize: 15,
+    fontWeight: '400' as const,
   },
-  bodyBold: {
+  caption: {
     fontFamily: foundationTypography.body,
-    fontSize: foundationTypography.sizes.base,
-    fontWeight: foundationTypography.weights.bold,
+    fontSize: 13,
+    fontWeight: '400' as const,
   },
   label: {
     fontFamily: foundationTypography.body,
-    fontSize: foundationTypography.sizes.sm,
-    fontWeight: foundationTypography.weights.medium,
+    fontSize: 12,
+    fontWeight: '500' as const,
   },
   mono: {
     fontFamily: foundationTypography.mono,
-    fontSize: foundationTypography.sizes.md,
-    fontWeight: foundationTypography.weights.medium,
+    fontSize: 15,
+    fontWeight: '500' as const,
+  },
+
+  // Keep legacy mappings to prevent breakages in existing pages before full migration
+  h1: {
+    fontFamily: foundationTypography.heading,
+    fontSize: 32,
+    fontWeight: '800' as const,
+  },
+  h2: {
+    fontFamily: foundationTypography.heading,
+    fontSize: 24,
+    fontWeight: '700' as const,
+  },
+  h3: {
+    fontFamily: foundationTypography.heading,
+    fontSize: 20,
+    fontWeight: '600' as const,
   },
 };

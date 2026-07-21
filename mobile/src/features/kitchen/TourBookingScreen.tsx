@@ -1,56 +1,16 @@
 import React from 'react';
-import {
-  StyleSheet,
-  View,
-  Platform,
-  TouchableOpacity,
-  ScrollView,
-  SafeAreaView,
-  TextInput,
-  Animated
-} from 'react-native';
-import { ArrowLeft, Check } from 'lucide-react-native';
+import { View, Platform, TouchableOpacity, ScrollView } from 'react-native';
+import { ArrowLeft } from 'lucide-react-native';
 import { useAppContext } from '../../app/context';
-import { theme, F, Button, Input, DateInput, PhoneInput } from '../../design-system';
-import { Text as RNText } from 'react-native';
-
-const B = {
-  orange: theme.colors.secondary,
-  orangeL: 'rgba(201, 107, 60, 0.08)',
-  green: theme.colors.success,
-  greenL: 'rgba(75, 93, 58, 0.08)',
-  cream: theme.colors.light.surface,
-  creamL: theme.colors.light.bg,
-};
-
-function Text({ style, ...props }: any) {
-  const flatStyle = StyleSheet.flatten(style || {});
-  let fontFamily = F.body;
-  const content = String(props.children || '');
-  const isNumeric = /[₹\d]/.test(content) && (
-    /^[₹\d\s★%\-.:\+a-zA-Z\s]+$/.test(content) ||
-    content.includes('kcal') ||
-    content.includes('protein') ||
-    content.includes('Carbs') ||
-    content.includes('₹') ||
-    content.includes('min') ||
-    content.includes('km') ||
-    content.includes('Serving') ||
-    content.includes('Visitors') ||
-    content.includes('Slot') ||
-    content.includes(':')
-  );
-
-  if (flatStyle.fontFamily) {
-    fontFamily = flatStyle.fontFamily;
-  } else if (flatStyle.fontSize >= 15 && (flatStyle.fontWeight === '900' || flatStyle.fontWeight === '800' || flatStyle.fontWeight === 'bold')) {
-    fontFamily = isNumeric ? F.mono : F.heading;
-  } else if (isNumeric) {
-    fontFamily = F.mono;
-  }
-  return <RNText style={[{ fontFamily }, style]} {...props} />;
-}
-import { BottomTabNav } from '../../core/components/BottomTabNav';
+import {
+  theme,
+  Text,
+  Button,
+  Input,
+  DateInput,
+  PageLayout,
+  Modal
+} from '../../design-system';
 
 export default function TourBookingScreen() {
   const {
@@ -65,48 +25,22 @@ export default function TourBookingScreen() {
     tourContactPhone,
     setTourContactPhone,
     setToast,
-    back,
-    t
+    back
   } = useAppContext();
 
   // Validations State
   const [errors, setErrors] = React.useState<Record<string, string>>({});
   const [touched, setTouched] = React.useState<Record<string, boolean>>({});
-
-  // Refs
-  const scrollViewRef = React.useRef<ScrollView>(null);
-  const dateRef = React.useRef<TextInput>(null);
-  const nameRef = React.useRef<TextInput>(null);
-  const phoneRef = React.useRef<TextInput>(null);
-
-  // Shake variables
-  const dateShake = React.useRef(new Animated.Value(0)).current;
-  const nameShake = React.useRef(new Animated.Value(0)).current;
-  const phoneShake = React.useRef(new Animated.Value(0)).current;
-
-  const triggerShake = (shakeVal: Animated.Value) => {
-    Animated.sequence([
-      Animated.timing(shakeVal, { toValue: 10, duration: 80, useNativeDriver: true }),
-      Animated.timing(shakeVal, { toValue: -10, duration: 80, useNativeDriver: true }),
-      Animated.timing(shakeVal, { toValue: 10, duration: 80, useNativeDriver: true }),
-      Animated.timing(shakeVal, { toValue: 0, duration: 80, useNativeDriver: true }),
-    ]).start();
-  };
-
-  const scrollAndShake = (field: string, ref: React.RefObject<any>, shakeVal: Animated.Value, yOffset: number) => {
-    triggerShake(shakeVal);
-    ref.current?.focus();
-    scrollViewRef.current?.scrollTo({ y: yOffset, animated: true });
-  };
+  const [showConfirmModal, setShowConfirmModal] = React.useState(false);
 
   const validateField = (field: string, val: string): string => {
     switch (field) {
       case 'date':
-        if (!val.trim()) return '❌ Please enter a preferred date.';
-        if (val.trim().length < 10) return '❌ Date must be in DD-MM-YYYY format.';
+        if (!val.trim()) return '❌ Please enter date for kitchen tour.';
+        if (val.trim().length < 10) return '❌ Please enter date in DD-MM-YYYY format.';
         return '';
       case 'name':
-        if (!val.trim()) return '❌ Please enter visitor contact name.';
+        if (!val.trim()) return '❌ Please enter contact person name.';
         if (val.trim().length < 3) return '❌ Name must contain at least 3 characters.';
         return '';
       case 'phone':
@@ -118,208 +52,189 @@ export default function TourBookingScreen() {
     }
   };
 
+  const handleFieldChange = (field: string, val: string, updateState: (v: string) => void) => {
+    updateState(val);
+    if (touched[field]) {
+      const errMsg = validateField(field, val);
+      if (errMsg) {
+        setErrors(prev => ({ ...prev, [field]: errMsg }));
+      } else {
+        setErrors(prev => {
+          const next = { ...prev };
+          delete next[field];
+          return next;
+        });
+      }
+    }
+  };
+
   const handleFieldBlur = (field: string, val: string) => {
     setTouched(prev => ({ ...prev, [field]: true }));
     const errMsg = validateField(field, val);
-    setErrors(prev => {
-      const copy = { ...prev };
-      if (errMsg) copy[field] = errMsg;
-      else delete copy[field];
-      return copy;
-    });
-  };
-
-  const handleFieldChange = (field: string, val: string, setter: (v: string) => void) => {
-    setter(val);
-    if (touched[field]) {
-      const errMsg = validateField(field, val);
-      setErrors(prev => {
-        const copy = { ...prev };
-        if (errMsg) copy[field] = errMsg;
-        else delete copy[field];
-        return copy;
-      });
+    if (errMsg) {
+      setErrors(prev => ({ ...prev, [field]: errMsg }));
     }
   };
 
-  const formatPhone = (val: string) => {
-    const clean = val.replace(/[^0-9]/g, '');
-    if (clean.length > 5) {
-      return `${clean.slice(0, 5)} ${clean.slice(5, 10)}`;
+  const handleBookTour = () => {
+    const e1 = validateField('date', tourDate);
+    const e2 = validateField('name', tourContactName);
+    const e3 = validateField('phone', tourContactPhone);
+
+    const newErrors: Record<string, string> = {};
+    if (e1) newErrors.date = e1;
+    if (e2) newErrors.name = e2;
+    if (e3) newErrors.phone = e3;
+
+    setErrors(newErrors);
+    setTouched({ date: true, name: true, phone: true });
+
+    if (Object.keys(newErrors).length > 0) {
+      setToast('⚠️ Please correct validation errors.');
+      return;
     }
-    return clean;
+    setShowConfirmModal(true);
+  };
+
+  const handleConfirmTour = () => {
+    setShowConfirmModal(false);
+    setToast("🎉 Kitchen tour booked successfully!");
+    back();
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.light.bg }}>
+    <PageLayout style={{ paddingHorizontal: 0 }}>
       {/* Top Header Bar */}
-      <View style={{ paddingHorizontal: 20, paddingTop: 16, paddingBottom: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderBottomWidth: 1, borderColor: t.border, backgroundColor: t.surface }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <TouchableOpacity onPress={back} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.card, borderWidth: 1, borderColor: t.border, justifyContent: 'center', alignItems: 'center' }}>
-            <ArrowLeft size={16} color={t.text} />
-          </TouchableOpacity>
-          <Text style={{ fontSize: 16, fontWeight: '900', color: t.text, marginLeft: 16, letterSpacing: 0.5 }}>Request Tour Scheduling</Text>
-        </View>
-        <TouchableOpacity onPress={back}>
-          <Text style={{ fontSize: 13, fontWeight: 'bold', color: B.orange }}>Cancel</Text>
-        </TouchableOpacity>
+      <View style={{ paddingHorizontal: 20, paddingTop: 16, paddingBottom: 12, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderColor: theme.colors.light.border, backgroundColor: theme.colors.light.surface }}>
+        <Button
+          onlyIcon
+          variant="ghost"
+          size="medium"
+          onPress={back}
+          iconLeft={<ArrowLeft size={16} color={theme.colors.light.text} />}
+          style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: theme.colors.light.surface }}
+        />
+        <Text variant="title" color="primary" style={{ marginLeft: 16 }}>BOOK KITCHEN TOUR</Text>
       </View>
 
-      <ScrollView ref={scrollViewRef} contentContainerStyle={{ paddingBottom: 120 }} showsVerticalScrollIndicator={false}>
-        {/* Preferred Date */}
-        <View style={{ paddingHorizontal: 20, paddingTop: 20 }}>
+      <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingVertical: 20, paddingBottom: 110 }} showsVerticalScrollIndicator={false}>
+        
+        <View style={{ marginBottom: theme.spacing.lg }}>
+          <Text variant="title" color="primary">Plan Your Visit</Text>
+          <Text variant="caption" color="sub" style={{ marginTop: 4, lineHeight: 18 }}>
+            Schedule an inspection of our facilities. Get an in-person walkthrough of hygiene standards and food prep steps.
+          </Text>
+        </View>
+
+        <View style={{ gap: theme.spacing.md }}>
           <DateInput
-            ref={dateRef}
-            label="Preferred Date"
+            label="TOUR DATE"
             required
             value={tourDate}
             onChangeText={val => handleFieldChange('date', val, setTourDate)}
             onBlur={() => handleFieldBlur('date', tourDate)}
             placeholder="DD-MM-YYYY"
             error={errors.date}
-            success={touched.date && !errors.date && tourDate.trim().length === 10}
-            shakeTrigger={!!errors.date}
           />
-        </View>
 
-        {/* Preferred Time Slot */}
-        <View style={{ paddingHorizontal: 20, marginTop: 24 }}>
-          <Text style={{ fontSize: 14, fontWeight: '900', color: t.text, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 12 }}>Preferred Time Slot</Text>
-          <View style={{ flexDirection: 'row', gap: 10 }}>
-            {['10:00 AM', '11:30 AM', '4:00 PM'].map(slot => {
-              const isSelected = tourTimeSlot === slot;
-              return (
-                <TouchableOpacity
-                  key={slot}
-                  activeOpacity={0.8}
-                  style={{
-                    flex: 1,
-                    height: 50,
-                    borderRadius: 16,
-                    borderWidth: 2,
-                    borderColor: isSelected ? B.orange : t.border,
-                    backgroundColor: isSelected ? B.orangeL : t.card,
-                    justifyContent: 'center',
-                    alignItems: 'center'
-                  }}
-                  onPress={() => setTourTimeSlot(slot)}
-                >
-                  <Text style={{ fontSize: 13.5, fontWeight: '800', color: isSelected ? B.orange : t.text }}>{slot}</Text>
-                </TouchableOpacity>
-              );
-            })}
+          {/* Time slot selector */}
+          <View>
+            <Text variant="label" color="secondary" style={{ fontWeight: '900', letterSpacing: 1.2, marginBottom: theme.spacing.sm }}>PREFERRED TIME SLOT</Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+              {['09:30 AM', '11:30 AM', '03:30 PM', '05:30 PM'].map((slot) => {
+                const isSelected = tourTimeSlot === slot;
+                return (
+                  <Button
+                    key={slot}
+                    title={slot}
+                    variant={isSelected ? 'primary' : 'outline'}
+                    size="medium"
+                    fullWidth={false}
+                    onPress={() => setTourTimeSlot(slot)}
+                  />
+                );
+              })}
+            </View>
           </View>
-        </View>
 
-        {/* Number of Visitors */}
-        <View style={{ paddingHorizontal: 20, marginTop: 24 }}>
-          <Text style={{ fontSize: 14, fontWeight: '900', color: t.text, textTransform: 'uppercase', letterSpacing: 0.5 }}>Number of Visitors</Text>
-          <Text style={{ fontSize: 11, color: t.sub, marginTop: 2, marginBottom: 12 }}>(Max 4 per tour)</Text>
-          
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
-            <TouchableOpacity
-              style={{
-                width: 44,
-                height: 44,
-                borderRadius: 22,
-                backgroundColor: t.card,
-                borderWidth: 1.5,
-                borderColor: t.border,
-                justifyContent: 'center',
-                alignItems: 'center'
-              }}
-              onPress={() => setTourVisitors((prev: number) => Math.max(1, prev - 1))}
-            >
-              <Text style={{ fontSize: 20, fontWeight: '900', color: t.text }}>-</Text>
-            </TouchableOpacity>
-
-            <Text style={{ fontSize: 18, fontWeight: '900', color: t.text, minWidth: 24, textAlign: 'center' }}>{tourVisitors}</Text>
-
-            <TouchableOpacity
-              style={{
-                width: 44,
-                height: 44,
-                borderRadius: 22,
-                backgroundColor: t.card,
-                borderWidth: 1.5,
-                borderColor: t.border,
-                justifyContent: 'center',
-                alignItems: 'center'
-              }}
-              onPress={() => setTourVisitors((prev: number) => Math.min(4, prev + 1))}
-            >
-              <Text style={{ fontSize: 20, fontWeight: '900', color: t.text }}>+</Text>
-            </TouchableOpacity>
+          {/* Visitors counter */}
+          <View>
+            <Text variant="label" color="secondary" style={{ fontWeight: '900', letterSpacing: 1.2, marginBottom: theme.spacing.sm }}>NUMBER OF VISITORS</Text>
+            <View style={{ flexDirection: 'row', gap: theme.spacing.sm }}>
+              {[1, 2, 3, 4, 5].map((num) => {
+                const isSelected = tourVisitors === num;
+                return (
+                  <Button
+                    key={num}
+                    title={String(num)}
+                    variant={isSelected ? 'primary' : 'outline'}
+                    size="medium"
+                    fullWidth={false}
+                    style={{ flex: 1 }}
+                    onPress={() => setTourVisitors(num)}
+                  />
+                );
+              })}
+            </View>
           </View>
-        </View>
 
-        <View style={{ paddingHorizontal: 20, marginTop: 24 }}>
           <Input
-            ref={nameRef}
-            label="Visitor Contact Name"
+            label="CONTACT PERSON NAME"
             required
             value={tourContactName}
             onChangeText={val => handleFieldChange('name', val.replace(/[^a-zA-Z\s]/g, ''), setTourContactName)}
             onBlur={() => handleFieldBlur('name', tourContactName)}
-            placeholder="Enter Full Name"
+            placeholder="E.g. Bhargav"
             error={errors.name}
-            success={touched.name && !errors.name && tourContactName.trim().length >= 3}
-            shakeTrigger={!!errors.name}
           />
-        </View>
 
-        <View style={{ paddingHorizontal: 20, marginTop: 12 }}>
-          <PhoneInput
-            ref={phoneRef}
-            label="Contact Number"
+          <Input
+            label="CONTACT PHONE NUMBER"
             required
             value={tourContactPhone}
-            onChangeText={val => handleFieldChange('phone', val, setTourContactPhone)}
+            onChangeText={val => handleFieldChange('phone', val.replace(/[^0-9]/g, ''), setTourContactPhone)}
             onBlur={() => handleFieldBlur('phone', tourContactPhone)}
-            placeholder="98765 43210"
+            placeholder="10-digit number"
+            keyboardType="phone-pad"
             error={errors.phone}
-            success={touched.phone && !errors.phone && tourContactPhone.replace(/[^0-9]/g, '').length === 10}
-            shakeTrigger={!!errors.phone}
           />
         </View>
 
-        {/* Confirm Tour Request Button */}
-        <View style={{ paddingHorizontal: 20, marginTop: 32 }}>
-          <Button
-            title="Confirm Tour Request"
-            onPress={() => {
-              const e1 = validateField('date', tourDate);
-              const e2 = validateField('name', tourContactName);
-              const e3 = validateField('phone', tourContactPhone);
-
-              const newErrors: Record<string, string> = {};
-              if (e1) newErrors.date = e1;
-              if (e2) newErrors.name = e2;
-              if (e3) newErrors.phone = e3;
-
-              setErrors(newErrors);
-              setTouched({ date: true, name: true, phone: true });
-
-              if (Object.keys(newErrors).length > 0) {
-                if (newErrors.date) {
-                  scrollAndShake('date', dateRef, dateShake, 0);
-                } else if (newErrors.name) {
-                  scrollAndShake('name', nameRef, nameShake, 100);
-                } else if (newErrors.phone) {
-                  scrollAndShake('phone', phoneRef, phoneShake, 200);
-                }
-                return;
-              }
-
-              setToast("Tour Request Confirmed successfully!");
-              back();
-            }}
-          />
-        </View>
+        <Button 
+          title="Schedule Tour ‣"
+          onPress={handleBookTour}
+          style={{ marginTop: theme.spacing.xl }}
+        />
       </ScrollView>
 
-      <BottomTabNav active="kitchen" />
-    </SafeAreaView>
+      {/* Booking confirmation dialog */}
+      <Modal
+        visible={showConfirmModal}
+        onClose={() => setShowConfirmModal(false)}
+      >
+        <View style={{ alignItems: 'center' }}>
+          <Text variant="title" color="text" style={{ textAlign: 'center', marginBottom: theme.spacing.sm }}>Confirm Kitchen Visit?</Text>
+          <Text variant="caption" color="sub" style={{ textAlign: 'center', marginBottom: theme.spacing.xl }}>
+            Book kitchen visit for <Text variant="caption" color="secondary" style={{ fontWeight: 'bold' }}>{tourVisitors} visitors</Text> on <Text variant="caption" color="secondary" style={{ fontWeight: 'bold' }}>{tourDate}</Text> at <Text variant="caption" color="secondary" style={{ fontWeight: 'bold' }}>{tourTimeSlot}</Text>?
+          </Text>
+          <View style={{ flexDirection: 'row', gap: theme.spacing.md, width: '100%' }}>
+            <Button
+              title="Cancel"
+              variant="outline"
+              size="medium"
+              style={{ flex: 1 }}
+              onPress={() => setShowConfirmModal(false)}
+            />
+            <Button
+              title="Confirm"
+              variant="primary"
+              size="medium"
+              style={{ flex: 1 }}
+              onPress={handleConfirmTour}
+            />
+          </View>
+        </View>
+      </Modal>
+    </PageLayout>
   );
 }
-

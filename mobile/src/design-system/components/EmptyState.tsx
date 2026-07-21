@@ -1,7 +1,8 @@
 import React from 'react';
-import { StyleSheet, View, Text, ViewStyle } from 'react-native';
+import { StyleSheet, View, ViewStyle } from 'react-native';
 import { Inbox } from 'lucide-react-native';
 import { theme } from '../theme';
+import { Text } from './Text';
 import { Button } from './Button';
 
 interface EmptyStateProps {
@@ -26,8 +27,8 @@ export function EmptyState({
       <View style={styles.iconContainer}>
         <Icon size={40} color={theme.colors.light.sub} strokeWidth={1.5} />
       </View>
-      <Text style={styles.title}>{title}</Text>
-      <Text style={styles.description}>{description}</Text>
+      <Text variant="title" color="text" style={styles.title}>{title}</Text>
+      <Text variant="caption" color="sub" style={styles.description}>{description}</Text>
       {actionLabel && onActionPress && (
         <Button
           title={actionLabel}

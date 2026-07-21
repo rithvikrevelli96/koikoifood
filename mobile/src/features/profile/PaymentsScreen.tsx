@@ -1,139 +1,103 @@
 import React from 'react';
-import {
-  StyleSheet,
-  View,
-  TouchableOpacity,
-  ScrollView,
-  SafeAreaView
-} from 'react-native';
-import { ArrowLeft, Wallet, Plus } from 'lucide-react-native';
+import { View, Platform, TouchableOpacity, ScrollView } from 'react-native';
+import { ArrowLeft, Wallet, Check, ChevronRight } from 'lucide-react-native';
 import { useAppContext } from '../../app/context';
-import { theme, F, Button } from '../../design-system';
-import { Text as RNText } from 'react-native';
-
-const B = {
-  orange: theme.colors.secondary,
-  orangeL: 'rgba(201, 107, 60, 0.08)',
-  green: theme.colors.success,
-  greenL: 'rgba(75, 93, 58, 0.08)',
-  cream: theme.colors.light.surface,
-  creamL: theme.colors.light.bg,
-};
-
-function Text({ style, ...props }: any) {
-  const flatStyle = StyleSheet.flatten(style || {});
-  let fontFamily = F.body;
-  const content = String(props.children || '');
-  const isNumeric = /[₹\d]/.test(content) && (
-    /^[₹\d\s★%\-.:\+a-zA-Z\s]+$/.test(content) ||
-    content.includes('kcal') ||
-    content.includes('protein') ||
-    content.includes('Carbs') ||
-    content.includes('₹') ||
-    content.includes('min') ||
-    content.includes('km') ||
-    content.includes('.') ||
-    content.includes(',')
-  );
-
-  if (flatStyle.fontFamily) {
-    fontFamily = flatStyle.fontFamily;
-  } else if (flatStyle.fontSize >= 15 && (flatStyle.fontWeight === '900' || flatStyle.fontWeight === '800' || flatStyle.fontWeight === 'bold')) {
-    fontFamily = isNumeric ? F.mono : F.heading;
-  } else if (isNumeric) {
-    fontFamily = F.mono;
-  }
-  return <RNText style={[{ fontFamily }, style]} {...props} />;
-}
+import {
+  theme,
+  Text,
+  Button,
+  PageLayout,
+  Card,
+  StatisticCard
+} from '../../design-system';
 
 export default function PaymentsScreen() {
   const {
     back,
     setToast,
-    t
   } = useAppContext();
 
+  const transactions = [
+    { id: '1', title: 'Plan Renewal: Monthly Veg', amount: '-₹1,850', date: '12-07-2026', status: 'Success' },
+    { id: '2', title: 'Top-up Wallet credit', amount: '+₹1,000', date: '08-07-2026', status: 'Success' },
+    { id: '3', title: 'Single Dabba purchase', amount: '-₹95', date: '04-07-2026', status: 'Success' },
+    { id: '4', title: 'Lunch refund: Skipped slot', amount: '+₹65', date: '01-07-2026', status: 'Success' }
+  ];
+
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: t.bg }}>
-      <View style={[styles.headerBar, { borderBottomColor: t.border }]}>
-        <TouchableOpacity onPress={back} style={[styles.backIconCircle, { backgroundColor: t.surface }]}>
-          <ArrowLeft size={16} color={t.text} />
-        </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: t.text }]}>Wallet & Payments</Text>
+    <PageLayout style={{ paddingHorizontal: 0 }}>
+      {/* Top Header Bar */}
+      <View style={{ paddingHorizontal: 20, paddingTop: 16, paddingBottom: 12, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderColor: theme.colors.light.border, backgroundColor: theme.colors.light.surface }}>
+        <Button
+          onlyIcon
+          variant="ghost"
+          size="medium"
+          onPress={back}
+          iconLeft={<ArrowLeft size={16} color={theme.colors.light.text} />}
+          style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: theme.colors.light.surface }}
+        />
+        <Text variant="title" color="primary" style={{ marginLeft: 16 }}>PAYMENTS & WALLET</Text>
       </View>
-      <ScrollView contentContainerStyle={{ padding: 16 }}>
-        {/* Balance card */}
-        <View style={[styles.loyaltyProgressBox, { backgroundColor: t.card, borderColor: t.border }]}>
-          <Wallet size={36} color={B.orange} />
-          <Text style={{ fontSize: 24, fontWeight: '900', color: t.text, marginTop: 10 }}>₹1,250.00</Text>
-          <Text style={{ fontSize: 12, color: t.muted }}>Available Wallet Balance</Text>
+
+      <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingVertical: 20, paddingBottom: 60 }} showsVerticalScrollIndicator={false}>
+        
+        {/* Wallet balance */}
+        <StatisticCard style={{ alignItems: 'flex-start', padding: 20, marginBottom: 24 }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', alignSelf: 'stretch', marginBottom: 6 }}>
+            <Text variant="caption" color="sub" style={{ fontWeight: 'bold' }}>DABBA WALLET BALANCE</Text>
+            <Wallet size={18} color={theme.colors.secondary} />
+          </View>
+          <Text variant="display" color="text" style={{ fontSize: 32, fontWeight: '900' }}>₹1,250</Text>
+          <Text variant="caption" color="sub" style={{ marginTop: 2, marginBottom: 16 }}>This amount is automatically used for renewals & single order checkouts.</Text>
           
-          <View style={{ width: '100%', marginTop: 14 }}>
+          <View style={{ flexDirection: 'row', gap: 12, width: '100%' }}>
             <Button
-              title="Add ₹500.00"
-              onPress={() => {
-                setToast("Successfully added ₹500.00 to your wallet!");
-              }}
-              style={{ height: 40, borderRadius: 20 }}
+              title="Add Money"
+              variant="primary"
+              size="medium"
+              style={{ flex: 1 }}
+              onPress={() => setToast('💳 Payment gateway simulation completed.')}
+            />
+            <Button
+              title="Refund to Bank"
+              variant="outline"
+              size="medium"
+              style={{ flex: 1 }}
+              onPress={() => setToast('💸 Refund request initiated successfully.')}
             />
           </View>
-        </View>
+        </StatisticCard>
 
-        {/* Transaction logs */}
-        <Text style={[styles.sectionSubTitle, { color: t.text, marginTop: 24, marginBottom: 12 }]}>Wallet Statement Logs</Text>
-        <View style={{ borderRadius: 16, overflow: 'hidden', borderWidth: 1.5, borderColor: t.border, backgroundColor: t.card }}>
-          {[
-            { title: 'Monsoon Referral Promo Credit', amt: '+₹100.00', date: 'Jul 10, 2026', col: B.green },
-            { title: 'Subscribed Monthly Dabba Tier', amt: '−₹3,999.00', date: 'Jul 08, 2026', col: '#EF4444' },
-            { title: 'Money Added via Card UPI', amt: '+₹4,000.00', date: 'Jul 08, 2026', col: B.green }
-          ].map((tx, i) => (
-            <View key={i} style={[styles.ingRow, i > 0 && { borderTopWidth: 1, borderTopColor: t.border }]}>
-              <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 13, fontWeight: 'bold', color: t.text }} numberOfLines={1}>{tx.title}</Text>
-                <Text style={{ fontSize: 10, color: t.muted, marginTop: 2 }}>{tx.date}</Text>
+        {/* Transactions log list */}
+        <Text variant="label" color="text" style={{ fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 12 }}>Transaction History</Text>
+        
+        <Card style={{ padding: 0, overflow: 'hidden' }}>
+          {transactions.map((tx, idx) => (
+            <View
+              key={tx.id}
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: 16,
+                borderBottomWidth: idx === transactions.length - 1 ? 0 : 1,
+                borderBottomColor: theme.colors.light.border,
+                backgroundColor: theme.colors.light.surface
+              }}
+            >
+              <View style={{ flex: 1.8 }}>
+                <Text variant="body" color="text" style={{ fontWeight: '700' }}>{tx.title}</Text>
+                <Text variant="caption" color="sub" style={{ marginTop: 2 }}>{tx.date} · {tx.status}</Text>
               </View>
-              <Text style={{ fontSize: 13, fontWeight: '900', color: tx.col }}>{tx.amt}</Text>
+              <View style={{ flex: 1.2, alignItems: 'flex-end' }}>
+                <Text variant="mono" color={tx.amount.startsWith('+') ? 'primary' : 'secondary'} style={{ fontWeight: '800' }}>
+                  {tx.amount}
+                </Text>
+              </View>
             </View>
           ))}
-        </View>
+        </Card>
       </ScrollView>
-    </SafeAreaView>
+    </PageLayout>
   );
 }
-
-const styles = StyleSheet.create({
-  headerBar: {
-    height: 54,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    borderBottomWidth: 1,
-  },
-  backIconCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: 16,
-    fontWeight: '900',
-    marginLeft: 12,
-  },
-  loyaltyProgressBox: {
-    alignItems: 'center',
-    padding: 20,
-    borderRadius: 20,
-    borderWidth: 1,
-  },
-  sectionSubTitle: {
-    fontSize: 14,
-    fontWeight: '900',
-  },
-  ingRow: {
-    flexDirection: 'row',
-    padding: 12,
-    alignItems: 'center',
-  },
-});

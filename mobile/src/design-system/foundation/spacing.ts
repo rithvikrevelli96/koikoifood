@@ -9,4 +9,10 @@ export const spacing = {
   huge: 48,
   giant: 64,
   outer: 24,
+  
+  // Dedicated layout tokens v2
+  screenHorizontal: 16,
+  screenVertical: 24,
+  sectionGap: 32,
+  cardGap: 20,
 };

@@ -41,7 +41,12 @@ export type Screen =
   | 'plans'
   | 'health_info'
   | 'dev_panel'
-  | 'animation_demo';
+  | 'animation_demo'
+  | 'meal_pref'
+  | 'finances'
+  | 'family'
+  | 'settings'
+  | 'about';
 
 export interface Review {
   id: number;

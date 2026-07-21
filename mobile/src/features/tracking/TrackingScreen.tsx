@@ -1,82 +1,90 @@
 import React from 'react';
-import {
-  StyleSheet,
-  View,
-  TouchableOpacity,
-  ScrollView,
-  SafeAreaView
-} from 'react-native';
+import { StyleSheet, View, TouchableOpacity, ScrollView, Linking } from 'react-native';
 import { ArrowLeft, MapPin, Bike, Check, PhoneCall } from 'lucide-react-native';
 import { useAppContext } from '../../app/context';
-import { theme, F } from '../../design-system';
-import { Text as RNText } from 'react-native';
-
-function Text({ style, ...props }: any) {
-  const flatStyle = StyleSheet.flatten(style || {});
-  let fontFamily = F.body;
-  const content = String(props.children || '');
-  const isNumeric = /[₹\d]/.test(content) && (
-    /^[₹\d\s★%\-.:\+a-zA-Z\s]+$/.test(content) ||
-    content.includes('kcal') ||
-    content.includes('protein') ||
-    content.includes('Carbs') ||
-    content.includes('₹') ||
-    content.includes('min') ||
-    content.includes('km')
-  );
-
-  if (flatStyle.fontFamily) {
-    fontFamily = flatStyle.fontFamily;
-  } else if (flatStyle.fontSize >= 15 && (flatStyle.fontWeight === '900' || flatStyle.fontWeight === '800' || flatStyle.fontWeight === 'bold')) {
-    fontFamily = isNumeric ? F.mono : F.heading;
-  } else if (isNumeric) {
-    fontFamily = F.mono;
-  }
-  return <RNText style={[{ fontFamily }, style]} {...props} />;
-}
+import {
+  theme,
+  Text,
+  Button,
+  PageLayout,
+  Card
+} from '../../design-system';
 
 export default function TrackingScreen() {
   const {
     back,
-    t
+    t,
+    setToast
   } = useAppContext();
 
+  const handleCallArjun = () => {
+    const phoneUrl = 'tel:+919876543210';
+    Linking.openURL(phoneUrl).catch(() => {
+      setToast('📞 Calling Arjun (+91 98765 43210)...');
+    });
+    setToast('📞 Dialing delivery partner Arjun...');
+  };
+
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: t.bg }}>
+    <PageLayout style={{ paddingHorizontal: 0 }}>
+      {/* Top Header Bar */}
       <View style={styles.headerBar}>
-        <TouchableOpacity onPress={back} style={[styles.backIconCircle, { backgroundColor: t.surface }]}>
-          <ArrowLeft size={16} color={t.text} />
-        </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: t.text }]}>Live Tracking</Text>
+        <Button
+          onlyIcon
+          variant="ghost"
+          size="medium"
+          onPress={back}
+          iconLeft={<ArrowLeft size={16} color={theme.colors.light.text} />}
+          style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: theme.colors.light.surface }}
+        />
+        <Text variant="title" color="primary" style={{ marginLeft: 16 }}>LIVE TRACKING</Text>
       </View>
 
-      <ScrollView contentContainerStyle={{ padding: 16 }}>
+      <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingVertical: 20, paddingBottom: 60 }} showsVerticalScrollIndicator={false}>
+        
         {/* Simulated Map Visual */}
-        <View style={[styles.mapMock, { backgroundColor: t.surface }]}>
+        <View style={[styles.mapMock, { backgroundColor: theme.colors.light.surface, borderColor: theme.colors.light.border }]}>
           <MapPin size={48} color={theme.colors.secondary} />
-          <Text style={{ fontSize: 12, fontWeight: 'bold', color: t.text, marginTop: 8 }}>Villas 45, Green Glen Layout</Text>
-          <Text style={{ fontSize: 10, color: t.muted }}>Arjun is 2.4 km away from your villa</Text>
+          <Text variant="body" color="text" style={{ fontWeight: 'bold', marginTop: 8 }}>Villas 45, Green Glen Layout</Text>
+          <Text variant="caption" color="sub" style={{ marginTop: 2 }}>
+            Arjun is <Text variant="mono" color="secondary" style={{ fontSize: 13, fontWeight: '700' }}>2.4 km</Text> away from your villa
+          </Text>
         </View>
 
         {/* Delivery Agent Card */}
-        <View style={[styles.agentCard, { backgroundColor: t.card, borderColor: t.border }]}>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <View style={styles.agentAvatar}>
-              <Text style={{ fontSize: 16 }}>🚴</Text>
+        <Card style={{ padding: 16, marginTop: 20 }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <View style={styles.agentAvatar}>
+                <Text variant="body" style={{ fontSize: 16 }}>🚴</Text>
+              </View>
+              <View style={{ marginLeft: 10 }}>
+                <Text variant="body" color="text" style={{ fontWeight: '900' }}>Arjun Dev</Text>
+                <Text variant="caption" color="sub" style={{ marginTop: 2 }}>
+                  Delivery Executive · <Text variant="mono" color="accent" style={{ fontWeight: '700' }}>4.9</Text> ★
+                </Text>
+              </View>
             </View>
-            <View style={{ marginLeft: 10 }}>
-              <Text style={{ fontSize: 14, fontWeight: '900', color: t.text }}>Arjun Dev</Text>
-              <Text style={{ fontSize: 11, color: t.muted }}>Delivery Executive · 4.9 Rating</Text>
-            </View>
+
+            <Button
+              title="Call Arjun"
+              variant="primary"
+              size="small"
+              fullWidth={false}
+              style={{ paddingHorizontal: 12, height: 32 }}
+              iconLeft={<PhoneCall size={12} color="#FFFFFF" />}
+              onPress={handleCallArjun}
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel="Call Arjun"
+              accessibilityHint="Places a phone call to delivery partner Arjun Dev"
+            />
           </View>
-          <TouchableOpacity style={styles.agentCallBtn}>
-            <PhoneCall size={14} color="#FFFFFF" />
-            <Text style={{ fontSize: 11, color: '#FFFFFF', fontWeight: 'bold', marginLeft: 6 }}>Call Arjun</Text>
-          </TouchableOpacity>
-        </View>
+        </Card>
 
         {/* Delivery Steps logs */}
-        <Text style={[styles.sectionSubTitle, { color: t.text, marginTop: 24, marginBottom: 12 }]}>Delivery Status Timeline</Text>
+        <Text variant="label" color="text" style={{ fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 28, marginBottom: 16 }}>Delivery Status Timeline</Text>
+        
         <View style={styles.timelineBlock}>
           {[
             { t: 'Order Received', desc: '11:00 AM · Kitchen acknowledged slot', done: true },
@@ -86,83 +94,56 @@ export default function TrackingScreen() {
           ].map((step, i) => (
             <View key={i} style={styles.timelineRow}>
               <View style={styles.timelineIndicatorColumn}>
-                <View style={[styles.timelineNodeLarge, { backgroundColor: step.done ? theme.colors.success : step.active ? theme.colors.secondary : t.surface }]}>
+                <View style={[styles.timelineNodeLarge, { backgroundColor: step.done ? theme.colors.success : step.active ? theme.colors.secondary : theme.colors.light.border }]}>
                   {step.done && <Check size={10} color="#FFFFFF" strokeWidth={3} />}
                 </View>
-                {i < 3 && <View style={[styles.timelineConnector, { backgroundColor: step.done ? theme.colors.success : t.border }]} />}
+                {i < 3 && <View style={[styles.timelineConnector, { backgroundColor: step.done ? theme.colors.success : theme.colors.light.border }]} />}
               </View>
               <View style={{ flex: 1, marginLeft: 12, paddingBottom: 24 }}>
-                <Text style={{ fontSize: 13, fontWeight: 'bold', color: step.done || step.active ? t.text : t.muted }}>{step.t}</Text>
-                <Text style={{ fontSize: 11, color: t.muted, marginTop: 2 }}>{step.desc}</Text>
+                <Text variant="body" color={step.done || step.active ? 'text' : 'muted'} style={{ fontWeight: 'bold' }}>{step.t}</Text>
+                <Text variant="caption" color="sub" style={{ marginTop: 2 }}>{step.desc}</Text>
               </View>
             </View>
           ))}
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </PageLayout>
   );
 }
 
 const styles = StyleSheet.create({
   headerBar: {
-    height: 54,
+    height: 56,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0,0,0,0.06)',
-  },
-  backIconCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: 16,
-    fontWeight: '900',
-    marginLeft: 12,
+    borderBottomColor: '#E8E2D8',
   },
   mapMock: {
-    height: 180,
-    borderRadius: 20,
+    height: 220,
+    borderRadius: 24,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
-  },
-  agentCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 12,
-    borderRadius: 18,
-    borderWidth: 1,
+    borderWidth: 1.5,
   },
   agentAvatar: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#FEF6EC',
+    backgroundColor: 'rgba(201, 107, 60, 0.08)',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  agentCallBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: theme.colors.success,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 12,
-  },
   timelineBlock: {
-    marginLeft: 10,
+    paddingLeft: 4,
   },
   timelineRow: {
     flexDirection: 'row',
   },
   timelineIndicatorColumn: {
     alignItems: 'center',
+    width: 24,
   },
   timelineNodeLarge: {
     width: 20,
@@ -170,13 +151,12 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
+    zIndex: 1,
   },
   timelineConnector: {
     width: 2,
-    height: 40,
-  },
-  sectionSubTitle: {
-    fontSize: 14,
-    fontWeight: '900',
+    flex: 1,
+    marginVertical: -2,
+    zIndex: 0,
   },
 });

@@ -83,7 +83,10 @@ export default function AppProvider({ children }: AppProviderProps) {
     healthGoal: 'Healthy Lifestyle',
     spiceLevel: 'Medium',
     favCuisines: ['South Indian', 'North Indian'] as string[],
-    allergies: 'None'
+    allergies: 'None',
+    profileCompleted: false,
+    locationCompleted: false,
+    healthCompleted: false,
   });
   const [subscribed, setSubscribed] = useState(false);
   const [newUserHomeMealTab, setNewUserHomeMealTab] = useState<'lunch' | 'dinner'>('lunch');
@@ -106,7 +109,7 @@ export default function AppProvider({ children }: AppProviderProps) {
   const [showLocationPermission, setShowLocationPermission] = useState(false);
   const [showMapSelection, setShowMapSelection] = useState(false);
   const [selectedMapPinIdx, setSelectedMapPinIdx] = useState(0);
-  const [selectedPlanId, setSelectedPlanId] = useState<string>('monthly');
+  const [selectedPlanId, setSelectedPlanId] = useState<string>('');
   const [showManageOptions, setShowManageOptions] = useState<boolean>(false);
   const [checkoutMealPref, setCheckoutMealPref] = useState<'Veg' | 'Non-Veg'>('Veg');
   const [checkoutFreq, setCheckoutFreq] = useState<'lunch' | 'dinner' | 'both'>('both');
@@ -240,18 +243,84 @@ export default function AppProvider({ children }: AppProviderProps) {
 
   const t = isDark ? DARK : LIGHT;
 
-  // Custom Navigation
-  const go = (s: Screen) => {
-    setScreenStack(prev => [...prev, s]);
-    setCurrentScreen(s);
+  // Per-tab navigation stacks
+  const TAB_ROOTS: string[] = ['home', 'meals', 'plans', 'kitchen', 'profile'];
+  const DEFAULT_TAB_STACKS: Record<string, Screen[]> = {
+    home: ['home'],
+    meals: ['meals'],
+    plans: ['plans'],
+    kitchen: ['kitchen'],
+    profile: ['profile'],
   };
 
+  const [activeTab, setActiveTab] = useState<string | null>(null);
+  const [tabStacks, setTabStacks] = useState<Record<string, Screen[]>>({ ...DEFAULT_TAB_STACKS });
+
+  // Switch to a different tab (used by BottomTabNav)
+  const switchTab = (tabId: string) => {
+    if (tabId === activeTab) {
+      // Tapping the current tab pops to root (standard iOS/Android behavior)
+      setTabStacks(prev => ({ ...prev, [tabId]: [tabId as Screen] }));
+      setCurrentScreen(tabId as Screen);
+    } else {
+      setActiveTab(tabId);
+      const stack = tabStacks[tabId] || [tabId as Screen];
+      setCurrentScreen(stack[stack.length - 1]);
+    }
+  };
+
+  // Full navigation reset (for logout)
+  const resetNavigation = (screen: Screen) => {
+    setActiveTab(null);
+    setScreenStack([screen]);
+    setTabStacks({ ...DEFAULT_TAB_STACKS });
+    setCurrentScreen(screen);
+  };
+
+  // Push a screen onto the navigation stack
+  const go = (s: Screen) => {
+    if (activeTab === null) {
+      // Onboarding/pre-auth mode
+      if (TAB_ROOTS.includes(s)) {
+        // Entering the main tabbed app
+        setActiveTab(s);
+        setCurrentScreen(s);
+      } else {
+        setScreenStack(prev => [...prev, s]);
+        setCurrentScreen(s);
+      }
+    } else {
+      // Main app — push onto the active tab's stack
+      setTabStacks(prev => ({
+        ...prev,
+        [activeTab]: [...(prev[activeTab] || [activeTab as Screen]), s],
+      }));
+      setCurrentScreen(s);
+    }
+  };
+
+  // Pop the current screen from the navigation stack
   const back = () => {
-    if (screenStack.length > 1) {
-      const nextStack = [...screenStack];
-      nextStack.pop();
-      setScreenStack(nextStack);
-      setCurrentScreen(nextStack[nextStack.length - 1]);
+    if (activeTab === null) {
+      // Onboarding/pre-auth mode
+      if (screenStack.length > 1) {
+        const nextStack = [...screenStack];
+        nextStack.pop();
+        setScreenStack(nextStack);
+        setCurrentScreen(nextStack[nextStack.length - 1]);
+      }
+    } else {
+      // Main app — pop from the active tab's stack
+      const currentStack = tabStacks[activeTab] || [activeTab as Screen];
+      if (currentStack.length > 1) {
+        const newStack = currentStack.slice(0, -1);
+        setTabStacks(prev => ({
+          ...prev,
+          [activeTab]: newStack,
+        }));
+        setCurrentScreen(newStack[newStack.length - 1]);
+      }
+      // At tab root — do nothing (standard native behavior)
     }
   };
 
@@ -267,7 +336,7 @@ export default function AppProvider({ children }: AppProviderProps) {
   useEffect(() => {
     async function saveState() {
       try {
-        const persistScreens = ['auth', 'setup1', 'setup2', 'setup3'];
+        const persistScreens = ['auth', 'setup1', 'setup2', 'setup3', 'plans', 'subscribe_flow'];
         if (persistScreens.includes(currentScreen)) {
           await storage.setItem('koikoi_onboarding_screen', currentScreen);
           await storage.setItem('koikoi_onboarding_user', JSON.stringify(user));
@@ -361,6 +430,9 @@ export default function AppProvider({ children }: AppProviderProps) {
         setScreenStack,
         go,
         back,
+        activeTab,
+        switchTab,
+        resetNavigation,
         isDark,
         t,
         toast,
