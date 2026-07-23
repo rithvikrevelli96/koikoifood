@@ -1,106 +1,77 @@
 import React from 'react';
-import {
-  StyleSheet,
-  View,
-  TouchableOpacity,
-  ScrollView,
-  SafeAreaView
-} from 'react-native';
-import { ArrowLeft } from 'lucide-react-native';
+import { StyleSheet, View, ScrollView } from 'react-native';
+import { ArrowLeft, Bell } from 'lucide-react-native';
 import { useAppContext } from '../../app/context';
-import { theme, F } from '../../design-system';
-import { Text as RNText } from 'react-native';
-
-const B = {
-  orange: theme.colors.secondary,
-  orangeL: 'rgba(201, 107, 60, 0.08)',
-  green: theme.colors.success,
-  greenL: 'rgba(75, 93, 58, 0.08)',
-  cream: theme.colors.light.surface,
-  creamL: theme.colors.light.bg,
-};
-
-function Text({ style, ...props }: any) {
-  const flatStyle = StyleSheet.flatten(style || {});
-  let fontFamily = F.body;
-  const content = String(props.children || '');
-  const isNumeric = /[₹\d]/.test(content) && (
-    /^[₹\d\s★%\-.:\+a-zA-Z\s]+$/.test(content) ||
-    content.includes('kcal') ||
-    content.includes('protein') ||
-    content.includes('Carbs') ||
-    content.includes('₹') ||
-    content.includes('min') ||
-    content.includes('km')
-  );
-
-  if (flatStyle.fontFamily) {
-    fontFamily = flatStyle.fontFamily;
-  } else if (flatStyle.fontSize >= 15 && (flatStyle.fontWeight === '900' || flatStyle.fontWeight === '800' || flatStyle.fontWeight === 'bold')) {
-    fontFamily = isNumeric ? F.mono : F.heading;
-  } else if (isNumeric) {
-    fontFamily = F.mono;
-  }
-  return <RNText style={[{ fontFamily }, style]} {...props} />;
-}
+import {
+  theme,
+  Text,
+  Button,
+  PageLayout,
+  Card
+} from '../../design-system';
 
 export default function NotificationsScreen() {
   const {
     back,
-    t
+    t,
+    isDark,
   } = useAppContext();
 
   const list = [
-    { id: 1, title: 'Lunch Dispatched 🍱', msg: 'Your healthy Lunch box has left the Bellandur kitchen hub.', time: '10 min ago' },
+    { id: 1, title: 'Lunch Dispatched 🍱', msg: 'Your healthy Lunch box has left the Gundlapochampally kitchen hub.', time: '10 min ago' },
     { id: 2, title: 'Subscribed Successfully! 🎉', msg: 'Welcome to Koi Koi. Your 30-day billing is now live.', time: 'Yesterday' }
   ];
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: t.bg }}>
-      <View style={styles.headerBar}>
-        <TouchableOpacity onPress={back} style={[styles.backIconCircle, { backgroundColor: t.surface }]}>
-          <ArrowLeft size={16} color={t.text} />
-        </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: t.text }]}>Notifications</Text>
+    <PageLayout style={{ paddingHorizontal: 0 }}>
+      {/* Top Header Bar */}
+      <View style={[styles.headerBar, { borderBottomColor: t.border, backgroundColor: t.card }]}>
+        <Button
+          onlyIcon
+          variant="ghost"
+          size="medium"
+          onPress={back}
+          iconLeft={<ArrowLeft size={16} color={t.text} />}
+          style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.surface }}
+          accessibilityLabel="Go back"
+          accessibilityRole="button"
+        />
+        <Text variant="title" color="primary" style={{ marginLeft: 16 }}>NOTIFICATIONS</Text>
       </View>
-      <ScrollView contentContainerStyle={{ padding: 16 }}>
-        {list.map(n => (
-          <View key={n.id} style={[styles.notiCard, { backgroundColor: t.card, borderColor: t.border }]}>
-            <Text style={{ fontSize: 13, fontWeight: 'bold', color: t.text }}>{n.title}</Text>
-            <Text style={{ fontSize: 11, color: t.sub, marginTop: 4 }}>{n.msg}</Text>
-            <Text style={{ fontSize: 9, color: t.muted, marginTop: 6 }}>{n.time}</Text>
+
+      <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingVertical: 20, paddingBottom: 60 }} showsVerticalScrollIndicator={false}>
+        {list.length === 0 ? (
+          <View style={styles.emptyState}>
+            <Bell size={40} color={t.muted} />
+            <Text variant="body" color="sub" style={{ fontWeight: '700', marginTop: 16, textAlign: 'center' }}>You're all caught up!</Text>
+            <Text variant="caption" color="muted" style={{ marginTop: 6, textAlign: 'center' }}>No new notifications right now.</Text>
           </View>
-        ))}
+        ) : (
+          <View style={{ gap: 12 }}>
+            {list.map(n => (
+              <Card key={n.id} style={{ padding: 16 }}>
+                <Text variant="title" color="text" style={{ fontSize: 16 }}>{n.title}</Text>
+                <Text variant="caption" color="sub" style={{ marginTop: 4, lineHeight: 16 }}>{n.msg}</Text>
+                <Text variant="mono" color="muted" style={{ marginTop: 8, fontSize: 11 }}>{n.time}</Text>
+              </Card>
+            ))}
+          </View>
+        )}
       </ScrollView>
-    </SafeAreaView>
+    </PageLayout>
   );
 }
 
 const styles = StyleSheet.create({
   headerBar: {
-    height: 54,
+    height: 56,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0,0,0,0.06)',
   },
-  backIconCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    justifyContent: 'center',
+  emptyState: {
     alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: 16,
-    fontWeight: '900',
-    marginLeft: 12,
-  },
-  notiCard: {
-    borderRadius: 16,
-    borderWidth: 1,
-    padding: 12,
-    marginBottom: 10,
+    paddingVertical: 60,
   },
 });

@@ -1,16 +1,68 @@
 export interface T {
+  // Surfaces & Backgrounds
   bg: string;
   surface: string;
   card: string;
+  elevated: string;
+  modal: string;
+  bottomSheet: string;
+  overlay: string;
+  backdrop: string;
+  input: string;
+  nav: string;
+  tabBar: string;
+  statusBar: string;
+
+  // Neutrals & Typography
   text: string;
   sub: string;
+  secondaryText: string;
   muted: string;
+  placeholder: string;
+  disabled: string;
   border: string;
-  nav: string;
-  input: string;
+  divider: string;
+  shadow: string;
+
+  // Brand & Accents
+  primary: string;
+  secondary: string;
+  accent: string;
+
+  // Semantics
+  success: string;
+  warning: string;
+  error: string;
+  info: string;
+
+  // Domain Presets
+  veg: { bg: string; text: string };
+  nonVeg: { bg: string; text: string };
+  premium: { bg: string; text: string };
+  wallet: { bg: string; text: string };
+
+  // Components & Controls
+  chip: { bg: string; text: string; border: string };
+  badge: { bg: string; text: string };
+  progressTrack: string;
+  progressFill: string;
+  skeleton: string;
+
+  // Interaction State Tokens
+  states: {
+    hover: string;
+    pressed: string;
+    focused: string;
+    selected: string;
+    disabled: string;
+    error: string;
+    success: string;
+    warning: string;
+  };
 }
 
 export type AppTheme = 'light' | 'dark' | 'system';
+
 
 export type Screen =
   | 'splash'
@@ -41,7 +93,13 @@ export type Screen =
   | 'plans'
   | 'health_info'
   | 'dev_panel'
-  | 'animation_demo';
+  | 'animation_demo'
+  | 'meal_pref'
+  | 'finances'
+  | 'family'
+  | 'settings'
+  | 'kitchen_ingredients'
+  | 'about';
 
 export interface Review {
   id: number;

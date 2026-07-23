@@ -1,9 +1,9 @@
 import React from 'react';
-import { View, Text, Platform, Animated, TouchableOpacity } from 'react-native';
-import Svg, { Circle, Path, Ellipse, LinearGradient as SvgLinearGradient, Stop, Defs } from 'react-native-svg';
+import { View, Platform, Animated } from 'react-native';
+import Svg, { Path, Ellipse, Circle } from 'react-native-svg';
 import { Calendar, Heart, ChefHat, ShieldCheck, Sparkles, Leaf, Pause, Lock } from 'lucide-react-native';
 import { useAppContext } from '../../app/context';
-import { theme, F, Button } from '../../design-system';
+import { theme, F, Button, Text, PageLayout, InfoCard } from '../../design-system';
 import {
   BoyIllustrationSvg,
   DabbasIllustrationSvg,
@@ -153,7 +153,7 @@ export default function OnboardingScreen() {
     let nextScreen: any = 'ob1';
     if (currentScreen === 'ob1') nextScreen = 'ob2';
     else if (currentScreen === 'ob2') nextScreen = 'ob3';
-    else nextScreen = 'ob1';
+    else nextScreen = 'auth';
 
     const timer = setTimeout(() => {
       go(nextScreen);
@@ -178,8 +178,12 @@ export default function OnboardingScreen() {
   if (step === 1) {
     title = "Healthy\nHome-Style Meals";
     descComponent = (
-      <Text>
-        Freshly prepared lunch and dinner cooked every day — <Text style={{ color: theme.colors.secondary, fontWeight: '800' }}>delivered warm</Text> to your doorstep.
+      <Text variant="bodyL" color="sub">
+        Freshly prepared lunch and dinner cooked every day —{' '}
+        <Text variant="bodyL" color="secondary" style={{ fontWeight: '800' }}>
+          delivered warm
+        </Text>{' '}
+        to your doorstep.
       </Text>
     );
     btnText = "Get Started";
@@ -187,7 +191,7 @@ export default function OnboardingScreen() {
   } else if (step === 2) {
     title = "Fresh Food.\nSteel Dabbas.";
     descComponent = (
-      <Text>
+      <Text variant="bodyL" color="sub">
         Hygienic meals in reusable steel containers. Zero plastic, maximum freshness, right on time every day.
       </Text>
     );
@@ -196,7 +200,7 @@ export default function OnboardingScreen() {
   } else {
     title = "Subscribe Once.\nEat Every Day.";
     descComponent = (
-      <Text>
+      <Text variant="bodyL" color="sub">
         Choose your plan and relax. Pause, skip or resume anytime — complete flexibility, zero stress.
       </Text>
     );
@@ -234,47 +238,44 @@ export default function OnboardingScreen() {
 
   if (step === 1) {
     card1Data.label = "Daily Rotation";
-    card1Data.icon = <Calendar size={18} color={theme.colors.secondary} strokeWidth={2.5} />;
+    card1Data.icon = <Calendar size={18} color={theme.colors.secondary} strokeWidth={2} />;
     
     card2Data.label = "Low Salt & Oil";
-    card2Data.icon = <Heart size={18} color={theme.colors.secondary} strokeWidth={2.5} />;
+    card2Data.icon = <Heart size={18} color={theme.colors.secondary} strokeWidth={2} />;
 
     card3Data.label = "Homestyle Cooking";
-    card3Data.icon = <ChefHat size={18} color={theme.colors.secondary} strokeWidth={2.5} />;
+    card3Data.icon = <ChefHat size={18} color={theme.colors.secondary} strokeWidth={2} />;
   } else if (step === 2) {
     card1Data.label = "Food-Grade Steel";
-    card1Data.icon = <ShieldCheck size={18} color={theme.colors.secondary} strokeWidth={2.5} />;
+    card1Data.icon = <ShieldCheck size={18} color={theme.colors.secondary} strokeWidth={2} />;
 
     card2Data.label = "Thermal Sanitized";
-    card2Data.icon = <Sparkles size={18} color={theme.colors.secondary} strokeWidth={2.5} />;
+    card2Data.icon = <Sparkles size={18} color={theme.colors.secondary} strokeWidth={2} />;
 
     card3Data.label = "Zero Plastic";
-    card3Data.icon = <Leaf size={18} color={theme.colors.secondary} strokeWidth={2.5} />;
+    card3Data.icon = <Leaf size={18} color={theme.colors.secondary} strokeWidth={2} />;
   } else {
     card1Data.label = "Pause Anytime";
-    card1Data.icon = <Pause size={18} color={theme.colors.secondary} strokeWidth={2.5} />;
+    card1Data.icon = <Pause size={18} color={theme.colors.secondary} strokeWidth={2} />;
 
     card2Data.label = "Custom Portions";
-    card2Data.icon = <Sparkles size={18} color={theme.colors.secondary} strokeWidth={2.5} />;
+    card2Data.icon = <Sparkles size={18} color={theme.colors.secondary} strokeWidth={2} />;
 
     card3Data.label = "No Lock-ins";
-    card3Data.icon = <Lock size={18} color={theme.colors.secondary} strokeWidth={2.5} />;
+    card3Data.icon = <Lock size={18} color={theme.colors.secondary} strokeWidth={2} />;
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: theme.colors.light.bg, alignItems: 'center', justifyContent: 'center' }}>
+    <PageLayout style={{ alignItems: 'center', justifyContent: 'center' }}>
       <View style={{ width: '100%', height: '100%', flex: 1 }}>
+        {/* Floating Green Decorative Leaves */}
         <View style={{ 
           position: 'absolute', 
           top: 220, 
           right: 35, 
           opacity: 0.65, 
           transform: [{ rotate: '45deg' }],
-          shadowColor: '#000',
-          shadowOffset: { width: 1, height: 2 },
-          shadowOpacity: 0.12,
-          shadowRadius: 3,
-          elevation: 2
+          zIndex: 1
         }} pointerEvents="none">
           <Svg width={18} height={18} viewBox="0 0 20 20" fill="none">
             <Path d="M2 18 C6 10, 14 12, 18 2 C10 10, 10 14, 2 18 Z" fill="#7FA457" />
@@ -287,11 +288,7 @@ export default function OnboardingScreen() {
           right: 55, 
           opacity: 0.55, 
           transform: [{ rotate: '-30deg' }],
-          shadowColor: '#000',
-          shadowOffset: { width: 1, height: 2 },
-          shadowOpacity: 0.12,
-          shadowRadius: 3,
-          elevation: 2
+          zIndex: 1
         }} pointerEvents="none">
           <Svg width={20} height={20} viewBox="0 0 20 20" fill="none">
             <Path d="M2 18 C6 10, 14 12, 18 2 C10 10, 10 14, 2 18 Z" fill="#6A8E49" />
@@ -303,11 +300,7 @@ export default function OnboardingScreen() {
           top: 220, 
           left: 30, 
           opacity: 0.75,
-          shadowColor: '#000',
-          shadowOffset: { width: 1, height: 1.5 },
-          shadowOpacity: 0.1,
-          shadowRadius: 2,
-          elevation: 1
+          zIndex: 1
         }} pointerEvents="none">
           <Svg width={8} height={8} viewBox="0 0 10 10">
             <Ellipse cx={5} cy={5} rx={3} ry={4} fill="#C69E7C" transform="rotate(30 5 5)" />
@@ -332,11 +325,6 @@ export default function OnboardingScreen() {
         </View>
 
         <View style={{ flex: 1, paddingTop: Platform.OS === 'ios' ? 50 : 20, paddingBottom: 105 }}>
-          <View style={{ flexDirection: 'row', justifyContent: 'flex-end', paddingHorizontal: 24 }}>
-            <TouchableOpacity onPress={() => go('home')} style={{ paddingHorizontal: 4, paddingVertical: 4 }}>
-              <Text style={{ fontSize: 16, fontWeight: '700', fontFamily: F.body, color: theme.colors.secondary }}>Skip</Text>
-            </TouchableOpacity>
-          </View>
 
           <Animated.View style={{ 
             flex: 1.5,
@@ -359,54 +347,36 @@ export default function OnboardingScreen() {
               position: 'absolute',
               top: card1Data.top,
               left: card1Data.left,
-              backgroundColor: theme.colors.light.surface,
-              borderWidth: 0,
-              borderRadius: 16,
-              paddingHorizontal: 12,
-              paddingVertical: 8,
-              alignItems: 'center',
-              gap: 6,
-              ...theme.shadows.card,
               transform: [{ translateY: cardY1 }],
             }}>
-              <Text style={{ fontSize: 10, fontWeight: '900', color: theme.colors.light.text, fontFamily: F.body, letterSpacing: 0.2 }}>{card1Data.label}</Text>
-              {card1Data.icon}
+              <InfoCard style={{ paddingHorizontal: 12, paddingVertical: 8, alignItems: 'center', gap: 6 }}>
+                <Text variant="label" color="text" style={{ letterSpacing: 0.2 }}>{card1Data.label}</Text>
+                {card1Data.icon}
+              </InfoCard>
             </Animated.View>
 
             <Animated.View style={{
               position: 'absolute',
               top: card2Data.top,
               right: card2Data.right,
-              backgroundColor: theme.colors.light.surface,
-              borderWidth: 0,
-              borderRadius: 16,
-              paddingHorizontal: 12,
-              paddingVertical: 8,
-              alignItems: 'center',
-              gap: 6,
-              ...theme.shadows.card,
               transform: [{ translateY: cardY2 }],
             }}>
-              <Text style={{ fontSize: 10, fontWeight: '900', color: theme.colors.light.text, fontFamily: F.body, letterSpacing: 0.2 }}>{card2Data.label}</Text>
-              {card2Data.icon}
+              <InfoCard style={{ paddingHorizontal: 12, paddingVertical: 8, alignItems: 'center', gap: 6 }}>
+                <Text variant="label" color="text" style={{ letterSpacing: 0.2 }}>{card2Data.label}</Text>
+                {card2Data.icon}
+              </InfoCard>
             </Animated.View>
 
             <Animated.View style={{
               position: 'absolute',
               bottom: card3Data.bottom,
               left: card3Data.left,
-              backgroundColor: theme.colors.light.surface,
-              borderWidth: 0,
-              borderRadius: 16,
-              paddingHorizontal: 12,
-              paddingVertical: 8,
-              alignItems: 'center',
-              gap: 6,
-              ...theme.shadows.card,
               transform: [{ translateY: cardY3 }],
             }}>
-              <Text style={{ fontSize: 10, fontWeight: '900', color: theme.colors.light.text, fontFamily: F.body, letterSpacing: 0.2 }}>{card3Data.label}</Text>
-              {card3Data.icon}
+              <InfoCard style={{ paddingHorizontal: 12, paddingVertical: 8, alignItems: 'center', gap: 6 }}>
+                <Text variant="label" color="text" style={{ letterSpacing: 0.2 }}>{card3Data.label}</Text>
+                {card3Data.icon}
+              </InfoCard>
             </Animated.View>
           </Animated.View>
 
@@ -428,35 +398,26 @@ export default function OnboardingScreen() {
               })}
             </View>
 
-            <Animated.Text style={{ 
-              fontSize: Platform.OS === 'ios' ? 38 : 35, 
-              fontWeight: '900', 
-              fontFamily: F.heading,
-              color: theme.colors.light.text, 
-              lineHeight: Platform.OS === 'ios' ? 44 : 41,
+            <Animated.View style={{
               opacity: obTitleFade,
               transform: [{ translateY: obTitleSlideY }],
-              textAlign: 'left',
             }}>
-              {title}
-            </Animated.Text>
+              <Text variant="headingL" color="text" style={{ textAlign: 'left', lineHeight: Platform.OS === 'ios' ? 44 : 41 }}>
+                {title}
+              </Text>
+            </Animated.View>
             
-            <Animated.Text style={{ 
-              fontSize: 16, 
-              color: '#8A857B', 
-              fontFamily: F.body,
-              lineHeight: 24,
-              fontWeight: '500',
+            <Animated.View style={{
               opacity: obDescFade,
               transform: [{ translateY: obDescSlideY }],
-              textAlign: 'left',
-              marginTop: 2,
             }}>
-              {descComponent}
-            </Animated.Text>
+              <View style={{ marginTop: 2 }}>
+                {descComponent}
+              </View>
+            </Animated.View>
           </View>
 
-          <View style={{ paddingHorizontal: 24, gap: 12, marginTop: 10, zIndex: 20 }}>
+          <View style={{ paddingHorizontal: 24, gap: 10, marginTop: 10, zIndex: 20 }}>
             <Button 
               title={btnText + (step === 1 ? '   →' : '')}
               onPress={handleNext}
@@ -464,6 +425,6 @@ export default function OnboardingScreen() {
           </View>
         </View>
       </View>
-    </View>
+    </PageLayout>
   );
 }

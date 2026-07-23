@@ -1,183 +1,127 @@
-import React from 'react';
-import {
-  StyleSheet,
-  View,
-  TouchableOpacity,
-  ScrollView,
-  SafeAreaView,
-  TextInput,
-  Animated
-} from 'react-native';
-import { ArrowLeft, Check } from 'lucide-react-native';
+import React, { useState } from 'react';
+import { View, Platform, TouchableOpacity, ScrollView, TextInput } from 'react-native';
+import { ArrowLeft, MessageSquare, Phone, Mail } from 'lucide-react-native';
 import { useAppContext } from '../../app/context';
-import { theme, F, Button, Input } from '../../design-system';
-import { Text as RNText } from 'react-native';
-
-const B = {
-  orange: theme.colors.secondary,
-  orangeL: 'rgba(201, 107, 60, 0.08)',
-  green: theme.colors.success,
-  greenL: 'rgba(75, 93, 58, 0.08)',
-  cream: theme.colors.light.surface,
-  creamL: theme.colors.light.bg,
-};
-
-function Text({ style, ...props }: any) {
-  const flatStyle = StyleSheet.flatten(style || {});
-  let fontFamily = F.body;
-  const content = String(props.children || '');
-  const isNumeric = /[₹\d]/.test(content) && (
-    /^[₹\d\s★%\-.:\+a-zA-Z\s]+$/.test(content) ||
-    content.includes('kcal') ||
-    content.includes('protein') ||
-    content.includes('Carbs') ||
-    content.includes('₹') ||
-    content.includes('min') ||
-    content.includes('km')
-  );
-
-  if (flatStyle.fontFamily) {
-    fontFamily = flatStyle.fontFamily;
-  } else if (flatStyle.fontSize >= 15 && (flatStyle.fontWeight === '900' || flatStyle.fontWeight === '800' || flatStyle.fontWeight === 'bold')) {
-    fontFamily = isNumeric ? F.mono : F.heading;
-  } else if (isNumeric) {
-    fontFamily = F.mono;
-  }
-  return <RNText style={[{ fontFamily }, style]} {...props} />;
-}
+import {
+  theme,
+  Text,
+  Button,
+  Input,
+  PageLayout,
+  Card
+} from '../../design-system';
 
 export default function SupportScreen() {
   const {
     back,
     setToast,
-    t
+    t,
   } = useAppContext();
 
-  // Local State
-  const [issueText, setIssueText] = React.useState('');
-  const [error, setError] = React.useState('');
-  const [touched, setTouched] = React.useState(false);
+  const [message, setMessage] = useState('');
+  const [subject, setSubject] = useState('');
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Refs & Animation
-  const inputRef = React.useRef<TextInput>(null);
-  const shakeAnim = React.useRef(new Animated.Value(0)).current;
-
-  const triggerShake = () => {
-    Animated.sequence([
-      Animated.timing(shakeAnim, { toValue: 10, duration: 80, useNativeDriver: true }),
-      Animated.timing(shakeAnim, { toValue: -10, duration: 80, useNativeDriver: true }),
-      Animated.timing(shakeAnim, { toValue: 10, duration: 80, useNativeDriver: true }),
-      Animated.timing(shakeAnim, { toValue: 0, duration: 80, useNativeDriver: true }),
-    ]).start();
-  };
-
-  const validate = (val: string): string => {
-    if (!val.trim()) return '❌ Please describe the issue you are facing.';
-    if (val.trim().length < 10) return '❌ Description must be at least 10 characters long.';
-    return '';
-  };
-
-  const handleBlur = () => {
-    setTouched(true);
-    setError(validate(issueText));
-  };
-
-  const handleChange = (val: string) => {
-    setIssueText(val);
-    if (touched) {
-      setError(validate(val));
+  const handleSendTicket = () => {
+    if (!subject.trim()) {
+      setErrors(prev => ({ ...prev, subject: '❌ Please enter support subject.' }));
+      return;
     }
+    if (!message.trim()) {
+      setErrors(prev => ({ ...prev, message: '❌ Please enter support message details.' }));
+      return;
+    }
+
+    setToast('📨 Support ticket created successfully!');
+    setSubject('');
+    setMessage('');
+    setErrors({});
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: t.bg }}>
-      <View style={[styles.headerBar, { borderBottomColor: t.border }]}>
-        <TouchableOpacity onPress={back} style={[styles.backIconCircle, { backgroundColor: t.surface }]}>
-          <ArrowLeft size={16} color={t.text} />
-        </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: t.text }]}>Support Helpdesk</Text>
+    <PageLayout style={{ paddingHorizontal: 0 }}>
+      {/* Top Header Bar */}
+      <View style={{ paddingHorizontal: 20, paddingTop: 16, paddingBottom: 12, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderColor: t.border, backgroundColor: t.card }}>
+        <Button
+          onlyIcon
+          variant="ghost"
+          size="medium"
+          onPress={back}
+          iconLeft={<ArrowLeft size={16} color={t.text} />}
+          style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.surface }}
+          accessibilityLabel="Go back"
+          accessibilityRole="button"
+        />
+        <Text variant="title" color="primary" style={{ marginLeft: 16 }}>SUPPORT & HELP DESK</Text>
       </View>
-      <ScrollView contentContainerStyle={{ padding: 16 }}>
-        <Text style={[styles.sectionSubTitle, { color: t.text, marginBottom: 12 }]}>Submit Support Ticket</Text>
 
-        <View style={[styles.supportForm, { backgroundColor: t.card, borderColor: t.border, padding: 20 }]}>
+      <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingVertical: 20, paddingBottom: 60 }} showsVerticalScrollIndicator={false}>
+        
+        <View style={{ marginBottom: theme.spacing.lg }}>
+          <Text variant="title" color="primary">We are here to help</Text>
+          <Text variant="caption" color="sub" style={{ marginTop: 4, lineHeight: 18 }}>
+            Reach out to our customer care executives for any issues with deliveries, cancellations or refund claims.
+          </Text>
+        </View>
+
+        {/* Contact links cards */}
+        <View style={{ flexDirection: 'row', gap: 10, marginBottom: 24 }}>
+          <Card style={{ flex: 1, alignItems: 'center', padding: 12 }}>
+            <Phone size={20} color={theme.colors.secondary} />
+            <Text variant="caption" color="text" style={{ fontWeight: 'bold', marginTop: 8 }}>Call Hotline</Text>
+            <Text variant="label" color="sub" style={{ marginTop: 2 }}>+91 9988776655</Text>
+          </Card>
+          <Card style={{ flex: 1, alignItems: 'center', padding: 12 }}>
+            <Mail size={20} color={theme.colors.secondary} />
+            <Text variant="caption" color="text" style={{ fontWeight: 'bold', marginTop: 8 }}>Write Email</Text>
+            <Text variant="label" color="sub" style={{ marginTop: 2 }}>support@koikoi.in</Text>
+          </Card>
+        </View>
+
+        {/* Form */}
+        <Text variant="label" color="text" style={{ fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 12 }}>Create Support Ticket</Text>
+        
+        <Card style={{ gap: theme.spacing.md }}>
           <Input
-            ref={inputRef}
-            label="Describe Issue"
+            label="SUBJECT"
             required
-            multiline
-            numberOfLines={4}
-            value={issueText}
-            onChangeText={handleChange}
-            onBlur={handleBlur}
-            placeholder="Tell us what is wrong..."
-            error={error}
-            success={touched && !error && issueText.trim().length >= 10}
-            shakeTrigger={!!error}
+            value={subject}
+            onChangeText={val => { setSubject(val); setErrors(prev => ({ ...prev, subject: '' })); }}
+            placeholder="E.g. Lunch delivery delay slot"
+            error={errors.subject}
           />
 
-          <View style={{ marginTop: 16 }}>
-            <Button
-              title="Submit Ticket"
-              onPress={() => {
-                const err = validate(issueText);
-                setError(err);
-                setTouched(true);
-
-                if (err) {
-                  triggerShake();
-                  inputRef.current?.focus();
-                  return;
-                }
-
-                setToast('Support Ticket Submitted!');
-                back();
-              }}
-            />
+          <View>
+            <Text variant="label" color="muted" style={{ fontWeight: '900', letterSpacing: 1.2, marginBottom: theme.spacing.xs }}>MESSAGE DETAILS *</Text>
+            <View style={{
+              height: 120,
+              borderRadius: 14,
+              borderWidth: 1.5,
+              borderColor: errors.message ? theme.colors.error : t.border,
+              backgroundColor: t.surface,
+              padding: 12,
+            }}>
+              <TextInput
+                style={{ flex: 1, fontSize: 13.5, color: t.text, textAlignVertical: 'top' }}
+                placeholder="Describe your query or complaint in details here..."
+                placeholderTextColor={t.muted}
+                value={message}
+                onChangeText={val => { setMessage(val); setErrors(prev => ({ ...prev, message: '' })); }}
+                multiline
+              />
+            </View>
+            {errors.message ? (
+              <Text variant="label" color="error" style={{ marginTop: 4, fontWeight: '600' }}>{errors.message}</Text>
+            ) : null}
           </View>
-        </View>
+
+          <Button 
+            title="Submit Support Query ‣"
+            onPress={handleSendTicket}
+            style={{ marginTop: 12 }}
+          />
+        </Card>
       </ScrollView>
-    </SafeAreaView>
+    </PageLayout>
   );
 }
-
-const styles = StyleSheet.create({
-  headerBar: {
-    height: 54,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    borderBottomWidth: 1,
-  },
-  backIconCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: 16,
-    fontWeight: '900',
-    marginLeft: 12,
-  },
-  sectionSubTitle: {
-    fontSize: 14,
-    fontWeight: '900',
-  },
-  supportForm: {
-    borderRadius: 18,
-    borderWidth: 1,
-  },
-  obBtnGradient: {
-    height: 54,
-    borderRadius: 27,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  obBtnText: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '900',
-  },
-});

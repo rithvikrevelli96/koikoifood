@@ -1,272 +1,449 @@
 import React from 'react';
-import {
-  StyleSheet,
-  View,
-  TouchableOpacity,
-  ScrollView,
-  SafeAreaView,
-  TextInput,
-  Animated
-} from 'react-native';
-import { ArrowLeft, Check } from 'lucide-react-native';
+import { View, Platform, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
+import { ArrowLeft, Flame, Award, GlassWater, Activity, Scale, Compass, CheckCircle2, Moon } from 'lucide-react-native';
 import { useAppContext } from '../../app/context';
-import { theme, F, Button, Input } from '../../design-system';
-import { Text as RNText } from 'react-native';
-
-const B = {
-  orange: theme.colors.secondary,
-  orangeL: 'rgba(201, 107, 60, 0.08)',
-  green: theme.colors.success,
-  greenL: 'rgba(75, 93, 58, 0.08)',
-  cream: theme.colors.light.surface,
-  creamL: theme.colors.light.bg,
-};
-
-function Text({ style, ...props }: any) {
-  const flatStyle = StyleSheet.flatten(style || {});
-  let fontFamily = F.body;
-  const content = String(props.children || '');
-  const isNumeric = /[₹\d]/.test(content) && (
-    /^[₹\d\s★%\-.:\+a-zA-Z\s]+$/.test(content) ||
-    content.includes('kcal') ||
-    content.includes('protein') ||
-    content.includes('Carbs') ||
-    content.includes('₹') ||
-    content.includes('min') ||
-    content.includes('km')
-  );
-
-  if (flatStyle.fontFamily) {
-    fontFamily = flatStyle.fontFamily;
-  } else if (flatStyle.fontSize >= 15 && (flatStyle.fontWeight === '900' || flatStyle.fontWeight === '800' || flatStyle.fontWeight === 'bold')) {
-    fontFamily = isNumeric ? F.mono : F.heading;
-  } else if (isNumeric) {
-    fontFamily = F.mono;
-  }
-  return <RNText style={[{ fontFamily }, style]} {...props} />;
-}
+import { ProgressRing } from '../../core/components/Common';
+import {
+  theme,
+  Text,
+  Button,
+  PageLayout,
+  Card,
+  InfoCard,
+  HeroCard
+} from '../../design-system';
+import { BottomTabNav } from '../../core/components/BottomTabNav';
 
 export default function HealthInfoScreen() {
-  const {
-    user,
-    setUser,
-    back,
-    setToast,
-    isDark,
-    t
-  } = useAppContext();
+  const { user, back, setToast, t, calorieCalc } = useAppContext();
 
-  // Validations Local State
-  const [errors, setErrors] = React.useState<Record<string, string>>({});
-  const [touched, setTouched] = React.useState<Record<string, boolean>>({});
+  // Metric Calculation Logic
+  const weight = user.weight || 72;
+  const height = user.height || 178;
+  const heightM = height / 100;
+  const bmiVal = parseFloat((weight / (heightM * heightM)).toFixed(1));
+  
+  let bmiStatus = 'Optimal';
+  let bmiColor = t.primary;
+  if (bmiVal < 18.5) {
+    bmiStatus = 'Underweight';
+    bmiColor = t.accent;
+  } else if (bmiVal >= 25 && bmiVal < 30) {
+    bmiStatus = 'Overweight';
+    bmiColor = t.secondary;
+  } else if (bmiVal >= 30) {
+    bmiStatus = 'Obese';
+    bmiColor = t.secondary;
+  }
 
-  // Input refs
-  const heightRef = React.useRef<TextInput>(null);
-  const weightRef = React.useRef<TextInput>(null);
-
-  // Shake animations
-  const heightShake = React.useRef(new Animated.Value(0)).current;
-  const weightShake = React.useRef(new Animated.Value(0)).current;
-
-  const triggerShake = (shakeVal: Animated.Value) => {
-    Animated.sequence([
-      Animated.timing(shakeVal, { toValue: 10, duration: 80, useNativeDriver: true }),
-      Animated.timing(shakeVal, { toValue: -10, duration: 80, useNativeDriver: true }),
-      Animated.timing(shakeVal, { toValue: 10, duration: 80, useNativeDriver: true }),
-      Animated.timing(shakeVal, { toValue: 0, duration: 80, useNativeDriver: true }),
-    ]).start();
-  };
-
-  const validateField = (field: string, val: string): string => {
-    switch (field) {
-      case 'height':
-        const h = parseFloat(val);
-        if (isNaN(h) || h <= 0) return '❌ Height must be a positive number.';
-        if (h < 50 || h > 250) return '❌ Please enter a valid height (50 - 250 cm).';
-        return '';
-      case 'weight':
-        const w = parseFloat(val);
-        if (isNaN(w) || w <= 0) return '❌ Weight must be a positive number.';
-        if (w < 20 || w > 300) return '❌ Please enter a valid weight (20 - 300 kg).';
-        return '';
-      default:
-        return '';
-    }
-  };
-
-  const handleFieldBlur = (field: string, val: string) => {
-    setTouched(prev => ({ ...prev, [field]: true }));
-    const errMsg = validateField(field, val);
-    setErrors(prev => {
-      const copy = { ...prev };
-      if (errMsg) copy[field] = errMsg;
-      else delete copy[field];
-      return copy;
-    });
-  };
-
-  const handleFieldChange = (field: string, val: string, setter: (v: string) => void) => {
-    setter(val);
-    if (touched[field]) {
-      const errMsg = validateField(field, val);
-      setErrors(prev => {
-        const copy = { ...prev };
-        if (errMsg) copy[field] = errMsg;
-        else delete copy[field];
-        return copy;
-      });
-    }
-  };
+  const recommendations = [
+    { title: 'Increase Hydration', text: 'You need 0.6 L more water to hit your daily cellular hydration goal. Sip slowly between meals.' },
+    { title: 'Optimal Protein Synthesis', text: 'With 82g consumed out of 120g, try adding the high-protein paneer side-dish in dinner.' },
+    { title: 'Pre-bed Winddown', text: 'To achieve your sleep target, disconnect screen displays 45 minutes prior to your 10:00 PM sleep slot.' }
+  ];
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: t.bg }}>
-      <View style={[styles.headerBar, { borderBottomColor: t.border }]}>
-        <TouchableOpacity onPress={back} style={[styles.backIconCircle, { backgroundColor: t.surface }]}>
-          <ArrowLeft size={16} color={t.text} />
-        </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: t.text }]}>Health Profile</Text>
+    <PageLayout style={{ paddingHorizontal: 0 }} background="organic" backgroundVariant="minimal">
+      {/* HEADER */}
+      <View style={[styles.headerContainer, { backgroundColor: t.surface, borderColor: t.border }]}>
+        <Button
+          onlyIcon
+          variant="ghost"
+          size="medium"
+          onPress={back}
+          iconLeft={<ArrowLeft size={16} color={t.text} />}
+          style={[styles.backBtn, { backgroundColor: t.surface }] as any}
+        />
+        <Text style={[styles.headerTitle, { color: t.primary }]}>Today's Health</Text>
       </View>
-      <ScrollView contentContainerStyle={{ padding: 16 }}>
-        <View style={[styles.supportForm, { backgroundColor: t.card, borderColor: t.border, padding: 20 }]}>
-          
-          <Input
-            ref={heightRef}
-            label="Height (cm)"
-            required
-            value={user.height}
-            onChangeText={val => handleFieldChange('height', val.replace(/[^0-9.]/g, ''), text => setUser((prev: any) => ({ ...prev, height: text })))}
-            onBlur={() => handleFieldBlur('height', user.height)}
-            keyboardType="numeric"
-            error={errors.height}
-            success={touched.height && !errors.height && user.height.trim().length > 0}
-            shakeTrigger={!!errors.height}
-          />
 
-          <Input
-            ref={weightRef}
-            label="Weight (kg)"
-            required
-            value={user.weight}
-            onChangeText={val => handleFieldChange('weight', val.replace(/[^0-9.]/g, ''), text => setUser((prev: any) => ({ ...prev, weight: text })))}
-            onBlur={() => handleFieldBlur('weight', user.weight)}
-            keyboardType="numeric"
-            error={errors.weight}
-            success={touched.weight && !errors.weight && user.weight.trim().length > 0}
-            shakeTrigger={!!errors.weight}
-          />
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        
+        {/* HERO SECTION - HEALTH SCORE */}
+        <View style={styles.heroSection}>
+          <HeroCard style={[styles.scoreHeroCard, { backgroundColor: t.card, borderColor: t.border }]}>
+            <View style={styles.scoreHeaderRow}>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.scoreSubLabel, { color: t.secondary }]}>METRIC INDEX</Text>
+                <Text style={[styles.scoreTitle, { color: t.text }]}>Health Score</Text>
+                <Text style={[styles.scoreDesc, { color: t.sub }]}>Your overall metabolic & activity wellness score is calculated daily.</Text>
+              </View>
+              <ProgressRing pct={84} size={88} strokeW={7} color={t.primary} label="84" theme={t} />
+            </View>
 
-          <Text style={[styles.setupLabel, { color: t.text, marginTop: 16 }]}>Current Goal</Text>
-          <View style={styles.chipRow}>
-            {['Weight Loss', 'Muscle Gain', 'Healthy Living', 'Senior Diet'].map(goal => {
-              const active = user.goal === goal;
-              return (
-                <TouchableOpacity
-                  key={goal}
-                  style={[
-                    styles.chip,
-                    { backgroundColor: active ? B.orange + '15' : (isDark ? 'rgba(255, 255, 255, 0.02)' : '#FFFFFF'), borderColor: active ? B.orange : t.border, borderWidth: 1 }
-                  ]}
-                  onPress={() => setUser((prev: any) => ({ ...prev, goal: goal }))}
-                >
-                  <Text style={{ fontSize: 12, color: active ? B.orange : t.text, fontWeight: active ? 'bold' : 'normal' }}>{goal}</Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
+            <View style={styles.scoreBadgeRow}>
+              <View style={[styles.onTrackChip, { backgroundColor: t.elevated, borderColor: t.border }]}>
+                <CheckCircle2 size={12} color={t.primary} style={{ marginRight: 4 }} />
+                <Text style={[styles.onTrackText, { color: t.primary }]}>88% Goals Completed</Text>
 
-          <View style={{ marginTop: 24 }}>
-            <Button
-              title="Save Profile"
-              onPress={() => {
-                const e1 = validateField('height', user.height);
-                const e2 = validateField('weight', user.weight);
+              </View>
+              <Text style={styles.tierText}>⭐ Gold Level Tracker</Text>
+            </View>
+          </HeroCard>
+        </View>
 
-                const newErrors: Record<string, string> = {};
-                if (e1) newErrors.height = e1;
-                if (e2) newErrors.weight = e2;
+        {/* NUTRITION METRICS (CALORIES & PROTEIN) */}
+        <View style={styles.sectionContainer}>
+          <Text style={styles.sectionTitle}>Nutrition Status</Text>
+          <View style={{ flexDirection: 'row', gap: 16 }}>
+            {/* Calories Card */}
+            <Card style={[styles.metricCard, { flex: 1 }]}>
+              <View style={styles.metricCardHeader}>
+                <Flame size={16} color="#C96B3C" />
+                <Text style={styles.metricCardTitle}>Calories</Text>
+              </View>
+              <Text style={styles.metricCardVal}>1,450</Text>
+              <Text style={styles.metricCardLimit}>/ {calorieCalc?.target || 2100} kcal</Text>
+              <View style={styles.progressBarTrack}>
+                <View style={[styles.progressBarFill, { width: '69%', backgroundColor: '#C96B3C' }]} />
+              </View>
+            </Card>
 
-                setErrors(newErrors);
-                setTouched({ height: true, weight: true });
-
-                if (Object.keys(newErrors).length > 0) {
-                  if (newErrors.height) {
-                    triggerShake(heightShake);
-                    heightRef.current?.focus();
-                  } else if (newErrors.weight) {
-                    triggerShake(weightShake);
-                    weightRef.current?.focus();
-                  }
-                  return;
-                }
-
-                setToast('Health Goals Updated!');
-                back();
-              }}
-            />
+            {/* Protein Card */}
+            <Card style={[styles.metricCard, { flex: 1 }]}>
+              <View style={styles.metricCardHeader}>
+                <Award size={16} color="#4B5D3A" />
+                <Text style={styles.metricCardTitle}>Protein</Text>
+              </View>
+              <Text style={styles.metricCardVal}>82g</Text>
+              <Text style={styles.metricCardLimit}>/ {calorieCalc?.protein || 120} g</Text>
+              <View style={styles.progressBarTrack}>
+                <View style={[styles.progressBarFill, { width: '68%', backgroundColor: '#4B5D3A' }]} />
+              </View>
+            </Card>
           </View>
         </View>
+
+        {/* WATER & SLEEP CARDS */}
+        <View style={styles.sectionContainer}>
+          <Text style={styles.sectionTitle}>Vitals & Habits</Text>
+          <View style={{ flexDirection: 'row', gap: 16 }}>
+            {/* Water Hydration */}
+            <Card style={[styles.metricCard, { flex: 1 }]}>
+              <View style={styles.metricCardHeader}>
+                <GlassWater size={16} color="#4B5D3A" />
+                <Text style={styles.metricCardTitle}>Water</Text>
+              </View>
+              <Text style={styles.metricCardVal}>2.4L</Text>
+              <Text style={styles.metricCardLimit}>/ 3.0 Liters</Text>
+              <View style={styles.progressBarTrack}>
+                <View style={[styles.progressBarFill, { width: '80%', backgroundColor: '#4B5D3A' }]} />
+              </View>
+            </Card>
+
+            {/* Sleep Target */}
+            <Card style={[styles.metricCard, { flex: 1 }]}>
+              <View style={styles.metricCardHeader}>
+                <Moon size={16} color="#C96B3C" />
+                <Text style={styles.metricCardTitle}>Sleep</Text>
+              </View>
+              <Text style={styles.metricCardVal}>8.0 hrs</Text>
+              <Text style={styles.metricCardLimit}>10:00 PM – 6:00 AM</Text>
+              <View style={styles.progressBarTrack}>
+                <View style={[styles.progressBarFill, { width: '100%', backgroundColor: '#C96B3C' }]} />
+              </View>
+            </Card>
+          </View>
+        </View>
+
+        {/* BMI & WEIGHT PROGRESS */}
+        <View style={styles.sectionContainer}>
+          <Text style={styles.sectionTitle}>Body Mass Index & Weight</Text>
+          <InfoCard style={styles.bmiCard}>
+            <View style={styles.bmiHeader}>
+              <View>
+                <Text style={styles.bmiTitle}>BMI Score: {bmiVal}</Text>
+                <Text style={[styles.bmiStatusText, { color: bmiColor }]}>{bmiStatus}</Text>
+              </View>
+              <View style={styles.bmiScaleCircle}>
+                <Text style={styles.scaleCircleText}>{bmiVal}</Text>
+              </View>
+            </View>
+            
+            <View style={styles.divider} />
+
+            <View style={styles.weightProgressRow}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.weightLabel}>Current Weight</Text>
+                <Text style={styles.weightValue}>{user.weight || 74} kg</Text>
+              </View>
+              <View style={styles.verticalDivider} />
+              <View style={{ flex: 1, alignItems: 'flex-end' }}>
+                <Text style={styles.weightLabel}>Goal Weight</Text>
+                <Text style={styles.weightValue}>{user.goalWeight || 70} kg</Text>
+              </View>
+            </View>
+
+            <View style={styles.progressBarTrack}>
+              <View style={[styles.progressBarFill, { width: '92%', backgroundColor: '#4B5D3A' }]} />
+            </View>
+            <Text style={styles.progressSubText}>92% towards goal (4 kg remaining)</Text>
+          </InfoCard>
+        </View>
+
+        {/* RECOMMENDATIONS */}
+        <View style={styles.sectionContainer}>
+          <Text style={styles.sectionTitle}>Recommendations</Text>
+          <View style={{ gap: 12 }}>
+            {recommendations.map((rec, index) => (
+              <Card key={index} style={styles.recCard}>
+                <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center', marginBottom: 6 }}>
+                  <Compass size={16} color="#C96B3C" />
+                  <Text style={styles.recTitle}>{rec.title}</Text>
+                </View>
+                <Text style={styles.recText}>{rec.text}</Text>
+              </Card>
+            ))}
+          </View>
+        </View>
+
       </ScrollView>
-    </SafeAreaView>
+
+      {/* Bottom Navigation */}
+      <BottomTabNav active="profile" />
+    </PageLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  headerBar: {
-    height: 54,
+  headerContainer: {
+    paddingHorizontal: theme.spacing.screenHorizontal,
+    paddingTop: 16,
+    paddingBottom: 12,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
     borderBottomWidth: 1,
   },
-  backIconCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
+  backBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
   },
   headerTitle: {
-    fontSize: 16,
-    fontWeight: '900',
-    marginLeft: 12,
+    fontFamily: theme.typography.headingFamily,
+    fontSize: 18,
+    color: '#4B5D3A',
+    fontWeight: '700',
+    marginLeft: 16,
+    textTransform: 'uppercase',
   },
-  supportForm: {
-    padding: 16,
-    borderRadius: 18,
+  scrollContent: {
+    paddingBottom: 100,
+  },
+  heroSection: {
+    paddingHorizontal: theme.spacing.screenHorizontal,
+    marginTop: theme.spacing.screenVertical,
+  },
+  scoreHeroCard: {
+    padding: 24,
+    borderRadius: 24,
+    backgroundColor: '#F4EFE6',
     borderWidth: 1,
+    borderColor: '#E8E2D8',
   },
-  setupLabel: {
-    fontSize: 11,
-    fontWeight: 'bold',
-  },
-  setupInput: {
-    height: 56,
-    borderRadius: 18,
-    paddingHorizontal: 16,
-    fontSize: 14,
-    fontWeight: '600',
-    marginTop: 6,
-  },
-  chipRow: {
+  scoreHeaderRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginTop: 8,
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
-  chip: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 12,
+  scoreSubLabel: {
+    fontFamily: theme.typography.bodyFamily,
+    fontSize: 11,
+    color: '#8A857B',
+    fontWeight: '800',
+    letterSpacing: 0.5,
   },
-  obBtnGradient: {
-    height: 54,
-    borderRadius: 27,
+  scoreTitle: {
+    fontFamily: theme.typography.headingFamily,
+    fontSize: 24,
+    color: '#1F1F1F',
+    fontWeight: '800',
+    marginTop: 2,
+  },
+  scoreDesc: {
+    fontFamily: theme.typography.bodyFamily,
+    fontSize: 12.5,
+    color: '#8A857B',
+    marginTop: 6,
+    lineHeight: 16,
+    paddingRight: 12,
+  },
+  scoreBadgeRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#E8E2D8',
+    paddingTop: 14,
+  },
+  onTrackChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(75, 93, 58, 0.08)',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+  },
+  onTrackText: {
+    fontFamily: theme.typography.bodyFamily,
+    fontSize: 11,
+    color: '#4B5D3A',
+    fontWeight: '700',
+  },
+  tierText: {
+    fontFamily: theme.typography.bodyFamily,
+    fontSize: 11,
+    color: '#8A857B',
+    fontWeight: '700',
+  },
+  sectionContainer: {
+    paddingHorizontal: theme.spacing.screenHorizontal,
+    marginTop: 16,
+  },
+  sectionTitle: {
+    fontFamily: theme.typography.headingFamily,
+    fontSize: 15,
+    color: '#1F1F1F',
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 12,
+  },
+  metricCard: {
+    padding: 16,
+    borderRadius: 20,
+    backgroundColor: '#F4EFE6',
+    borderWidth: 1,
+    borderColor: '#E8E2D8',
+  },
+  metricCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  metricCardTitle: {
+    fontFamily: theme.typography.bodyFamily,
+    fontSize: 13,
+    color: '#8A857B',
+    fontWeight: '700',
+  },
+  metricCardVal: {
+    fontFamily: theme.typography.monoFamily,
+    fontSize: 26,
+    color: '#1F1F1F',
+    fontWeight: '800',
+    marginTop: 10,
+  },
+  metricCardLimit: {
+    fontFamily: theme.typography.bodyFamily,
+    fontSize: 11.5,
+    color: '#8A857B',
+    marginTop: 2,
+  },
+  progressBarTrack: {
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#E8E2D8',
+    marginTop: 12,
+    overflow: 'hidden',
+  },
+  progressBarFill: {
+    height: '100%',
+    borderRadius: 3,
+  },
+  bmiCard: {
+    padding: 18,
+    borderRadius: 20,
+    backgroundColor: '#F4EFE6',
+    borderWidth: 1,
+    borderColor: '#E8E2D8',
+  },
+  bmiHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  bmiTitle: {
+    fontFamily: theme.typography.headingFamily,
+    fontSize: 16,
+    color: '#1F1F1F',
+    fontWeight: '700',
+  },
+  bmiStatusText: {
+    fontFamily: theme.typography.bodyFamily,
+    fontSize: 12.5,
+    fontWeight: '700',
+    marginTop: 2,
+  },
+  bmiScaleCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#FCFAF6',
+    borderWidth: 1.5,
+    borderColor: '#E8E2D8',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  obBtnText: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '900',
+  scaleCircleText: {
+    fontFamily: theme.typography.monoFamily,
+    fontSize: 13,
+    color: '#1F1F1F',
+    fontWeight: '800',
+  },
+  weightProgressRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginVertical: 14,
+  },
+  weightLabel: {
+    fontFamily: theme.typography.bodyFamily,
+    fontSize: 11.5,
+    color: '#8A857B',
+  },
+  weightValue: {
+    fontFamily: theme.typography.monoFamily,
+    fontSize: 16,
+    color: '#1F1F1F',
+    fontWeight: '700',
+    marginTop: 4,
+  },
+  verticalDivider: {
+    width: 1,
+    height: 28,
+    backgroundColor: '#E8E2D8',
+  },
+  progressSubText: {
+    fontFamily: theme.typography.bodyFamily,
+    fontSize: 11,
+    color: '#8A857B',
+    marginTop: 6,
+    textAlign: 'center',
+  },
+  recCard: {
+    padding: 16,
+    borderRadius: 20,
+    backgroundColor: '#F4EFE6',
+    borderWidth: 1,
+    borderColor: '#E8E2D8',
+  },
+  recTitle: {
+    fontFamily: theme.typography.bodyFamily,
+    fontSize: 13.5,
+    color: '#1F1F1F',
+    fontWeight: '700',
+  },
+  recText: {
+    fontFamily: theme.typography.bodyFamily,
+    fontSize: 12,
+    color: '#8A857B',
+    lineHeight: 16,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#E8E2D8',
+    marginVertical: 12,
   },
 });

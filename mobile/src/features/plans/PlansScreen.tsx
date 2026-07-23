@@ -1,52 +1,17 @@
-import React from 'react';
-import {
-  StyleSheet,
-  View,
-  Platform,
-  TouchableOpacity,
-  ScrollView,
-  SafeAreaView,
-  ImageBackground
-} from 'react-native';
-import { ArrowLeft, ChevronRight, Play, Pause, SkipForward, Check } from 'lucide-react-native';
+import React, { useState } from 'react';
+import { View, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
+import { ArrowLeft, ChevronRight, Check } from 'lucide-react-native';
 import { useAppContext } from '../../app/context';
-import { theme, F, Button } from '../../design-system';
-import { Text as RNText } from 'react-native';
-
-const B = {
-  orange: theme.colors.secondary,
-  orangeL: 'rgba(201, 107, 60, 0.08)',
-  green: theme.colors.success,
-  greenL: 'rgba(75, 93, 58, 0.08)',
-  cream: theme.colors.light.surface,
-  creamL: theme.colors.light.bg,
-};
-
-function Text({ style, ...props }: any) {
-  const flatStyle = StyleSheet.flatten(style || {});
-  let fontFamily = F.body;
-  const content = String(props.children || '');
-  const isNumeric = /[₹\d]/.test(content) && (
-    /^[₹\d\s★%\-.:\+a-zA-Z\s]+$/.test(content) ||
-    content.includes('kcal') ||
-    content.includes('protein') ||
-    content.includes('Carbs') ||
-    content.includes('₹') ||
-    content.includes('min') ||
-    content.includes('km') ||
-    content.includes('Day') ||
-    content.includes('tier')
-  );
-
-  if (flatStyle.fontFamily) {
-    fontFamily = flatStyle.fontFamily;
-  } else if (flatStyle.fontSize >= 15 && (flatStyle.fontWeight === '900' || flatStyle.fontWeight === '800' || flatStyle.fontWeight === 'bold')) {
-    fontFamily = isNumeric ? F.mono : F.heading;
-  } else if (isNumeric) {
-    fontFamily = F.mono;
-  }
-  return <RNText style={[{ fontFamily }, style]} {...props} />;
-}
+import {
+  theme,
+  Text,
+  Button,
+  PageLayout,
+  PlanCard,
+  HeroCard,
+  Card,
+  BottomSheet
+} from '../../design-system';
 import { PLANS } from '../../core/constants/meals';
 import { BottomTabNav } from '../../core/components/BottomTabNav';
 
@@ -56,238 +21,705 @@ export default function PlansScreen() {
     setSelectedPlanId,
     paused,
     setPaused,
+    subscribed,
+    setSubscribed,
     showManageOptions,
     setShowManageOptions,
     setToast,
     back,
     go,
-    t
+    switchTab,
+    t,
+    isDark,
   } = useAppContext();
 
+  const [expandedPlanId, setExpandedPlanId] = useState<string | null>(null);
+  const [planCategory, setPlanCategory] = useState<'all' | 'individual' | 'specialty'>('all');
+
+  const currentPlanId = 'monthly';
   const currentPlanName = "Monthly Subscription";
-  const currentPlanDetails = "Day 3 of 30 · Next: Tomorrow, 12:30 PM";
-  const selectedPlan = PLANS.find(p => p.id === selectedPlanId) || PLANS[2];
+  const currentPlanDetails = "Day 3 of 30";
+  const nextDeliveryTime = "Tomorrow • 12:30 PM";
+
+  const selectedPlan = PLANS.find(p => p.id === selectedPlanId);
+  const isCurrentSelected = selectedPlanId === currentPlanId;
+
+  const handleSelectPlan = (planId: string) => {
+    setSelectedPlanId(planId);
+    if (expandedPlanId === planId) {
+      setExpandedPlanId(null);
+    } else {
+      setExpandedPlanId(planId);
+    }
+  };
+
+  const handleUpgradePress = () => {
+    if (!selectedPlan) return;
+    if (subscribed && isCurrentSelected) {
+      setShowManageOptions(true);
+    } else {
+      setToast(`🎉 Redirecting to checkout for ${selectedPlan.name}...`);
+      go('subscribe_flow');
+    }
+  };
+
+  const benefits = [
+    { title: 'Pure Home-Cooked Quality', desc: 'Meals prepared in home-style smart kitchens with zero preservatives.' },
+    { title: 'Delivered in Stainless Steel', desc: 'Eco-safe, warm, insulated steel dabbas delivered daily.' },
+    { title: 'Complete Pausing Flexibility', desc: 'Pause or skip deliveries online before the cutoff timers.' },
+  ];
+
+  // Filter plans based on selected segment
+  const displayedPlans = PLANS.filter(p => {
+    if (planCategory === 'individual') return ['daily', 'weekly', 'monthly'].includes(p.id);
+    if (planCategory === 'specialty') return ['family', 'student', 'corporate'].includes(p.id);
+    return true;
+  });
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.light.bg }}>
-      {/* Top Header Bar */}
-      <View style={{ paddingHorizontal: 20, paddingTop: 16, paddingBottom: 12, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderColor: t.border, backgroundColor: t.surface }}>
-        <TouchableOpacity onPress={back} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.card, borderWidth: 1, borderColor: t.border, justifyContent: 'center', alignItems: 'center' }}>
-          <ArrowLeft size={16} color={t.text} />
+    <PageLayout style={{ paddingHorizontal: 0 }} background="organic" backgroundVariant="minimal">
+
+      {/* HEADER */}
+      <View style={[styles.headerContainer, { backgroundColor: t.bg }]}>
+        <TouchableOpacity onPress={back} style={[styles.backBtn, { backgroundColor: t.surface, borderColor: t.border }]} activeOpacity={0.7}>
+          <ArrowLeft size={20} color={t.primary} />
         </TouchableOpacity>
-        <Text style={{ fontSize: 16, fontWeight: '900', color: t.text, marginLeft: 16, letterSpacing: 0.5 }}>MY SUBSCRIPTION</Text>
+        <Text style={[styles.headerTitle, { color: t.text }]}>Subscription Plans</Text>
       </View>
 
-      <ScrollView contentContainerStyle={{ paddingBottom: selectedPlanId !== 'monthly' ? 220 : 110 }} showsVerticalScrollIndicator={false}>
-        {/* Active subscription card section */}
-        <View style={{ paddingHorizontal: 20, paddingTop: 16 }}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Text style={{ fontSize: 13, fontWeight: '900', color: t.text, textTransform: 'uppercase', letterSpacing: 0.5 }}>Current Plan</Text>
-            <View style={{ backgroundColor: paused ? '#F59E0B' : B.green, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 }}>
-              <Text style={{ fontSize: 9, fontWeight: '900', color: '#FFFFFF' }}>{paused ? 'PAUSED' : 'ACTIVE'}</Text>
-            </View>
-          </View>
-          <Text style={{ fontSize: 12, color: t.sub, marginTop: 4, marginBottom: 12 }}>
-            Tap your current active subscription to manage, pause, or reschedule.
-          </Text>
+      <ScrollView
+        style={styles.scrollArea}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
 
-          <TouchableOpacity 
-            activeOpacity={0.85}
-            onPress={() => setShowManageOptions(!showManageOptions)}
-            style={{
-              backgroundColor: t.card,
-              borderRadius: 24,
-              borderWidth: 1.5,
-              borderColor: t.border,
-              padding: 18,
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.02,
-              shadowRadius: 10,
-              elevation: 2
-            }}
-          >
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-              <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 16, fontWeight: '900', color: t.text }}>{currentPlanName}</Text>
-                <Text style={{ fontSize: 12, color: t.sub, marginTop: 4 }}>{currentPlanDetails}</Text>
-              </View>
-              <ChevronRight size={18} color={t.muted} style={{ transform: [{ rotate: showManageOptions ? '90deg' : '0deg' }] }} />
-            </View>
-
-            <View style={[styles.progressBarBG, { backgroundColor: t.surface, marginTop: 14 }]}>
-              <View style={[styles.progressBarFill, { backgroundColor: B.orange, width: '90%' }]} />
-            </View>
-          </TouchableOpacity>
-        </View>
-
-        {/* Manage Options collapsible panel */}
-        {showManageOptions && (
-          <View style={{ paddingHorizontal: 20, marginTop: 12, gap: 10 }}>
-            <TouchableOpacity
-              style={[styles.managePlanBtn, { backgroundColor: t.card, borderColor: t.border }]}
-              onPress={() => {
-                setPaused(!paused);
-                setToast(paused ? 'Deliveries Resumed!' : 'Deliveries Paused Successfully');
-              }}
-            >
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <View style={[styles.settingsRowIcon, { backgroundColor: paused ? B.greenL : B.orangeL }]}>
-                  {paused ? <Play size={16} color={B.green} /> : <Pause size={16} color={B.orange} />}
-                </View>
-                <View style={{ marginLeft: 12 }}>
-                  <Text style={{ fontSize: 13, fontWeight: 'bold', color: t.text }}>
-                    {paused ? 'Resume Deliveries' : 'Pause Plan'}
-                  </Text>
-                  <Text style={{ fontSize: 10.5, color: t.sub, marginTop: 1 }}>
-                    {paused ? 'Unpause to receive food' : 'Temporarily pause deliveries'}
-                  </Text>
-                </View>
-              </View>
-              <ChevronRight size={16} color={t.muted} />
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.managePlanBtn, { backgroundColor: t.card, borderColor: t.border }]}
-              onPress={() => {
-                setToast("Tomorrow's delivery skipped! Day credited back.");
-              }}
-            >
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <View style={[styles.settingsRowIcon, { backgroundColor: '#EFF6FF' }]}>
-                  <SkipForward size={16} color="#3B82F6" />
-                </View>
-                <View style={{ marginLeft: 12 }}>
-                  <Text style={{ fontSize: 13, fontWeight: 'bold', color: t.text }}>Skip Tomorrow</Text>
-                  <Text style={{ fontSize: 10.5, color: t.sub, marginTop: 1 }}>Skip next dabba, credit back cash</Text>
-                </View>
-              </View>
-              <ChevronRight size={16} color={t.muted} />
-            </TouchableOpacity>
+        {/* NON-SUBSCRIBED HEADER */}
+        {!subscribed && (
+          <View style={styles.messageContainer}>
+            <Text style={[styles.messageTitle, { color: t.text }]}>Choose Your Plan</Text>
+            <Text style={[styles.messageText, { color: t.sub }]}>
+              You don't have an active subscription yet.{"\n"}Choose a plan to get started.
+            </Text>
           </View>
         )}
 
-        {/* Select Other Plans Title */}
-        <View style={{ paddingHorizontal: 20, marginTop: 24, marginBottom: 12 }}>
-          <Text style={{ fontSize: 14, fontWeight: '900', color: t.text, textTransform: 'uppercase', letterSpacing: 0.5 }}>Select Other Plans</Text>
+        {/* CURRENT PLAN (Only show if subscribed) */}
+        {subscribed && (
+          <View style={styles.sectionContainer}>
+            <View style={styles.sectionHeaderRow}>
+              <Text style={styles.sectionLabel}>Current Plan</Text>
+              <View style={styles.activeStatusChip}>
+                <Text style={styles.activeStatusText}>🟢 ACTIVE</Text>
+              </View>
+            </View>
+
+            <HeroCard style={styles.currentPlanHero}>
+              <Text style={styles.currentPlanLabel}>MONTHLY VEG DABBA</Text>
+              <Text style={styles.currentPlanNameText}>{currentPlanName}</Text>
+              <Text style={styles.currentPlanDurationText}>{currentPlanDetails}</Text>
+
+              <View style={styles.nextDeliveryRow}>
+                <Text style={styles.nextDeliveryLabel}>Next Delivery</Text>
+                <Text style={styles.nextDeliveryValue}>{nextDeliveryTime}</Text>
+              </View>
+
+              <Button
+                title="Manage Plan"
+                variant="outline"
+                size="medium"
+                style={styles.managePlanBtn}
+                onPress={() => setShowManageOptions(true)}
+              />
+            </HeroCard>
+          </View>
+        )}
+
+        {/* SUBSCRIPTION TIMELINE (Only show if subscribed) */}
+        {subscribed && (
+          <View style={styles.sectionContainer}>
+            <Text style={styles.sectionLabel}>Subscription Timeline</Text>
+            <View style={styles.timelineCard}>
+              <View style={styles.timelineRow}>
+                <Text style={styles.timelineLabel}>Remaining Days</Text>
+                <Text style={styles.timelineVal}>27 Days Left</Text>
+              </View>
+              <View style={styles.timelineTrack}>
+                <View style={[styles.timelineFill, { width: '10%' }]} />
+              </View>
+              <Text style={styles.timelineProgressText}>3 of 30 days completed</Text>
+            </View>
+          </View>
+        )}
+
+        {/* BENEFITS */}
+        <View style={styles.sectionContainer}>
+          <Text style={[styles.sectionLabel, { color: t.sub }]}>Subscription Benefits</Text>
+          <View style={[styles.benefitsContainer, { backgroundColor: t.card, borderColor: t.border }]}>
+            {benefits.map((b, idx) => (
+              <View key={idx} style={[styles.benefitRow, { borderBottomColor: t.border }]}>
+                <View style={[styles.benefitCheckCircle, { backgroundColor: isDark ? 'rgba(122, 147, 104, 0.2)' : 'rgba(75, 93, 58, 0.08)' }]}>
+                  <Check size={12} color={t.primary} strokeWidth={3} />
+                </View>
+                <View style={styles.benefitTextCol}>
+                  <Text style={[styles.benefitTitle, { color: t.text }]}>{b.title}</Text>
+                  <Text style={[styles.benefitDesc, { color: t.sub }]}>{b.desc}</Text>
+                </View>
+              </View>
+            ))}
+          </View>
         </View>
 
-        {/* List of other plans */}
-        <View style={{ paddingHorizontal: 20, gap: 12 }}>
-          {PLANS.map(p => {
-            const isSelected = selectedPlanId === p.id;
-            return (
-              <TouchableOpacity
-                key={p.id}
-                activeOpacity={0.85}
-                style={{
-                  backgroundColor: t.card,
-                  borderRadius: 24,
-                  borderWidth: 2,
-                  borderColor: isSelected ? B.orange : t.border,
-                  padding: 16,
-                  position: 'relative',
-                  overflow: 'hidden',
-                  shadowColor: '#000',
-                  shadowOffset: { width: 0, height: 4 },
-                  shadowOpacity: isSelected ? 0.04 : 0.01,
-                  shadowRadius: 10,
-                  elevation: 2
-                }}
-                onPress={() => setSelectedPlanId(p.id)}
-              >
-                {p.badge ? (
-                  <View style={{
-                    position: 'absolute',
-                    top: 0,
-                    right: 16,
-                    backgroundColor: p.color,
-                    paddingHorizontal: 10,
-                    paddingVertical: 4,
-                    borderBottomLeftRadius: 10,
-                    borderBottomRightRadius: 10
+        {/* AVAILABLE PLANS CATALOG */}
+        <View style={styles.sectionContainer}>
+          <Text style={styles.sectionLabel}>{subscribed ? "Other Available Plans" : "Subscription Catalog"}</Text>
+          
+          {/* Segmented Category Filter Pills */}
+          <View style={{ flexDirection: 'row', gap: 8, marginBottom: 14 }}>
+            {[
+              { id: 'all', label: 'All Plans' },
+              { id: 'individual', label: 'Individual' },
+              { id: 'specialty', label: 'Specialty & Office' },
+            ].map(tab => {
+              const isActive = planCategory === tab.id;
+              return (
+                <TouchableOpacity
+                  key={tab.id}
+                  activeOpacity={0.8}
+                  onPress={() => setPlanCategory(tab.id as any)}
+                  style={{
+                    paddingHorizontal: 12,
+                    paddingVertical: 6,
+                    borderRadius: 14,
+                    backgroundColor: isActive ? '#4B5D3A' : '#F4EFE6',
+                    borderWidth: 1,
+                    borderColor: isActive ? '#4B5D3A' : '#E8E2D8',
+                  }}
+                >
+                  <Text style={{
+                    fontFamily: theme.typography.bodyFamily,
+                    fontSize: 11.5,
+                    color: isActive ? '#FFFFFF' : '#1F1F1F',
+                    fontWeight: isActive ? '700' : '600',
                   }}>
-                    <Text style={{ fontSize: 8.5, fontWeight: '900', color: '#FFFFFF', letterSpacing: 0.5 }}>{p.badge}</Text>
-                  </View>
-                ) : null}
+                    {tab.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
 
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <View style={{ flex: 1, marginRight: 8 }}>
-                    <Text style={{ fontSize: 16, fontWeight: '900', color: t.text }}>{p.name}</Text>
-                    <Text style={{ fontSize: 11, color: t.sub, marginTop: 4 }}>{p.sub}</Text>
-                  </View>
-                  <View style={{ alignItems: 'flex-end' }}>
-                    <Text style={{ fontSize: 18, fontWeight: '900', color: isSelected ? B.orange : t.text }}>{p.price}</Text>
-                    <Text style={{ fontSize: 9.5, color: t.muted, marginTop: 2 }}>{p.unit}</Text>
-                  </View>
-                </View>
+          <View style={styles.plansListContainer}>
+            {displayedPlans.map((plan) => {
+              const isSelected = selectedPlanId === plan.id;
+              const isCurrent = subscribed && plan.id === currentPlanId;
+              const isExpanded = expandedPlanId === plan.id;
 
-                <View style={{ height: 1, backgroundColor: t.border, marginVertical: 12 }} />
-
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, rowGap: 8 }}>
-                  {p.perks.map((perk, i) => (
-                    <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, width: '45%' }}>
-                      <Check size={12} color={B.green} strokeWidth={2.5} />
-                      <Text style={{ fontSize: 10.5, color: t.sub }} numberOfLines={1}>{perk}</Text>
-                    </View>
-                  ))}
-                </View>
-              </TouchableOpacity>
-            );
-          })}
+              return (
+                <PlanCard
+                  key={plan.id}
+                  plan={plan}
+                  selected={isSelected}
+                  expanded={isExpanded}
+                  onPress={() => handleSelectPlan(plan.id)}
+                  isCurrent={isCurrent}
+                />
+              );
+            })}
+          </View>
         </View>
+
+        {/* BILLING & RENEWAL (subscribed only) */}
+        {subscribed && (
+          <View style={styles.sectionContainer}>
+            <Text style={styles.sectionLabel}>Billing & Renewal</Text>
+            <View style={styles.infoCard}>
+              <View style={styles.billingRow}>
+                <Text style={styles.billingLabel}>Next Renewal</Text>
+                <Text style={styles.billingValue}>12 Aug 2026</Text>
+              </View>
+              <View style={styles.cardDivider} />
+              <View style={styles.billingRow}>
+                <Text style={styles.billingLabel}>Payment Method</Text>
+                <Text style={styles.billingValue}>•••• 4821</Text>
+              </View>
+              <View style={styles.cardDivider} />
+              <View style={styles.billingRow}>
+                <Text style={styles.billingLabel}>Auto Renewal</Text>
+                <Text style={[styles.billingValue, { color: '#4B5D3A', fontWeight: '700' }] as any}>Enabled</Text>
+              </View>
+              <View style={styles.cardDivider} />
+              <TouchableOpacity
+                style={styles.billingInvoiceRow}
+                onPress={() => go('finances')}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.billingInvoiceText}>View Invoices & Billing History</Text>
+                <ChevronRight size={14} color="#8A857B" />
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+
+        {/* SUBSCRIPTION HISTORY (subscribed only) */}
+        {subscribed && (
+          <View style={styles.sectionContainer}>
+            <Text style={styles.sectionLabel}>Subscription History</Text>
+            <View style={styles.infoCard}>
+              <View style={styles.historyRow}>
+                <View>
+                  <Text style={styles.historyPlanTitle}>Monthly Veg</Text>
+                  <Text style={styles.historyDuration}>Jan – Mar</Text>
+                </View>
+                <Text style={styles.historyStatusText}>Completed</Text>
+              </View>
+              <View style={styles.cardDivider} />
+              <View style={styles.historyRow}>
+                <View>
+                  <Text style={styles.historyPlanTitle}>Weekly Veg</Text>
+                  <Text style={styles.historyDuration}>Apr – May</Text>
+                </View>
+                <Text style={styles.historyStatusText}>Completed</Text>
+              </View>
+              <View style={styles.cardDivider} />
+              <View style={styles.historyRow}>
+                <View>
+                  <Text style={styles.historyPlanTitle}>Family Plan</Text>
+                  <Text style={styles.historyDuration}>Current</Text>
+                </View>
+                <Text style={[styles.historyStatusText, { color: '#4B5D3A', fontWeight: '700' }] as any}>Active</Text>
+              </View>
+            </View>
+          </View>
+        )}
+
       </ScrollView>
 
-      {/* Bottom Sticky Action Button */}
-      {selectedPlanId !== 'monthly' && (
-        <View style={{
-          position: 'absolute',
-          bottom: Platform.OS === 'ios' ? 90 : 80,
-          left: 0,
-          right: 0,
-          backgroundColor: t.surface,
-          borderTopWidth: 1.5,
-          borderTopColor: t.border,
-          paddingHorizontal: 20,
-          paddingTop: 12,
-          paddingBottom: Platform.OS === 'ios' ? 28 : 16,
-          zIndex: 10
-        }}>
-          <Button
-            title={`Change to ${selectedPlan.name} tier · ${selectedPlan.price}`}
-            onPress={() => go('subscribe_flow')}
-          />
+      {/* BOTTOM SELECTED PLAN CHECKOUT BAR */}
+      {selectedPlan && (
+        <View style={[styles.bottomCtaContainer, { backgroundColor: t.card, borderColor: t.border }]}>
+          <View style={styles.bottomCtaInfo}>
+            <Text style={[styles.ctaPlanLabel, { color: t.sub }]}>Selected Plan</Text>
+            <Text style={[styles.ctaPlanValue, { color: t.text }]}>{selectedPlan.name} · {selectedPlan.price}</Text>
+          </View>
+          <TouchableOpacity
+            style={[styles.ctaButton, { backgroundColor: t.primary }]}
+            onPress={handleUpgradePress}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.ctaButtonText}>
+              {(subscribed && isCurrentSelected) ? "Manage Plan" : "Subscribe Now"}
+            </Text>
+          </TouchableOpacity>
         </View>
       )}
 
+      {/* Bottom Navigation */}
       <BottomTabNav active="plans" />
-    </SafeAreaView>
+
+      {/* Manage Subscription Bottom Sheet */}
+      <BottomSheet
+        visible={showManageOptions}
+        onClose={() => setShowManageOptions(false)}
+        height={260}
+      >
+        <View style={styles.bottomSheetContent}>
+          <Text style={styles.sheetTitle}>Manage Subscription</Text>
+          <Button
+            title={paused ? "Resume Subscription" : "Pause Subscription"}
+            variant={paused ? "primary" : "outline"}
+            size="medium"
+            onPress={() => {
+              setPaused(!paused);
+              setShowManageOptions(false);
+              setToast(paused ? '🟢 Subscription Resumed' : '🟡 Subscription Paused');
+            }}
+          />
+          <Button
+            title="Reschedule Next Delivery"
+            variant="outline"
+            size="medium"
+            style={{ marginTop: 12 }}
+            onPress={() => {
+              setShowManageOptions(false);
+              switchTab('home');
+            }}
+          />
+        </View>
+      </BottomSheet>
+    </PageLayout>
   );
 }
 
+/* ─────────── STYLES ─────────── */
 const styles = StyleSheet.create({
-  progressBarBG: {
-    height: 6,
-    borderRadius: 3,
-    width: '100%',
+  /* ── Header ── */
+  headerContainer: {
+    paddingHorizontal: theme.spacing.screenHorizontal,
+    paddingTop: 16,
+    paddingBottom: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderColor: '#E8E2D8',
+    backgroundColor: '#F4EFE6',
   },
-  progressBarFill: {
-    height: '100%',
-    borderRadius: 3,
+  backBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  headerTitle: {
+    fontFamily: theme.typography.headingFamily,
+    fontSize: 18,
+    color: '#4B5D3A',
+    fontWeight: '700',
+    marginLeft: 12,
+    textTransform: 'uppercase',
+  },
+
+  /* ── Scroll ── */
+  scrollArea: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 140,
+  },
+
+  /* ── Message / Empty State ── */
+  messageContainer: {
+    paddingHorizontal: theme.spacing.screenHorizontal,
+    marginTop: 16,
+    alignItems: 'center',
+  },
+  messageTitle: {
+    fontFamily: theme.typography.headingFamily,
+    fontSize: 22,
+    color: '#1F1F1F',
+    fontWeight: '800',
+    textAlign: 'center',
+  },
+  messageText: {
+    fontFamily: theme.typography.bodyFamily,
+    fontSize: 13.5,
+    color: '#8A857B',
+    textAlign: 'center',
+    lineHeight: 19,
+    marginTop: 6,
+  },
+
+  /* ── Sections ── */
+  sectionContainer: {
+    paddingHorizontal: theme.spacing.screenHorizontal,
+    marginTop: 16,
+  },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  sectionLabel: {
+    fontFamily: theme.typography.headingFamily,
+    fontSize: 14,
+    color: '#1F1F1F',
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 10,
+  },
+
+  /* ── Current Plan Hero ── */
+  currentPlanHero: {
+    borderColor: '#4B5D3A',
+    borderWidth: 1.5,
+    backgroundColor: '#FCFAF6',
+    padding: 20,
+  },
+  currentPlanLabel: {
+    fontFamily: theme.typography.bodyFamily,
+    fontSize: 10.5,
+    color: '#8A857B',
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  activeStatusChip: {
+    backgroundColor: 'rgba(75, 93, 58, 0.08)',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  activeStatusText: {
+    fontFamily: theme.typography.bodyFamily,
+    fontSize: 10,
+    color: '#4B5D3A',
+    fontWeight: '800',
+  },
+  currentPlanNameText: {
+    fontFamily: theme.typography.headingFamily,
+    fontSize: 22,
+    color: '#1F1F1F',
+    fontWeight: '700',
+    marginTop: 8,
+  },
+  currentPlanDurationText: {
+    fontFamily: theme.typography.bodyFamily,
+    fontSize: 13.5,
+    color: '#8A857B',
+    marginTop: 2,
+  },
+  nextDeliveryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 16,
+    backgroundColor: '#F4EFE6',
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E8E2D8',
+  },
+  nextDeliveryLabel: {
+    fontFamily: theme.typography.bodyFamily,
+    fontSize: 12,
+    color: '#8A857B',
+  },
+  nextDeliveryValue: {
+    fontFamily: theme.typography.monoFamily,
+    fontSize: 12,
+    color: '#1F1F1F',
+    fontWeight: '700',
   },
   managePlanBtn: {
+    marginTop: 16,
+    borderColor: '#4B5D3A',
+    height: 48,
+  },
+
+  /* ── Timeline ── */
+  timelineCard: {
+    padding: 16,
+    backgroundColor: '#F4EFE6',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#E8E2D8',
+  },
+  timelineRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  timelineLabel: {
+    fontFamily: theme.typography.bodyFamily,
+    fontSize: 13,
+    color: '#8A857B',
+  },
+  timelineVal: {
+    fontFamily: theme.typography.monoFamily,
+    fontSize: 13,
+    color: '#1F1F1F',
+    fontWeight: '700',
+  },
+  timelineTrack: {
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#E8E2D8',
+    marginTop: 10,
+    overflow: 'hidden',
+  },
+  timelineFill: {
+    height: '100%',
+    backgroundColor: '#4B5D3A',
+    borderRadius: 4,
+  },
+  timelineProgressText: {
+    fontFamily: theme.typography.bodyFamily,
+    fontSize: 11,
+    color: '#8A857B',
+    marginTop: 6,
+    textAlign: 'center',
+  },
+
+  /* ── Benefits (compact — no minHeight cards) ── */
+  benefitsContainer: {
+    backgroundColor: '#F4EFE6',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#E8E2D8',
+    overflow: 'hidden',
+  },
+  benefitRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E8E2D8',
+    gap: 12,
+  },
+  benefitCheckCircle: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: 'rgba(75, 93, 58, 0.10)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 1,
+  },
+  benefitTextCol: {
+    flex: 1,
+  },
+  benefitTitle: {
+    fontFamily: theme.typography.bodyFamily,
+    fontSize: 13.5,
+    color: '#1F1F1F',
+    fontWeight: '700',
+  },
+  benefitDesc: {
+    fontFamily: theme.typography.bodyFamily,
+    fontSize: 12,
+    color: '#8A857B',
+    lineHeight: 16,
+    marginTop: 2,
+  },
+
+  /* ── Plans Catalog ── */
+  plansListContainer: {
+    gap: theme.spacing.cardGap,
+    marginTop: 4,
+  },
+
+  /* ── Shared Info Card (no minHeight) ── */
+  infoCard: {
+    backgroundColor: '#F4EFE6',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#E8E2D8',
+    padding: 16,
+  },
+
+  /* ── Billing ── */
+  billingRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  billingLabel: {
+    fontFamily: theme.typography.bodyFamily,
+    fontSize: 13,
+    color: '#8A857B',
+  },
+  billingValue: {
+    fontFamily: theme.typography.bodyFamily,
+    fontSize: 13,
+    color: '#1F1F1F',
+    fontWeight: '600',
+  },
+  billingInvoiceRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 4,
+  },
+  billingInvoiceText: {
+    fontFamily: theme.typography.bodyFamily,
+    fontSize: 13,
+    color: '#C96B3C',
+    fontWeight: '700',
+  },
+
+  /* ── History ── */
+  historyRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  historyPlanTitle: {
+    fontFamily: theme.typography.headingFamily,
+    fontSize: 14,
+    color: '#1F1F1F',
+    fontWeight: '700',
+  },
+  historyDuration: {
+    fontFamily: theme.typography.bodyFamily,
+    fontSize: 11,
+    color: '#8A857B',
+    marginTop: 2,
+  },
+  historyStatusText: {
+    fontFamily: theme.typography.bodyFamily,
+    fontSize: 12,
+    color: '#8A857B',
+    fontWeight: '600',
+  },
+
+  /* ── Shared ── */
+  cardDivider: {
+    height: 1,
+    backgroundColor: '#E8E2D8',
+    marginVertical: 10,
+  },
+
+  /* ── Bottom CTA Bar ── */
+  bottomCtaContainer: {
+    position: 'absolute',
+    bottom: 84,
+    left: 0,
+    right: 0,
+    backgroundColor: '#FCFAF6',
+    borderTopWidth: 1,
+    borderColor: '#E8E2D8',
+    paddingHorizontal: theme.spacing.screenHorizontal,
+    paddingVertical: 12,
+    zIndex: 99,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 12,
-    borderRadius: 18,
-    borderWidth: 1.5,
+    gap: 16,
   },
-  settingsRowIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 10,
+  bottomCtaInfo: {
+    flex: 1,
+  },
+  ctaPlanLabel: {
+    fontFamily: theme.typography.bodyFamily,
+    fontSize: 11,
+    color: '#8A857B',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  ctaPlanValue: {
+    fontFamily: theme.typography.monoFamily,
+    fontSize: 14.5,
+    color: '#1F1F1F',
+    fontWeight: '800',
+    marginTop: 2,
+  },
+  ctaButton: {
+    backgroundColor: '#4B5D3A',
+    paddingHorizontal: 22,
+    paddingVertical: 12,
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  ctaButtonText: {
+    fontFamily: theme.typography.bodyFamily,
+    fontSize: 13.5,
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
+
+  /* ── Bottom Sheet ── */
+  bottomSheetContent: {
+    gap: 12,
+  },
+  sheetTitle: {
+    fontFamily: theme.typography.headingFamily,
+    fontSize: 18,
+    color: '#1F1F1F',
+    fontWeight: '700',
+    marginBottom: 10,
   },
 });

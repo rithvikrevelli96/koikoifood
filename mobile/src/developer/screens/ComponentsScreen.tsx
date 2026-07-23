@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, Text, ScrollView, TouchableOpacity, SafeAreaView } from 'react-native';
+import { StyleSheet, View, Text, ScrollView, TouchableOpacity, SafeAreaView, Modal as RNModal } from 'react-native';
 import { ArrowLeft, Play, ShieldAlert, Sparkles, Layers } from 'lucide-react-native';
 import { useAppContext } from '../../app/context';
-import { B, F, theme, Button, Input, PhoneInput, DateInput, OTPInput, BottomSheet, Modal, Checkbox, Badge, Chip, Card, Divider } from '../../design-system';
+import { B, F, theme, Button, Input, PhoneInput, DateInput, OTPInput, BottomSheet, Modal, Checkbox, Badge, Chip, Card, Divider, OrganicBackground } from '../../design-system';
 
 interface ComponentsScreenProps {
   onBack: () => void;
@@ -33,6 +33,13 @@ export default function ComponentsScreen({ onBack }: ComponentsScreenProps) {
   // Overlays States
   const [sheetVisible, setSheetVisible] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
+
+  // Background Showcase States
+  const [bgSandboxVisible, setBgSandboxVisible] = useState(false);
+  const [bgVariant, setBgVariant] = useState<'default' | 'auth' | 'dashboard' | 'minimal' | 'fullscreen'>('auth');
+  const [bgDensity, setBgDensity] = useState<'none' | 'light' | 'medium' | 'full'>('full');
+  const [bgDark, setBgDark] = useState(false);
+  const [bgScrollable, setBgScrollable] = useState(false);
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: t.bg }}>
@@ -244,6 +251,99 @@ export default function ComponentsScreen({ onBack }: ComponentsScreenProps) {
             <Button title="Dismiss Modal" onPress={() => setModalVisible(false)} />
           </View>
         </Modal>
+
+        {/* Backgrounds Sandbox Trigger */}
+        <Text style={[styles.sectionTitle, { color: t.sub, marginTop: 12 }]}>BACKGROUND SYSTEM SANDBOX</Text>
+        <View style={{ marginBottom: 20 }}>
+          <TouchableOpacity
+            onPress={() => setBgSandboxVisible(true)}
+            style={[styles.overlayTrigger, { backgroundColor: t.card, borderColor: t.border, paddingVertical: 20 }]}
+          >
+            <Sparkles size={22} color={B.orange} />
+            <Text style={[styles.overlayTriggerText, { color: t.text, fontSize: 13, marginTop: 4 }]}>
+              Launch OrganicBackground Showcase
+            </Text>
+            <Text style={{ fontFamily: F.body, fontSize: 11, color: t.sub, textAlign: 'center', marginTop: 4 }}>
+              Interactive showcase demonstrating variant designs, visual density levels, dark theme support, and scroll containers.
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Background Sandbox Fullscreen Showcase Instance */}
+        <RNModal visible={bgSandboxVisible} animationType="slide" transparent={false} onRequestClose={() => setBgSandboxVisible(false)}>
+          <OrganicBackground
+            variant={bgVariant}
+            density={bgDensity}
+            scrollable={bgScrollable}
+            isDark={bgDark}
+            withSafeArea
+          >
+            <View style={{ flex: 1, padding: 24, justifyContent: 'center', alignItems: 'center' }}>
+              <Card style={{ backgroundColor: bgDark ? theme.colors.dark.surface : theme.colors.light.surface, width: '100%', padding: 20, borderRadius: 20, zIndex: 10, borderWidth: 1.5, borderColor: bgDark ? theme.colors.dark.border : theme.colors.light.border }}>
+                <Text style={{ fontFamily: F.heading, fontSize: 18, fontWeight: '800', color: bgDark ? theme.colors.dark.text : theme.colors.light.text, marginBottom: 4 }}>
+                  OrganicBackground Showcase
+                </Text>
+                <Text style={{ fontFamily: F.body, fontSize: 12, color: bgDark ? theme.colors.dark.sub : theme.colors.light.sub, marginBottom: 16 }}>
+                  Live playground for testing density, variants, and theme colors.
+                </Text>
+
+                {/* Selector Variant */}
+                <Text style={styles.sandboxLabel}>Variant</Text>
+                <View style={styles.optionsRow}>
+                  {(['default', 'auth', 'dashboard', 'minimal', 'fullscreen'] as const).map(v => (
+                    <TouchableOpacity
+                      key={v}
+                      onPress={() => setBgVariant(v)}
+                      style={[styles.optionBtn, bgVariant === v && styles.optionBtnActive]}
+                    >
+                      <Text style={[styles.optionText, bgVariant === v && styles.optionTextActive]}>{v}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+
+                {/* Selector Density */}
+                <Text style={styles.sandboxLabel}>Density</Text>
+                <View style={styles.optionsRow}>
+                  {(['none', 'light', 'medium', 'full'] as const).map(d => (
+                    <TouchableOpacity
+                      key={d}
+                      onPress={() => setBgDensity(d)}
+                      style={[styles.optionBtn, bgDensity === d && styles.optionBtnActive]}
+                    >
+                      <Text style={[styles.optionText, bgDensity === d && styles.optionTextActive]}>{d}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+
+                {/* Toggle Dark Mode & Scrollable */}
+                <Text style={styles.sandboxLabel}>Configuration</Text>
+                <View style={styles.optionsRow}>
+                  <TouchableOpacity
+                    onPress={() => setBgDark(prev => !prev)}
+                    style={[styles.optionBtn, bgDark && styles.optionBtnActive]}
+                  >
+                    <Text style={[styles.optionText, bgDark && styles.optionTextActive]}>
+                      Dark Mode: {bgDark ? 'ON' : 'OFF'}
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    onPress={() => setBgScrollable(prev => !prev)}
+                    style={[styles.optionBtn, bgScrollable && styles.optionBtnActive]}
+                  >
+                    <Text style={[styles.optionText, bgScrollable && styles.optionTextActive]}>
+                      Scrollable: {bgScrollable ? 'ON' : 'OFF'}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+
+                <View style={{ marginTop: 8 }}>
+                  <Button title="Exit Showcase" variant="secondary" onPress={() => setBgSandboxVisible(false)} />
+                </View>
+              </Card>
+            </View>
+          </OrganicBackground>
+        </RNModal>
       </ScrollView>
     </SafeAreaView>
   );

@@ -132,7 +132,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: theme.spacing.lg,
     borderWidth: 1.5,
-    borderColor: 'transparent',
+    borderColor: theme.colors.light.border,
   },
   inputFocused: {
     borderColor: theme.colors.secondary,

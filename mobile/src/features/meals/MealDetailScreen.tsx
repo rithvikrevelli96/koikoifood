@@ -1,209 +1,228 @@
-import React from 'react';
-import {
-  StyleSheet,
-  View,
-  Platform,
-  TouchableOpacity,
-  ScrollView,
-  SafeAreaView,
-  StatusBar,
-  Image
-} from 'react-native';
-import { ArrowLeft, Star } from 'lucide-react-native';
+import React, { useState } from 'react';
+import { StyleSheet, View, Platform, TouchableOpacity, ScrollView, Image } from 'react-native';
+import { ArrowLeft, Star, Heart, Flame, ShieldAlert, Award } from 'lucide-react-native';
 import { useAppContext } from '../../app/context';
-import { theme, F } from '../../design-system';
-import { Text as RNText } from 'react-native';
-
-function Text({ style, ...props }: any) {
-  const flatStyle = StyleSheet.flatten(style || {});
-  let fontFamily = F.body;
-  const content = String(props.children || '');
-  const isNumeric = /[₹\d]/.test(content) && (
-    /^[₹\d\s★%\-.:\+a-zA-Z\s]+$/.test(content) ||
-    content.includes('kcal') ||
-    content.includes('protein') ||
-    content.includes('Carbs') ||
-    content.includes('₹') ||
-    content.includes('min') ||
-    content.includes('km')
-  );
-
-  if (flatStyle.fontFamily) {
-    fontFamily = flatStyle.fontFamily;
-  } else if (flatStyle.fontSize >= 15 && (flatStyle.fontWeight === '900' || flatStyle.fontWeight === '800' || flatStyle.fontWeight === 'bold')) {
-    fontFamily = isNumeric ? F.mono : F.heading;
-  } else if (isNumeric) {
-    fontFamily = F.mono;
-  }
-  return <RNText style={[{ fontFamily }, style]} {...props} />;
-}
-import { VegPill, ProgressRing } from '../../core/components/Common';
+import {
+  theme,
+  Text,
+  Button,
+  PageLayout,
+  Card
+} from '../../design-system';
 
 export default function MealDetailScreen() {
   const {
     mealsList,
     selectedMealId,
     back,
-    t,
-    isDark
+    setToast
   } = useAppContext();
 
   const meal = mealsList.find(m => m.id === selectedMealId) || mealsList[0];
+  const [isFavorited, setIsFavorited] = useState(false);
 
-  const ingredientsTable = [
-    { category: 'Cooking Base Oil', item: meal.ingredients.oil, quantity: '12 ml' },
-    meal.ingredients.rice ? { category: 'Primary Grain (Rice)', item: meal.ingredients.rice, quantity: '180g cooked' } : null,
-    meal.ingredients.flour ? { category: 'Primary Grain (Wheat)', item: meal.ingredients.flour, quantity: '3 Rotis (120g)' } : null,
-    meal.ingredients.dal ? { category: 'Lentils / Grains', item: meal.ingredients.dal, quantity: '120g portion' } : null,
-    meal.ingredients.meat ? { category: 'Protein (Halal Meat)', item: meal.ingredients.meat, quantity: '150g portion' } : null,
-    meal.ingredients.dairy ? { category: 'Dairy / Cream', item: meal.ingredients.dairy.join(', '), quantity: '40g portion' } : null,
-    { category: 'Fresh Vegetables', item: meal.ingredients.veg.join(', '), quantity: '150g fresh' },
-    { category: 'Sourced Masala Spices', item: meal.ingredients.spices.join(', '), quantity: '8g authentic' },
-  ].filter(Boolean) as { category: string; item: string; quantity: string }[];
+  const ingredientsList = [
+    { name: 'Toor dal', qty: '1 cup' },
+    { name: 'Tomato & Onion', qty: '1 portion' },
+    { name: 'Garlic & Cumin', qty: '4 cloves / 1 tsp' },
+    { name: 'Pure Ghee', qty: '1 tbsp' }
+  ];
+
+  const nutritionList = [
+    { label: 'Calories', val: `${meal.cal} kcal`, pct: 35 },
+    { label: 'Protein', val: `${meal.protein}g`, pct: 58 },
+    { label: 'Carbs', val: `${meal.carbs}g`, pct: 45 },
+    { label: 'Fats', val: `${meal.fat}g`, pct: 28 },
+  ];
+
+  const benefitsList = [
+    { title: 'Heart Healthy', desc: 'Low saturated fat, using cold-ground organic masalas.' },
+    { title: 'Digestive Comfort', desc: 'Pre-soaked lentils and digestive spices ensure zero bloating.' },
+    { title: 'Energy Sustenance', desc: 'Complex carbs provide a steady, clean release of energy.' }
+  ];
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: t.bg }]}>
-      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={t.bg} />
+    <PageLayout style={{ paddingHorizontal: 0, backgroundColor: theme.colors.light.bg }}>
       
-      <View style={[styles.headerBar, { borderBottomColor: t.border }]}>
-        <TouchableOpacity onPress={back} style={[styles.backIconCircle, { backgroundColor: t.surface }]}>
-          <ArrowLeft size={16} color={t.text} />
-        </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: t.text }]}>Meal Details</Text>
-      </View>
+      <ScrollView contentContainerStyle={{ paddingBottom: 110 }} showsVerticalScrollIndicator={false}>
+        
+        {/* 1. Large Food Photo */}
+        <View style={{ width: '100%', height: 340, position: 'relative' }}>
+          <Image source={{ uri: meal.img }} style={{ width: '100%', height: '100%', resizeMode: 'cover' }} />
+          
+          <TouchableOpacity
+            onPress={back}
+            style={{
+              position: 'absolute',
+              left: 20,
+              top: Platform.OS === 'ios' ? 50 : 24,
+              width: 44,
+              height: 44,
+              borderRadius: 22,
+              backgroundColor: '#FFFFFF',
+              justifyContent: 'center',
+              alignItems: 'center',
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.1,
+              shadowRadius: 6,
+              elevation: 4
+            }}
+          >
+            <ArrowLeft size={18} color={theme.colors.light.text} strokeWidth={2.5} />
+          </TouchableOpacity>
 
-      <ScrollView contentContainerStyle={{ paddingBottom: 60 }} showsVerticalScrollIndicator={false}>
-        <Image source={{ uri: meal.img }} style={styles.detailImg} />
+          <TouchableOpacity
+            onPress={() => {
+              setIsFavorited(!isFavorited);
+              setToast(isFavorited ? 'Removed from favorites' : 'Added to favorites!');
+            }}
+            style={{
+              position: 'absolute',
+              right: 20,
+              top: Platform.OS === 'ios' ? 50 : 24,
+              width: 44,
+              height: 44,
+              borderRadius: 22,
+              backgroundColor: '#FFFFFF',
+              justifyContent: 'center',
+              alignItems: 'center',
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.1,
+              shadowRadius: 6,
+              elevation: 4
+            }}
+          >
+            <Heart size={18} color={isFavorited ? theme.colors.secondary : theme.colors.light.text} fill={isFavorited ? theme.colors.secondary : 'transparent'} strokeWidth={2.5} />
+          </TouchableOpacity>
+        </View>
 
-        <View style={{ padding: 16 }}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-            <VegPill veg={meal.type === 'veg'} />
-            <View style={[styles.mealCardRating, { backgroundColor: isDark ? '#2D281E' : '#FFFDF0', borderColor: isDark ? '#4C3F24' : '#FEF3C7' }]}>
-              <Star size={10} color="#F59E0B" fill="#F59E0B" />
-              <Text style={{ fontSize: 11, fontWeight: 'bold', color: '#F59E0B', marginLeft: 2 }}>{meal.rating}</Text>
+        {/* Content Panel (Overlaps the image) */}
+        <View style={{
+          backgroundColor: '#FFFFFF',
+          borderTopLeftRadius: 36,
+          borderTopRightRadius: 36,
+          marginTop: -36,
+          paddingHorizontal: 24,
+          paddingTop: 32,
+        }}>
+          
+          {/* 2. Meal Name */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6 }}>
+            <Text variant="display" color="primary" style={{ fontSize: 28, fontWeight: '800', letterSpacing: -0.5 }}>
+              {meal.name.split(' + ')[0]}
+            </Text>
+            <Text variant="display" style={{ fontSize: 24 }}>🌿</Text>
+          </View>
+
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 8 }}>
+            <View style={{ flexDirection: 'row' }}>
+              {[1, 2, 3, 4, 5].map((s) => (
+                <Star key={s} size={13} color={theme.colors.accent} fill={theme.colors.accent} />
+              ))}
+            </View>
+            <Text variant="body" color="text" style={{ fontWeight: '800', marginLeft: 4, fontSize: 13.5 }}>
+              {meal.rating || '4.8'} <Text variant="body" color="muted" style={{ fontWeight: 'normal' }}>(320 reviews)</Text>
+            </Text>
+          </View>
+
+          <Text variant="body" color="sub" style={{ marginTop: 12, lineHeight: 22, fontSize: 14 }}>
+            {meal.desc}
+          </Text>
+
+          {/* 3. Calories & 4. Protein (Stats Card) */}
+          <View style={{
+            flexDirection: 'row',
+            marginTop: 24,
+            backgroundColor: theme.colors.light.surface,
+            borderRadius: 20,
+            padding: 16,
+            borderWidth: 1.5,
+            borderColor: theme.colors.light.border,
+            gap: 16
+          }}>
+            <View style={{ flex: 1, alignItems: 'center' }}>
+              <Flame size={20} color={theme.colors.secondary} />
+              <Text variant="mono" color="text" style={{ fontSize: 18, fontWeight: '800', marginTop: 4 }}>{meal.cal} kcal</Text>
+              <Text variant="label" color="muted" style={{ marginTop: 2 }}>Calories</Text>
+            </View>
+            <View style={{ width: 1.5, backgroundColor: theme.colors.light.border }} />
+            <View style={{ flex: 1, alignItems: 'center' }}>
+              <Award size={20} color={theme.colors.secondary} />
+              <Text variant="mono" color="text" style={{ fontSize: 18, fontWeight: '800', marginTop: 4 }}>{meal.protein}g</Text>
+              <Text variant="label" color="muted" style={{ marginTop: 2 }}>Protein</Text>
             </View>
           </View>
 
-          <Text style={[styles.detailMealName, { color: t.text }]}>{meal.name}</Text>
-          <Text style={{ fontSize: 12, color: t.muted, marginTop: 4 }}>Chef: {meal.chef}</Text>
-          <Text style={[styles.detailMealDesc, { color: t.sub }]}>{meal.desc}</Text>
-
-          {/* Nutrition Progress Rings */}
-          <Text style={[styles.sectionSubTitle, { color: t.text, marginTop: 24, marginBottom: 12 }]}>Macros Breakdowns</Text>
-          <View style={styles.macroRow}>
-            <ProgressRing pct={(meal.cal / 1000) * 100} label={`${meal.cal}`} sub="Kcal" color={theme.colors.secondary} theme={t} />
-            <ProgressRing pct={(meal.protein / 60) * 100} label={`${meal.protein}g`} sub="Protein" color="#6366F1" theme={t} />
-            <ProgressRing pct={(meal.carbs / 100) * 100} label={`${meal.carbs}g`} sub="Carbs" color="#22C55E" theme={t} />
-            <ProgressRing pct={(meal.fat / 40) * 100} label={`${meal.fat}g`} sub="Fat" color="#EC4899" theme={t} />
-          </View>
-
-          {/* Ingredients table with quantities */}
-          <Text style={[styles.sectionSubTitle, { color: t.text, marginTop: 24, marginBottom: 12 }]}>Ingredients Used & Quantity</Text>
-          <View style={{ borderRadius: 16, overflow: 'hidden', borderWidth: 1.5, borderColor: t.border, backgroundColor: t.card }}>
-            {/* Header row */}
-            <View style={{ flexDirection: 'row', backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : '#F5F5F5', paddingVertical: 12, paddingHorizontal: 16, borderBottomWidth: 1.5, borderBottomColor: t.border }}>
-              <Text style={{ flex: 1.2, fontSize: 11, fontWeight: '900', color: t.text, textTransform: 'uppercase', letterSpacing: 0.5 }}>Ingredient</Text>
-              <Text style={{ flex: 2, fontSize: 11, fontWeight: '900', color: t.text, textTransform: 'uppercase', letterSpacing: 0.5, paddingHorizontal: 8 }}>Details</Text>
-              <Text style={{ flex: 1, fontSize: 11, fontWeight: '900', color: t.text, textTransform: 'uppercase', letterSpacing: 0.5, textAlign: 'right' }}>Serving Qty</Text>
-            </View>
-
-            {/* Data rows */}
-            {ingredientsTable.map((ing, idx) => (
-              <View 
-                key={idx} 
-                style={{ 
-                  flexDirection: 'row', 
-                  paddingVertical: 14, 
-                  paddingHorizontal: 16, 
-                  borderBottomWidth: idx < ingredientsTable.length - 1 ? 1 : 0, 
-                  borderBottomColor: t.border,
-                  alignItems: 'center'
-                }}
-              >
-                <Text style={{ flex: 1.2, fontSize: 12, fontWeight: '800', color: t.text }}>{ing.category}</Text>
-                <Text style={{ flex: 2, fontSize: 12, color: t.sub, paddingHorizontal: 8 }} numberOfLines={2}>{ing.item}</Text>
-                <Text style={{ flex: 1, fontSize: 12, fontWeight: '900', color: theme.colors.secondary, textAlign: 'right' }}>{ing.quantity}</Text>
+          {/* 5. Ingredients list */}
+          <Text variant="body" color="primary" style={{ marginTop: 32, fontWeight: '800', fontSize: 15, textTransform: 'uppercase', letterSpacing: 0.5 }}>Ingredients Used</Text>
+          <View style={{ gap: 12, marginTop: 12 }}>
+            {ingredientsList.map((ing, idx) => (
+              <View key={idx} style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 4 }}>
+                <Text variant="body" color="text" style={{ fontWeight: '700' }}>• {ing.name}</Text>
+                <Text variant="caption" color="sub">{ing.qty}</Text>
               </View>
             ))}
           </View>
 
-          {/* Reviews */}
-          <Text style={[styles.sectionSubTitle, { color: t.text, marginTop: 24, marginBottom: 8 }]}>Customer Reviews</Text>
-          <View style={{ gap: 10 }}>
-            {meal.reviews.map(r => (
-              <View key={r.id} style={[styles.reviewCard, { backgroundColor: t.card, borderColor: t.border }]}>
+          {/* 6. Nutrition Details */}
+          <Text variant="body" color="primary" style={{ marginTop: 32, fontWeight: '800', fontSize: 15, textTransform: 'uppercase', letterSpacing: 0.5 }}>Macro Breakdown</Text>
+          <View style={{ gap: 14, marginTop: 14 }}>
+            {nutritionList.map((item, idx) => (
+              <View key={idx} style={{ gap: 6 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                  <Text style={{ fontSize: 12, fontWeight: 'bold', color: t.text }}>{r.user}</Text>
-                  <Text style={{ fontSize: 10, color: t.muted }}>{r.date}</Text>
+                  <Text variant="caption" color="text" style={{ fontWeight: '700' }}>{item.label}</Text>
+                  <Text variant="mono" color="secondary" style={{ fontWeight: '800' }}>{item.val}</Text>
                 </View>
-                <Text style={{ fontSize: 12, color: t.sub, marginTop: 4 }}>{r.comment}</Text>
+                <View style={{ height: 6, backgroundColor: theme.colors.light.surface, borderRadius: 3, overflow: 'hidden' }}>
+                  <View style={{ height: '100%', width: `${item.pct}%`, backgroundColor: theme.colors.primary }} />
+                </View>
               </View>
             ))}
           </View>
+
+          {/* 7. Health Benefits */}
+          <Text variant="body" color="primary" style={{ marginTop: 32, fontWeight: '800', fontSize: 15, textTransform: 'uppercase', letterSpacing: 0.5 }}>Meal Benefits</Text>
+          <View style={{ gap: 16, marginTop: 14, marginBottom: 20 }}>
+            {benefitsList.map((item, idx) => (
+              <View key={idx} style={{ flexDirection: 'row', gap: 12 }}>
+                <View style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: 'rgba(75, 93, 58, 0.08)', justifyContent: 'center', alignItems: 'center', marginTop: 2 }}>
+                  <Text style={{ fontSize: 10 }}>🌿</Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text variant="caption" color="text" style={{ fontWeight: '800' }}>{item.title}</Text>
+                  <Text variant="caption" color="sub" style={{ marginTop: 2, lineHeight: 14 }}>{item.desc}</Text>
+                </View>
+              </View>
+            ))}
+          </View>
+
         </View>
       </ScrollView>
-    </SafeAreaView>
+
+      {/* 8. Subscribe CTA Button */}
+      <View style={{
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        backgroundColor: '#FFFFFF',
+        paddingVertical: 16,
+        paddingHorizontal: 24,
+        borderTopWidth: 1,
+        borderColor: theme.colors.light.border
+      }}>
+        <Button
+          title="Add to Today's Plan ✓"
+          variant="primary"
+          size="large"
+          onPress={() => {
+            setToast("Meal schedule updated successfully!");
+            back();
+          }}
+        />
+      </View>
+    </PageLayout>
   );
 }
-
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-  },
-  headerBar: {
-    height: 54,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    borderBottomWidth: 1,
-  },
-  backIconCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: 16,
-    fontWeight: '900',
-    marginLeft: 12,
-  },
-  detailImg: {
-    width: '100%',
-    height: 220,
-  },
-  detailMealName: {
-    fontSize: 22,
-    fontWeight: '900',
-    marginTop: 10,
-  },
-  detailMealDesc: {
-    fontSize: 13,
-    lineHeight: 18,
-    marginTop: 8,
-    opacity: 0.8,
-  },
-  sectionSubTitle: {
-    fontSize: 14,
-    fontWeight: '900',
-  },
-  macroRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  mealCardRating: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 8,
-    borderWidth: 1,
-  },
-  reviewCard: {
-    borderRadius: 14,
-    borderWidth: 1,
-    padding: 10,
-  },
-});

@@ -21,6 +21,7 @@ export function OTPInput({
 }: OTPInputProps) {
   const inputsRef = useRef<TextInput[]>([]);
   const shakeAnim = useRef(new Animated.Value(0)).current;
+  const [focusedIndex, setFocusedIndex] = React.useState<number | null>(null);
 
   React.useEffect(() => {
     if (shakeTrigger && error) {
@@ -57,6 +58,7 @@ export function OTPInput({
     <Animated.View style={[styles.container, containerStyle, { transform: [{ translateX: shakeAnim }] }]}>
       {Array.from({ length }).map((_, i) => {
         const val = digits[i] || '';
+        const isFocused = focusedIndex === i;
         return (
           <TextInput
             key={i}
@@ -66,11 +68,14 @@ export function OTPInput({
             value={val}
             onChangeText={text => handleChange(text, i)}
             onKeyPress={e => handleKeyPress(e, i)}
+            onFocus={() => setFocusedIndex(i)}
+            onBlur={() => setFocusedIndex(null)}
             keyboardType="number-pad"
             maxLength={1}
             style={[
               styles.digitInput,
               error && styles.digitInputError,
+              isFocused && styles.digitInputFocused,
               !!val && styles.digitInputFilled,
             ]}
             selectTextOnFocus
@@ -96,7 +101,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     backgroundColor: theme.colors.light.input,
     borderWidth: 1.5,
-    borderColor: 'transparent',
+    borderColor: theme.colors.light.border,
     textAlign: 'center',
     fontFamily: theme.typography.monoFamily,
     fontSize: 20,
@@ -105,6 +110,9 @@ const styles = StyleSheet.create({
   },
   digitInputFilled: {
     borderColor: theme.colors.primary,
+  },
+  digitInputFocused: {
+    borderColor: theme.colors.secondary,
   },
   digitInputError: {
     borderColor: theme.colors.error,

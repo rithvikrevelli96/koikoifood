@@ -2,7 +2,6 @@ import React from 'react';
 import {
   StyleSheet,
   View,
-  Text,
   Modal,
   FlatList,
   SafeAreaView,
@@ -15,7 +14,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { ArrowLeft, Search, X, MapPin, Sparkles } from 'lucide-react-native';
 import AppProvider from './src/app/AppProvider';
 import { useAppContext } from './src/app/context';
-import { theme, F } from './src/design-system';
+import { theme, F, Text, Button } from './src/design-system';
 
 const B = {
   orange: theme.colors.secondary,
@@ -38,6 +37,7 @@ import MealsScreen from './src/features/meals/MealsScreen';
 import MealDetailScreen from './src/features/meals/MealDetailScreen';
 import KitchenScreen from './src/features/kitchen/KitchenScreen';
 import TourBookingScreen from './src/features/kitchen/TourBookingScreen';
+import KitchenIngredientsScreen from './src/features/kitchen/KitchenIngredientsScreen';
 import ProfileScreen from './src/features/profile/ProfileScreen';
 import PersonalScreen from './src/features/profile/PersonalScreen';
 import HealthInfoScreen from './src/features/profile/HealthInfoScreen';
@@ -50,6 +50,11 @@ import SupportScreen from './src/features/profile/SupportScreen';
 import ReferScreen from './src/features/profile/ReferScreen';
 import PlansScreen from './src/features/plans/PlansScreen';
 import SubscribeFlowScreen from './src/features/plans/SubscribeFlowScreen';
+import MealPreferencesScreen from './src/features/profile/MealPreferencesScreen';
+import FinancesScreen from './src/features/profile/FinancesScreen';
+import FamilyScreen from './src/features/profile/FamilyScreen';
+import SettingsScreen from './src/features/profile/SettingsScreen';
+import AboutScreen from './src/features/profile/AboutScreen';
 import TrackingScreen from './src/features/tracking/TrackingScreen';
 import NotificationsScreen from './src/features/notifications/NotificationsScreen';
 import { DeveloperNavigator } from './src/developer';
@@ -101,29 +106,30 @@ function AppContent() {
             <View style={{ width: 54, height: 54, borderRadius: 27, backgroundColor: B.orangeL, justifyContent: 'center', alignItems: 'center', marginBottom: 14, alignSelf: 'center' }}>
               <MapPin size={24} color={B.orange} />
             </View>
-            <Text style={{ fontSize: 16, fontWeight: '800', color: t.text, textAlign: 'center', marginBottom: 12 }}>
+            <Text variant="title" color="primary" style={{ textAlign: 'center', marginBottom: 12 }}>
               Enable Location Accuracy
             </Text>
-            <Text style={{ fontSize: 13, color: t.sub, textAlign: 'center', marginBottom: 20, lineHeight: 18 }}>
+            <Text variant="caption" color="sub" style={{ textAlign: 'center', marginBottom: 20, lineHeight: 18 }}>
               This app needs location accuracy turned on to position the map pin at your exact delivery spot.
             </Text>
-            <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 12 }}>
-              <TouchableOpacity 
-                onPress={() => setShowLocationDialog(false)} 
-                style={{ paddingVertical: 10, paddingHorizontal: 16, borderRadius: 20, borderWidth: 1, borderColor: t.border }}
-              >
-                <Text style={{ fontSize: 13, fontWeight: '800', color: t.text }}>No, thanks</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity 
+            <View style={{ flexDirection: 'row', gap: 12 }}>
+              <Button
+                title="No, thanks"
+                variant="outline"
+                size="medium"
+                style={{ flex: 1 }}
+                onPress={() => setShowLocationDialog(false)}
+              />
+              <Button
+                title="Enable"
+                variant="primary"
+                size="medium"
+                style={{ flex: 1 }}
                 onPress={() => {
                   setShowLocationDialog(false);
                   detectCurrentLocation();
-                }} 
-                style={{ paddingVertical: 10, paddingHorizontal: 16, borderRadius: 20, backgroundColor: B.orange }}
-              >
-                <Text style={{ fontSize: 13, fontWeight: '800', color: '#FFFFFF' }}>Enable</Text>
-              </TouchableOpacity>
+                }}
+              />
             </View>
           </View>
         </View>
@@ -164,13 +170,15 @@ function AppContent() {
               backgroundColor: t.card,
               gap: 12
             }}>
-              <TouchableOpacity 
-                onPress={() => setShowSearchModal(false)} 
-                style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.surface, borderWidth: 1.5, borderColor: t.border, justifyContent: 'center', alignItems: 'center' }}
-              >
-                <ArrowLeft size={16} color={t.text} />
-              </TouchableOpacity>
-              <Text style={{ fontSize: 16, fontWeight: '900', color: t.text }}>Search Location</Text>
+              <Button
+                onlyIcon
+                variant="ghost"
+                size="medium"
+                onPress={() => setShowSearchModal(false)}
+                iconLeft={<ArrowLeft size={16} color={t.text} />}
+                style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.surface }}
+              />
+              <Text variant="title" color="primary">Search Location</Text>
             </View>
 
             {/* Search Input Box */}
@@ -227,17 +235,17 @@ function AppContent() {
                     gap: 14
                   }}
                 >
-                  <MapPin size={20} color={B.orange} />
+                  <MapPin size={20} color={theme.colors.secondary} />
                   <View style={{ flex: 1 }}>
-                    <Text style={{ fontSize: 14, fontWeight: '700', color: t.text }}>{item.name}</Text>
-                    <Text style={{ fontSize: 12, color: t.muted, marginTop: 2 }}>{item.desc}</Text>
+                    <Text variant="body" color="text" style={{ fontWeight: '700' }}>{item.name}</Text>
+                    <Text variant="caption" color="sub" style={{ marginTop: 2 }}>{item.desc}</Text>
                   </View>
-                  <Text style={{ fontSize: 11, fontWeight: 'bold', color: t.muted }}>{item.dist}</Text>
+                  <Text variant="caption" color="muted" style={{ fontWeight: 'bold' }}>{item.dist}</Text>
                 </TouchableOpacity>
               )}
               ListEmptyComponent={
                 <View style={{ alignItems: 'center', marginTop: 40 }}>
-                  <Text style={{ color: t.muted }}>No matching locations found</Text>
+                  <Text variant="body" color="muted">No matching locations found</Text>
                 </View>
               }
             />
@@ -295,6 +303,18 @@ function AppContent() {
         return <PlansScreen />;
       case 'subscribe_flow':
         return <SubscribeFlowScreen />;
+      case 'meal_pref':
+        return <MealPreferencesScreen />;
+      case 'finances':
+        return <FinancesScreen />;
+      case 'family':
+        return <FamilyScreen />;
+      case 'settings':
+        return <SettingsScreen />;
+      case 'about':
+        return <AboutScreen />;
+      case 'kitchen_ingredients':
+        return <KitchenIngredientsScreen />;
       case 'tracking':
         return <TrackingScreen />;
       case 'notifications':
@@ -315,9 +335,9 @@ function AppContent() {
     <View style={{ flex: 1, backgroundColor: t.bg }}>
       <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor="transparent" translucent />
 
-      {/* Decorative Warm Organic Background Shapes */}
-      <View style={{ position: 'absolute', top: -100, right: -100, width: 350, height: 350, borderRadius: 175, backgroundColor: isDark ? 'rgba(233, 106, 46, 0.08)' : 'rgba(244, 179, 106, 0.25)', zIndex: 0 }} />
-      <View style={{ position: 'absolute', bottom: -50, left: -100, width: 300, height: 300, borderRadius: 150, backgroundColor: isDark ? 'rgba(244, 179, 106, 0.06)' : 'rgba(233, 106, 46, 0.18)', zIndex: 0 }} />
+      {/* Decorative Warm Organic Brand Colors Background Shapes */}
+      <View style={{ position: 'absolute', top: -100, right: -100, width: 350, height: 350, borderRadius: 175, backgroundColor: isDark ? 'rgba(75, 93, 58, 0.04)' : 'rgba(75, 93, 58, 0.06)', zIndex: 0 }} />
+      <View style={{ position: 'absolute', bottom: -50, left: -100, width: 300, height: 300, borderRadius: 150, backgroundColor: isDark ? 'rgba(201, 107, 60, 0.04)' : 'rgba(201, 107, 60, 0.06)', zIndex: 0 }} />
 
       {/* Main Screen Renderer */}
       <View style={{ 
@@ -337,7 +357,7 @@ function AppContent() {
         <View style={styles.toastContainer}>
           <LinearGradient colors={[B.orange, B.secondary]} style={styles.toastGradient}>
             <Sparkles size={14} color="#FFFFFF" style={{ marginRight: 6 }} />
-            <Text style={styles.toastText}>{toast}</Text>
+            <Text variant="caption" color="inverse" style={styles.toastText}>{toast}</Text>
           </LinearGradient>
         </View>
       )}
@@ -377,7 +397,6 @@ const styles = StyleSheet.create({
   },
   toastText: {
     color: '#FFFFFF',
-    fontSize: 12.5,
     fontWeight: '900',
     textAlign: 'center'
   }

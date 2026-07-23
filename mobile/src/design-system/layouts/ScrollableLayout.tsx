@@ -23,12 +23,14 @@ export const ScrollableLayout = React.forwardRef<ScrollView, ScrollableLayoutPro
   return (
     <KeyboardAvoidingView
       style={styles.keyboardView}
-      behavior={keyboardAvoidingBehavior || (Platform.OS === 'ios' ? 'padding' : undefined)}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
+      behavior={keyboardAvoidingBehavior || (Platform.OS === 'ios' ? 'padding' : Platform.OS === 'android' ? 'height' : 'padding')}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 0}
     >
       <ScrollView
         ref={ref}
         keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        automaticallyAdjustKeyboardInsets={true}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[styles.scrollContent, contentContainerStyle]}
         {...props}
