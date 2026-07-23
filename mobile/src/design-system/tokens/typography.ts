@@ -12,6 +12,11 @@ export const typography = {
     fontSize: 56,
     fontWeight: '800' as const,
   },
+  hero: {
+    fontFamily: foundationTypography.heading,
+    fontSize: 48,
+    fontWeight: '800' as const,
+  },
   headingXl: {
     fontFamily: foundationTypography.heading,
     fontSize: 40,
@@ -57,13 +62,18 @@ export const typography = {
     fontSize: 12,
     fontWeight: '500' as const,
   },
+  button: {
+    fontFamily: foundationTypography.body,
+    fontSize: 14,
+    fontWeight: '700' as const,
+  },
   mono: {
     fontFamily: foundationTypography.mono,
     fontSize: 15,
     fontWeight: '500' as const,
   },
 
-  // Keep legacy mappings to prevent breakages in existing pages before full migration
+  // Semantic aliases
   h1: {
     fontFamily: foundationTypography.heading,
     fontSize: 32,
@@ -80,3 +90,4 @@ export const typography = {
     fontWeight: '600' as const,
   },
 };
+

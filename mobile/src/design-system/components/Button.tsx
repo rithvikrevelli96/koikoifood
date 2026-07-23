@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { theme } from '../theme';
 import { useAnalytics } from '../hooks/useAnalytics';
+import { useAppContext } from '../../app/context';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'outline' | 'destructive' | 'success';
 export type ButtonSize = 'small' | 'medium' | 'large';
@@ -57,19 +58,31 @@ export function Button({
   analyticsScreen,
 }: ButtonProps) {
   const { track } = useAnalytics();
+  let t = theme.colors.light;
+  let isDark = false;
+  try {
+    const ctx = useAppContext();
+    if (ctx && ctx.t) {
+      t = ctx.t;
+      isDark = ctx.isDark;
+    }
+  } catch (e) {}
+
   const scaleAnim = React.useRef(new Animated.Value(1)).current;
   const lastPressTime = React.useRef(0);
 
   const handlePressIn = () => {
-    Animated.spring(scaleAnim, {
-      toValue: 0.98,
+    Animated.timing(scaleAnim, {
+      toValue: 0.97,
+      duration: 120,
       useNativeDriver: true,
     }).start();
   };
 
   const handlePressOut = () => {
-    Animated.spring(scaleAnim, {
+    Animated.timing(scaleAnim, {
       toValue: 1,
+      duration: 120,
       useNativeDriver: true,
     }).start();
   };
@@ -91,14 +104,14 @@ export function Button({
   // 1. Resolve container variants
   const getVariantStyle = (): ViewStyle => {
     if (disabled) {
-      return { backgroundColor: theme.colors.disabled, borderColor: 'transparent' };
+      return { backgroundColor: t.disabled, borderColor: 'transparent' };
     }
     switch (variant) {
       case 'secondary':
         return {
-          backgroundColor: theme.colors.light.surface,
-          borderWidth: 2,
-          borderColor: theme.colors.secondary,
+          backgroundColor: t.surface,
+          borderWidth: 1,
+          borderColor: t.border,
         };
       case 'ghost':
         return { backgroundColor: 'transparent' };
@@ -106,35 +119,36 @@ export function Button({
         return {
           backgroundColor: 'transparent',
           borderWidth: 1.5,
-          borderColor: theme.colors.light.border,
+          borderColor: t.border,
         };
       case 'destructive':
         return { backgroundColor: theme.colors.error };
       case 'success':
-        return { backgroundColor: theme.colors.success };
+        return { backgroundColor: t.primary };
       case 'primary':
       default:
-        return { backgroundColor: theme.colors.secondary };
+        return { backgroundColor: t.primary };
     }
   };
 
   // 2. Resolve typography color styles
   const getTextStyle = (): TextStyle => {
     if (disabled) {
-      return { color: '#FFFFFF' };
+      return { color: t.sub };
     }
     switch (variant) {
       case 'secondary':
-        return { color: theme.colors.secondary };
+        return { color: t.text };
       case 'ghost':
-        return { color: theme.colors.primary };
+        return { color: t.primary };
       case 'outline':
-        return { color: theme.colors.light.text };
+        return { color: t.text };
       case 'destructive':
+        return { color: '#FFFFFF' };
       case 'success':
       case 'primary':
       default:
-        return { color: '#FFFFFF' };
+        return { color: '#F8F6F2' };
     }
   };
 

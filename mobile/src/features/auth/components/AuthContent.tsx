@@ -63,7 +63,7 @@ export const AuthContent = React.memo(({
   country,
   setCountry,
 }: AuthContentProps) => {
-  const { go } = useAppContext();
+  const { go, setUser, setToast, setSubscribed } = useAppContext();
 
   return (
     <View style={styles.container}>
@@ -144,9 +144,30 @@ export const AuthContent = React.memo(({
               title="Just Browse App ‣"
               variant="outline"
               size="medium"
-              onPress={() => go('home')}
+              onPress={() => {
+                setUser((prev: any) => ({
+                  ...prev,
+                  name: 'Sophia Williams',
+                  email: 'sophia@gmail.com',
+                  phone: '+91 98765 43210',
+                  avatar: '👩‍🍳',
+                  foodPref: 'Veg',
+                  height: '172',
+                  weight: '68',
+                  address: 'Plot 42, Hitech City Road, Madhapur, Hyderabad, Telangana - 500081',
+                  addressLabel: 'Home',
+                  dob: '15-08-1996',
+                  gender: 'Female',
+                  profileCompleted: true,
+                  locationCompleted: true,
+                  healthCompleted: true,
+                }));
+                setSubscribed(true);
+                setToast('👋 Browsing as Demo Guest (Sophia Williams)');
+                go('home');
+              }}
               style={styles.browseBtn}
-              accessibilityLabel="Just browse app as guest without logging in"
+              accessibilityLabel="Just browse app as guest with demo details"
             />
 
             {/* Terms and Privacy Footer */}

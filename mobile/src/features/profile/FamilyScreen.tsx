@@ -17,6 +17,8 @@ export default function FamilyScreen() {
   const {
     back,
     setToast,
+    t,
+    isDark,
   } = useAppContext();
 
   const [familyMembers, setFamilyMembers] = useState([
@@ -40,14 +42,16 @@ export default function FamilyScreen() {
   return (
     <PageLayout style={{ paddingHorizontal: 0 }} background="organic" backgroundVariant="minimal">
       {/* HEADER */}
-      <View style={styles.headerContainer}>
+      <View style={[styles.headerContainer, { borderColor: t.border, backgroundColor: t.card }]}>
         <Button
           onlyIcon
           variant="ghost"
           size="medium"
           onPress={back}
-          iconLeft={<ArrowLeft size={16} color={theme.colors.light.text} />}
-          style={styles.backBtn}
+          iconLeft={<ArrowLeft size={16} color={t.text} />}
+          style={[styles.backBtn, { backgroundColor: t.surface }] as any}
+          accessibilityLabel="Go back"
+          accessibilityRole="button"
         />
         <Text style={styles.headerTitle}>Family Members</Text>
       </View>
@@ -147,14 +151,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderBottomWidth: 1,
-    borderColor: theme.colors.light.border,
-    backgroundColor: theme.colors.light.surface,
   },
   backBtn: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: theme.colors.light.surface,
   },
   headerTitle: {
     fontFamily: theme.typography.headingFamily,

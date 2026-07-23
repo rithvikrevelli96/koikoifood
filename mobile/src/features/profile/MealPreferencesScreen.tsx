@@ -21,7 +21,8 @@ export default function MealPreferencesScreen() {
     allergiesList,
     setAllergiesList,
     foodDislikes,
-    setFoodDislikes
+    setFoodDislikes,
+    t,
   } = useAppContext();
 
   // Local Slot Preference State
@@ -61,33 +62,33 @@ export default function MealPreferencesScreen() {
   return (
     <PageLayout style={{ paddingHorizontal: 0 }} background="organic" backgroundVariant="minimal">
       {/* HEADER */}
-      <View style={styles.headerContainer}>
+      <View style={[styles.headerContainer, { backgroundColor: t.surface, borderColor: t.border }]}>
         <Button
           onlyIcon
           variant="ghost"
           size="medium"
           onPress={back}
-          iconLeft={<ArrowLeft size={16} color={theme.colors.light.text} />}
-          style={styles.backBtn}
+          iconLeft={<ArrowLeft size={16} color={t.text} />}
+          style={[styles.backBtn, { backgroundColor: t.surface }] as any}
         />
-        <Text style={styles.headerTitle}>Meal Preferences</Text>
+        <Text style={[styles.headerTitle, { color: t.primary }]}>Meal Preferences</Text>
       </View>
 
       <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         
         {/* HERO SECTION */}
         <View style={styles.heroSection}>
-          <Text style={styles.heroSubTitle}>DIETARY PROFILE</Text>
-          <Text style={styles.heroMainTitle}>Tailor Your Daily Dabba</Text>
-          <Text style={styles.heroDesc}>
+          <Text style={[styles.heroSubTitle, { color: t.secondary }]}>DIETARY PROFILE</Text>
+          <Text style={[styles.heroMainTitle, { color: t.text }]}>Tailor Your Daily Dabba</Text>
+          <Text style={[styles.heroDesc, { color: t.sub }]}>
             Our chefs custom prepare every meal according to your selected diet, spices, allergies, and delivery schedules.
           </Text>
         </View>
 
         {/* Veg / Non Veg Selection */}
         <View style={styles.sectionContainer}>
-          <Text style={styles.sectionLabel}>Dietary Type</Text>
-          <InfoCard style={styles.infoCardWrapper}>
+          <Text style={[styles.sectionLabel, { color: t.text }]}>Dietary Type</Text>
+          <InfoCard style={[styles.infoCardWrapper, { backgroundColor: t.card, borderColor: t.border }]}>
             <View style={styles.preferenceRow}>
               {['Veg', 'Non-Veg', 'Eggetarian', 'Vegan'].map(pref => {
                 const isSel = user.foodPref === pref || (pref === 'Veg' && user.foodPref === 'Vegetarian') || (pref === 'Non-Veg' && user.foodPref === 'Non-Vegetarian');
@@ -97,14 +98,11 @@ export default function MealPreferencesScreen() {
                     onPress={() => setUser((p: any) => ({ ...p, foodPref: pref }))}
                     style={[
                       styles.dietChip,
-                      isSel ? styles.dietChipActive : undefined
+                      { backgroundColor: isSel ? t.primary : t.elevated, borderColor: isSel ? t.primary : t.border }
                     ]}
                   >
-                    <Text style={[
-                      styles.dietChipText,
-                      isSel ? styles.dietChipTextActive : undefined
-                    ] as any}>
-                      {pref === 'Veg' ? '🌱 Veg' : pref === 'Non-Veg' ? '🍗 Non-Veg' : pref === 'Eggetarian' ? '🥚 Egg' : '🥦 Vegan'}
+                    <Text style={{ fontFamily: theme.typography.bodyFamily, fontSize: 12.5, color: isSel ? '#FFFFFF' : t.text, fontWeight: '700' }}>
+                      {pref}
                     </Text>
                   </TouchableOpacity>
                 );
@@ -230,14 +228,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderBottomWidth: 1,
-    borderColor: theme.colors.light.border,
-    backgroundColor: theme.colors.light.surface,
   },
   backBtn: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: theme.colors.light.surface,
   },
   headerTitle: {
     fontFamily: theme.typography.headingFamily,

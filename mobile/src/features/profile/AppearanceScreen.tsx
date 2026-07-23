@@ -20,6 +20,7 @@ export default function AppearanceScreen() {
     setThemeMode,
     back,
     setToast,
+    t,
   } = useAppContext();
 
   const themesList: {
@@ -35,35 +36,29 @@ export default function AppearanceScreen() {
       label: 'Warm Light Theme',
       desc: 'Relaxing sand & cream surfaces with forest-green accents.',
       icon: Sun,
-      iconBg: 'rgba(201, 107, 60, 0.12)',
-      iconColor: '#C96B3C',
+      iconBg: isDark ? 'rgba(215, 132, 86, 0.18)' : 'rgba(201, 107, 60, 0.12)',
+      iconColor: t.secondary,
     },
     {
       key: 'dark',
       label: 'Warm Dark Theme',
       desc: 'Comfortable dark charcoal tones for high legibility at night.',
       icon: Moon,
-      iconBg: 'rgba(217, 182, 90, 0.15)',
-      iconColor: '#D9B65A',
+      iconBg: isDark ? 'rgba(224, 194, 106, 0.18)' : 'rgba(217, 182, 90, 0.15)',
+      iconColor: t.accent,
     },
     {
       key: 'system',
       label: 'System Default',
       desc: 'Automatically matches your device OS theme preference.',
       icon: Smartphone,
-      iconBg: 'rgba(75, 93, 58, 0.12)',
-      iconColor: '#4B5D3A',
+      iconBg: isDark ? 'rgba(122, 147, 104, 0.18)' : 'rgba(75, 93, 58, 0.12)',
+      iconColor: t.primary,
     },
   ];
 
-  const handleSelectTheme = async (mode: AppTheme) => {
+  const handleSelectTheme = (mode: AppTheme) => {
     setThemeMode(mode);
-    try {
-      await storage.setItem('koikoi_theme_mode', mode);
-    } catch (e) {
-      console.warn('Failed to save theme mode:', e);
-    }
-
     if (mode === 'light') {
       setToast('☀️ Light theme enabled!');
     } else if (mode === 'dark') {
@@ -73,20 +68,17 @@ export default function AppearanceScreen() {
     }
   };
 
-  const headerBg = isDark ? theme.colors.dark.surface : theme.colors.light.surface;
-  const headerBorder = isDark ? theme.colors.dark.border : theme.colors.light.border;
-
   return (
     <PageLayout style={{ paddingHorizontal: 0 }}>
       {/* Top Header Bar */}
-      <View style={[styles.headerBar, { backgroundColor: headerBg, borderColor: headerBorder }]}>
+      <View style={[styles.headerBar, { backgroundColor: t.surface, borderColor: t.border }]}>
         <Button
           onlyIcon
           variant="ghost"
           size="medium"
           onPress={back}
-          iconLeft={<ArrowLeft size={16} color={isDark ? theme.colors.dark.text : theme.colors.light.text} />}
-          style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: headerBg }}
+          iconLeft={<ArrowLeft size={16} color={t.text} />}
+          style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.surface }}
           accessibilityLabel="Go back"
         />
         <Text variant="title" color="primary" style={{ marginLeft: 14 }}>
@@ -119,8 +111,8 @@ export default function AppearanceScreen() {
                 style={[
                   styles.themeCard,
                   {
-                    backgroundColor: isDark ? theme.colors.dark.surface : theme.colors.light.surface,
-                    borderColor: isActive ? theme.colors.secondary : (isDark ? theme.colors.dark.border : theme.colors.light.border),
+                    backgroundColor: t.card,
+                    borderColor: isActive ? t.secondary : t.border,
                     borderWidth: isActive ? 2 : 1,
                   }
                 ]}
@@ -139,8 +131,8 @@ export default function AppearanceScreen() {
                         {item.label}
                       </Text>
                       {isActive && (
-                        <View style={styles.activePill}>
-                          <Text style={styles.activePillText}>Active</Text>
+                        <View style={[styles.activePill, { backgroundColor: isDark ? 'rgba(122, 147, 104, 0.2)' : 'rgba(75, 93, 58, 0.15)' }]}>
+                          <Text style={[styles.activePillText, { color: t.primary }]}>Active</Text>
                         </View>
                       )}
                     </View>
@@ -152,8 +144,8 @@ export default function AppearanceScreen() {
                   <View style={[
                     styles.radioCircle,
                     {
-                      borderColor: isActive ? theme.colors.secondary : (isDark ? '#555045' : theme.colors.light.muted),
-                      backgroundColor: isActive ? theme.colors.secondary : 'transparent',
+                      borderColor: isActive ? t.secondary : t.border,
+                      backgroundColor: isActive ? t.secondary : 'transparent',
                     }
                   ]}>
                     {isActive && <Check size={13} color="#FFFFFF" strokeWidth={3} />}
@@ -172,7 +164,7 @@ export default function AppearanceScreen() {
           <InfoCard style={{ gap: 12 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <Sparkles size={16} color={theme.colors.secondary} />
+                <Sparkles size={16} color={t.secondary} />
                 <Text variant="title" color="primary">Active Mode: {isDark ? 'Dark Theme' : 'Light Theme'}</Text>
               </View>
               <Text variant="mono" color="secondary" style={{ fontWeight: '800', fontSize: 12 }}>
@@ -184,6 +176,7 @@ export default function AppearanceScreen() {
             </Text>
           </InfoCard>
         </View>
+
 
       </ScrollView>
     </PageLayout>

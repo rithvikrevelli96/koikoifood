@@ -83,7 +83,7 @@ export function BottomSheet({
     })
   ).current;
 
-  if (!visible && (animatedValue as any)._value === SCREEN_HEIGHT) return null;
+  if (!visible) return null;
 
   return (
     <View style={StyleSheet.absoluteFillObject}>

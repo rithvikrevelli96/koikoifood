@@ -28,7 +28,9 @@ export default function PlansScreen() {
     setToast,
     back,
     go,
-    switchTab
+    switchTab,
+    t,
+    isDark,
   } = useAppContext();
 
   const [expandedPlanId, setExpandedPlanId] = useState<string | null>(null);
@@ -78,11 +80,11 @@ export default function PlansScreen() {
     <PageLayout style={{ paddingHorizontal: 0 }} background="organic" backgroundVariant="minimal">
 
       {/* HEADER */}
-      <View style={styles.headerContainer}>
-        <TouchableOpacity onPress={back} style={styles.backBtn} activeOpacity={0.7}>
-          <ArrowLeft size={20} color="#4B5D3A" />
+      <View style={[styles.headerContainer, { backgroundColor: t.bg }]}>
+        <TouchableOpacity onPress={back} style={[styles.backBtn, { backgroundColor: t.surface, borderColor: t.border }]} activeOpacity={0.7}>
+          <ArrowLeft size={20} color={t.primary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Subscription Plans</Text>
+        <Text style={[styles.headerTitle, { color: t.text }]}>Subscription Plans</Text>
       </View>
 
       <ScrollView
@@ -94,8 +96,8 @@ export default function PlansScreen() {
         {/* NON-SUBSCRIBED HEADER */}
         {!subscribed && (
           <View style={styles.messageContainer}>
-            <Text style={styles.messageTitle}>Choose Your Plan</Text>
-            <Text style={styles.messageText}>
+            <Text style={[styles.messageTitle, { color: t.text }]}>Choose Your Plan</Text>
+            <Text style={[styles.messageText, { color: t.sub }]}>
               You don't have an active subscription yet.{"\n"}Choose a plan to get started.
             </Text>
           </View>
@@ -149,18 +151,18 @@ export default function PlansScreen() {
           </View>
         )}
 
-        {/* BENEFITS — compact list, no minHeight */}
+        {/* BENEFITS */}
         <View style={styles.sectionContainer}>
-          <Text style={styles.sectionLabel}>Subscription Benefits</Text>
-          <View style={styles.benefitsContainer}>
+          <Text style={[styles.sectionLabel, { color: t.sub }]}>Subscription Benefits</Text>
+          <View style={[styles.benefitsContainer, { backgroundColor: t.card, borderColor: t.border }]}>
             {benefits.map((b, idx) => (
-              <View key={idx} style={styles.benefitRow}>
-                <View style={styles.benefitCheckCircle}>
-                  <Check size={12} color="#4B5D3A" strokeWidth={3} />
+              <View key={idx} style={[styles.benefitRow, { borderBottomColor: t.border }]}>
+                <View style={[styles.benefitCheckCircle, { backgroundColor: isDark ? 'rgba(122, 147, 104, 0.2)' : 'rgba(75, 93, 58, 0.08)' }]}>
+                  <Check size={12} color={t.primary} strokeWidth={3} />
                 </View>
                 <View style={styles.benefitTextCol}>
-                  <Text style={styles.benefitTitle}>{b.title}</Text>
-                  <Text style={styles.benefitDesc}>{b.desc}</Text>
+                  <Text style={[styles.benefitTitle, { color: t.text }]}>{b.title}</Text>
+                  <Text style={[styles.benefitDesc, { color: t.sub }]}>{b.desc}</Text>
                 </View>
               </View>
             ))}
@@ -292,15 +294,15 @@ export default function PlansScreen() {
 
       </ScrollView>
 
-      {/* Sticky Bottom CTA — Only shown after user selects a plan */}
+      {/* BOTTOM SELECTED PLAN CHECKOUT BAR */}
       {selectedPlan && (
-        <View style={styles.bottomCtaContainer}>
+        <View style={[styles.bottomCtaContainer, { backgroundColor: t.card, borderColor: t.border }]}>
           <View style={styles.bottomCtaInfo}>
-            <Text style={styles.ctaPlanLabel}>Selected Plan</Text>
-            <Text style={styles.ctaPlanValue}>{selectedPlan.name} · {selectedPlan.price}</Text>
+            <Text style={[styles.ctaPlanLabel, { color: t.sub }]}>Selected Plan</Text>
+            <Text style={[styles.ctaPlanValue, { color: t.text }]}>{selectedPlan.name} · {selectedPlan.price}</Text>
           </View>
           <TouchableOpacity
-            style={styles.ctaButton}
+            style={[styles.ctaButton, { backgroundColor: t.primary }]}
             onPress={handleUpgradePress}
             activeOpacity={0.85}
           >

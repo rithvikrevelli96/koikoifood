@@ -1,6 +1,15 @@
 // Foundation & Theme Exports
 export { theme, LIGHT, DARK, B, F } from './theme';
 
+// Token Exports
+export { zIndex } from './tokens/zIndex';
+export { opacity } from './tokens/opacity';
+export { breakpoints } from './tokens/breakpoints';
+export { animationTimings } from './tokens/animations';
+
+// Utility Exports
+export { cn, mergeClasses } from './utils/cn';
+
 // Layout Templates
 export { PageLayout } from './layouts/PageLayout';
 export { ScrollableLayout } from './layouts/ScrollableLayout';
@@ -13,7 +22,7 @@ export { useOTP } from './hooks/useOTP';
 export { useKeyboard } from './hooks/useKeyboard';
 export { useAnalytics } from './hooks/useAnalytics';
 
-// Core UI Components
+// Core UI Components (Shadcn-Inspired)
 export { Text, TextVariant, SemanticColor } from './components/Text';
 export { Button } from './components/Button';
 export { Input } from './components/Input';

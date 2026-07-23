@@ -153,7 +153,7 @@ export default function OnboardingScreen() {
     let nextScreen: any = 'ob1';
     if (currentScreen === 'ob1') nextScreen = 'ob2';
     else if (currentScreen === 'ob2') nextScreen = 'ob3';
-    else nextScreen = 'ob1';
+    else nextScreen = 'auth';
 
     const timer = setTimeout(() => {
       go(nextScreen);

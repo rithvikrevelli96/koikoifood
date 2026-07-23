@@ -48,23 +48,23 @@ export function Text({
   ...props
 }: TextProps) {
   let isDark = false;
+  let t: any = null;
   try {
     const context = useAppContext();
     if (context) {
       isDark = context.isDark;
+      if (context.t) t = context.t;
     }
   } catch (e) {}
 
-  const currentTheme = isDark ? theme.colors.dark : theme.colors.light;
+  const currentTheme = t || (isDark ? theme.colors.dark : theme.colors.light);
 
   // Resolve preset layout from theme typography tokens
   const variantStyle = theme.typography[variant] || theme.typography.body;
 
   // Resolve color dynamically from semantic tokens
-  const colorHex =
-    currentTheme[color as keyof typeof currentTheme] ||
-    (theme.colors[color as keyof typeof theme.colors] as string) ||
-    currentTheme.text;
+  const resolvedColor = currentTheme[color as keyof typeof currentTheme];
+  const colorHex: string = typeof resolvedColor === 'string' ? resolvedColor : currentTheme.text;
 
   return (
     <RNText

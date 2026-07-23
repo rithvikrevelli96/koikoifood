@@ -13,7 +13,6 @@ import {
   Modal
 } from '../../../design-system';
 import { validateField } from '../utils/validation';
-import { StepIndicator } from './StepIndicator';
 
 export function SetupStep1() {
   const { user, setUser, go, back, setToast } = useAppContext();
@@ -73,11 +72,11 @@ export function SetupStep1() {
   };
 
   return (
-    <PageLayout style={{ paddingHorizontal: 0 }} background="organic" backgroundVariant="onboarding">
+    <PageLayout style={{ paddingHorizontal: 0 }} background="organic">
       <ScrollableLayout contentContainerStyle={{ paddingHorizontal: theme.spacing.xxl, paddingVertical: theme.spacing.xl }}>
         
         {/* Header */}
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: theme.spacing.md }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: theme.spacing.lg }}>
           <Button
             onlyIcon
             variant="ghost"
@@ -90,12 +89,12 @@ export function SetupStep1() {
           </View>
         </View>
 
-        <StepIndicator currentStep={1} />
-
-        <Text variant="headingM" color="primary" style={{ marginTop: theme.spacing.sm }}>Create Your Profile</Text>
-        <Text variant="caption" color="sub" style={{ marginTop: 4 }}>
-          Help us personalize your Koi Koi dabba experience.
-        </Text>
+        <View style={{ marginBottom: theme.spacing.xl }}>
+          <Text variant="headingM" color="primary">Create Your Profile</Text>
+          <Text variant="caption" color="sub" style={{ marginTop: 4 }}>
+            Help us personalize your Koi Koi dabba experience.
+          </Text>
+        </View>
 
         {/* Profile Avatar Toggler */}
         <View style={{ alignItems: 'center', marginVertical: theme.spacing.xl }}>
@@ -149,16 +148,10 @@ export function SetupStep1() {
             value={user.name}
             onChangeText={val => handleFieldChange('name', val.replace(/[^a-zA-Z\s]/g, ''), 'name')}
             onBlur={() => handleFieldBlur('name', user.name)}
-            placeholder="Bhargav"
+            placeholder="e.g. Bhargav"
             error={errors.name}
             success={touched.name && !errors.name && user.name.trim().length >= 3}
             shakeTrigger={!!errors.name}
-          />
-
-          <Input
-            label="MOBILE NUMBER (READ ONLY)"
-            value={user.phone}
-            editable={false}
           />
 
           <Input
@@ -167,7 +160,7 @@ export function SetupStep1() {
             value={user.email}
             onChangeText={val => handleFieldChange('email', val.replace(/[^a-zA-Z0-9@._+-]/g, ''), 'email')}
             onBlur={() => handleFieldBlur('email', user.email)}
-            placeholder="bhargav@koikoi.in"
+            placeholder="e.g. bhargav@gmail.com"
             keyboardType="email-address"
             error={errors.email}
             success={touched.email && !errors.email && user.email.trim().length > 0}
@@ -228,23 +221,25 @@ export function SetupStep1() {
             Are you sure you want to go back? Any setup information entered will be discarded.
           </Text>
           <View style={{ flexDirection: 'row', gap: theme.spacing.md, width: '100%' }}>
-            <Button
-              title="Keep Editing"
-              variant="outline"
-              size="medium"
-              style={{ flex: 1 }}
-              onPress={() => setShowDiscardModal(false)}
-            />
-            <Button
-              title="Discard"
-              variant="destructive"
-              size="medium"
-              style={{ flex: 1 }}
-              onPress={() => {
-                setShowDiscardModal(false);
-                back();
-              }}
-            />
+            <View style={{ flex: 1 }}>
+              <Button
+                title="Keep Editing"
+                variant="outline"
+                size="medium"
+                onPress={() => setShowDiscardModal(false)}
+              />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Button
+                title="Discard"
+                variant="destructive"
+                size="medium"
+                onPress={() => {
+                  setShowDiscardModal(false);
+                  back();
+                }}
+              />
+            </View>
           </View>
         </View>
       </Modal>

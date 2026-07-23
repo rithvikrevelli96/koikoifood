@@ -20,7 +20,8 @@ export default function SettingsScreen() {
     back,
     setToast,
     smartNotifications,
-    setSmartNotifications
+    setSmartNotifications,
+    t,
   } = useAppContext();
 
   // Local measurement units state
@@ -43,34 +44,34 @@ export default function SettingsScreen() {
   return (
     <PageLayout style={{ paddingHorizontal: 0 }} background="organic" backgroundVariant="minimal">
       {/* HEADER */}
-      <View style={styles.headerContainer}>
+      <View style={[styles.headerContainer, { backgroundColor: t.surface, borderColor: t.border }]}>
         <Button
           onlyIcon
           variant="ghost"
           size="medium"
           onPress={back}
-          iconLeft={<ArrowLeft size={16} color={theme.colors.light.text} />}
-          style={styles.backBtn}
+          iconLeft={<ArrowLeft size={16} color={t.text} />}
+          style={[styles.backBtn, { backgroundColor: t.surface }] as any}
         />
-        <Text style={styles.headerTitle}>Settings</Text>
+        <Text style={[styles.headerTitle, { color: t.primary }]}>Settings</Text>
       </View>
 
       <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         
         {/* HERO SECTION */}
         <View style={styles.heroSection}>
-          <Text style={styles.heroSubTitle}>PREFERENCES</Text>
-          <Text style={styles.heroMainTitle}>Control Visuals & Units</Text>
-          <Text style={styles.heroDesc}>
+          <Text style={[styles.heroSubTitle, { color: t.secondary }]}>PREFERENCES</Text>
+          <Text style={[styles.heroMainTitle, { color: t.text }]}>Control Visuals & Units</Text>
+          <Text style={[styles.heroDesc, { color: t.sub }]}>
             Customize the theme interface appearance, weight measurement scales, and order notifications.
           </Text>
         </View>
 
         {/* Appearance Settings */}
         <View style={styles.sectionContainer}>
-          <Text style={styles.sectionTitle}>App Appearance</Text>
-          <InfoCard style={styles.cardWrapper}>
-            <Text style={styles.cardLabel}>Choose Theme</Text>
+          <Text style={[styles.sectionTitle, { color: t.text }]}>App Appearance</Text>
+          <InfoCard style={[styles.cardWrapper, { backgroundColor: t.card, borderColor: t.border }]}>
+            <Text style={[styles.cardLabel, { color: t.sub }]}>Choose Theme</Text>
             <View style={styles.themeRow}>
               {[
                 { key: 'light', label: 'Light ☀️' },
@@ -82,9 +83,12 @@ export default function SettingsScreen() {
                   <TouchableOpacity
                     key={item.key}
                     onPress={() => handleSelectTheme(item.key as any)}
-                    style={[styles.themeChip, isSelected ? styles.themeChipActive : undefined]}
+                    style={[
+                      styles.themeChip,
+                      { backgroundColor: isSelected ? t.primary : t.elevated, borderColor: isSelected ? t.primary : t.border }
+                    ]}
                   >
-                    <Text style={[styles.themeChipText, isSelected ? styles.themeChipTextActive : undefined] as any}>
+                    <Text style={{ fontFamily: theme.typography.bodyFamily, fontSize: 12.5, color: isSelected ? '#FFFFFF' : t.text, fontWeight: '700' }}>
                       {item.label}
                     </Text>
                   </TouchableOpacity>
@@ -96,48 +100,48 @@ export default function SettingsScreen() {
 
         {/* Units Configuration */}
         <View style={styles.sectionContainer}>
-          <Text style={styles.sectionTitle}>Measurement Units</Text>
-          <InfoCard style={styles.cardWrapper}>
+          <Text style={[styles.sectionTitle, { color: t.text }]}>Measurement Units</Text>
+          <InfoCard style={[styles.cardWrapper, { backgroundColor: t.card, borderColor: t.border }]}>
             <View style={styles.preferenceRow}>
               <View style={styles.prefTextCol}>
-                <Text style={styles.prefLabel}>Weight Scale</Text>
-                <Text style={styles.prefDesc}>Select weight units in profile</Text>
+                <Text style={[styles.prefLabel, { color: t.text }]}>Weight Scale</Text>
+                <Text style={[styles.prefDesc, { color: t.sub }]}>Select weight units in profile</Text>
               </View>
-              <View style={styles.toggleGroup}>
+              <View style={[styles.toggleGroup, { backgroundColor: t.elevated, borderColor: t.border }]}>
                 <TouchableOpacity
                   onPress={() => setWeightUnit('kg')}
-                  style={[styles.toggleBtn, weightUnit === 'kg' ? styles.toggleBtnActive : undefined]}
+                  style={[styles.toggleBtn, weightUnit === 'kg' && { backgroundColor: t.primary }]}
                 >
-                  <Text style={[styles.toggleBtnText, weightUnit === 'kg' ? styles.toggleBtnTextActive : undefined] as any}>KG</Text>
+                  <Text style={{ fontFamily: theme.typography.bodyFamily, fontSize: 11.5, color: weightUnit === 'kg' ? '#FFFFFF' : t.text, fontWeight: '700' }}>KG</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   onPress={() => setWeightUnit('lbs')}
-                  style={[styles.toggleBtn, weightUnit === 'lbs' ? styles.toggleBtnActive : undefined]}
+                  style={[styles.toggleBtn, weightUnit === 'lbs' && { backgroundColor: t.primary }]}
                 >
-                  <Text style={[styles.toggleBtnText, weightUnit === 'lbs' ? styles.toggleBtnTextActive : undefined] as any}>LBS</Text>
+                  <Text style={{ fontFamily: theme.typography.bodyFamily, fontSize: 11.5, color: weightUnit === 'lbs' ? '#FFFFFF' : t.text, fontWeight: '700' }}>LBS</Text>
                 </TouchableOpacity>
               </View>
             </View>
 
-            <View style={styles.divider} />
+            <View style={[styles.divider, { backgroundColor: t.divider }]} />
 
             <View style={styles.preferenceRow}>
               <View style={styles.prefTextCol}>
-                <Text style={styles.prefLabel}>Height Units</Text>
-                <Text style={styles.prefDesc}>Select height units in profile</Text>
+                <Text style={[styles.prefLabel, { color: t.text }]}>Height Units</Text>
+                <Text style={[styles.prefDesc, { color: t.sub }]}>Select height units in profile</Text>
               </View>
-              <View style={styles.toggleGroup}>
+              <View style={[styles.toggleGroup, { backgroundColor: t.elevated, borderColor: t.border }]}>
                 <TouchableOpacity
                   onPress={() => setHeightUnit('cm')}
-                  style={[styles.toggleBtn, heightUnit === 'cm' ? styles.toggleBtnActive : undefined]}
+                  style={[styles.toggleBtn, heightUnit === 'cm' && { backgroundColor: t.primary }]}
                 >
-                  <Text style={[styles.toggleBtnText, heightUnit === 'cm' ? styles.toggleBtnTextActive : undefined] as any}>CM</Text>
+                  <Text style={{ fontFamily: theme.typography.bodyFamily, fontSize: 11.5, color: heightUnit === 'cm' ? '#FFFFFF' : t.text, fontWeight: '700' }}>CM</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   onPress={() => setHeightUnit('ft')}
-                  style={[styles.toggleBtn, heightUnit === 'ft' ? styles.toggleBtnActive : undefined]}
+                  style={[styles.toggleBtn, heightUnit === 'ft' && { backgroundColor: t.primary }]}
                 >
-                  <Text style={[styles.toggleBtnText, heightUnit === 'ft' ? styles.toggleBtnTextActive : undefined] as any}>FT</Text>
+                  <Text style={{ fontFamily: theme.typography.bodyFamily, fontSize: 11.5, color: heightUnit === 'ft' ? '#FFFFFF' : t.text, fontWeight: '700' }}>FT</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -146,8 +150,8 @@ export default function SettingsScreen() {
 
         {/* Notification Settings */}
         <View style={styles.sectionContainer}>
-          <Text style={styles.sectionTitle}>Smart Alerts & Notifications</Text>
-          <InfoCard style={styles.cardWrapper}>
+          <Text style={[styles.sectionTitle, { color: t.text }]}>Smart Alerts & Notifications</Text>
+          <InfoCard style={[styles.cardWrapper, { backgroundColor: t.card, borderColor: t.border }]}>
             {[
               { key: 'orderUpdates', label: 'Delivery Updates', desc: 'Realtime live tracking notifications' },
               { key: 'meal', label: 'Meal Reminders', desc: 'Alerts to configure skipped lunches/dinners' },
@@ -157,17 +161,17 @@ export default function SettingsScreen() {
               const val = smartNotifications ? smartNotifications[item.key] : false;
               return (
                 <View key={item.key}>
-                  {idx > 0 && <View style={styles.divider} />}
+                  {idx > 0 && <View style={[styles.divider, { backgroundColor: t.divider }]} />}
                   <View style={styles.preferenceRow}>
                     <View style={styles.prefTextCol}>
-                      <Text style={styles.prefLabel}>{item.label}</Text>
-                      <Text style={styles.prefDesc}>{item.desc}</Text>
+                      <Text style={[styles.prefLabel, { color: t.text }]}>{item.label}</Text>
+                      <Text style={[styles.prefDesc, { color: t.sub }]}>{item.desc}</Text>
                     </View>
                     <Switch
                       value={val}
                       onValueChange={() => toggleNotification(item.key)}
-                      trackColor={{ false: '#E8E2D8', true: '#4B5D3A' }}
-                      thumbColor="#FCFAF6"
+                      trackColor={{ false: t.border, true: t.primary }}
+                      thumbColor={val ? '#FFFFFF' : t.sub}
                     />
                   </View>
                 </View>
@@ -175,6 +179,7 @@ export default function SettingsScreen() {
             })}
           </InfoCard>
         </View>
+
 
       </ScrollView>
 
@@ -192,19 +197,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderBottomWidth: 1,
-    borderColor: theme.colors.light.border,
-    backgroundColor: theme.colors.light.surface,
   },
   backBtn: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: theme.colors.light.surface,
   },
   headerTitle: {
     fontFamily: theme.typography.headingFamily,
     fontSize: 18,
-    color: '#4B5D3A',
     fontWeight: '700',
     marginLeft: 16,
     textTransform: 'uppercase',
@@ -220,7 +221,6 @@ const styles = StyleSheet.create({
   heroSubTitle: {
     fontFamily: theme.typography.bodyFamily,
     fontSize: 11,
-    color: '#C96B3C',
     fontWeight: '800',
     letterSpacing: 1.5,
     textTransform: 'uppercase',
@@ -228,14 +228,12 @@ const styles = StyleSheet.create({
   heroMainTitle: {
     fontFamily: theme.typography.headingFamily,
     fontSize: 26,
-    color: '#1F1F1F',
     fontWeight: '800',
     marginTop: 4,
   },
   heroDesc: {
     fontFamily: theme.typography.bodyFamily,
     fontSize: 13.5,
-    color: '#8A857B',
     lineHeight: 19,
     marginTop: 8,
   },
@@ -246,7 +244,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontFamily: theme.typography.headingFamily,
     fontSize: 15,
-    color: '#1F1F1F',
     fontWeight: '700',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -255,14 +252,11 @@ const styles = StyleSheet.create({
   cardWrapper: {
     padding: 16,
     borderRadius: 20,
-    backgroundColor: '#F4EFE6',
     borderWidth: 1,
-    borderColor: '#E8E2D8',
   },
   cardLabel: {
     fontFamily: theme.typography.bodyFamily,
     fontSize: 13.5,
-    color: '#8A857B',
     fontWeight: '700',
     marginBottom: 12,
   },
@@ -275,18 +269,12 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 10,
     borderWidth: 1.5,
-    borderColor: '#E8E2D8',
-    backgroundColor: '#FCFAF6',
     alignItems: 'center',
   },
-  themeChipActive: {
-    backgroundColor: '#4B5D3A',
-    borderColor: '#4B5D3A',
-  },
+  themeChipActive: {},
   themeChipText: {
     fontFamily: theme.typography.bodyFamily,
     fontSize: 12.5,
-    color: '#1F1F1F',
     fontWeight: '700',
   },
   themeChipTextActive: {
@@ -305,35 +293,28 @@ const styles = StyleSheet.create({
   prefLabel: {
     fontFamily: theme.typography.bodyFamily,
     fontSize: 14,
-    color: '#1F1F1F',
     fontWeight: '700',
   },
   prefDesc: {
     fontFamily: theme.typography.bodyFamily,
     fontSize: 11.5,
-    color: '#8A857B',
     marginTop: 2,
   },
   toggleGroup: {
     flexDirection: 'row',
-    backgroundColor: '#FCFAF6',
     borderRadius: 10,
     padding: 3,
     borderWidth: 1,
-    borderColor: '#E8E2D8',
   },
   toggleBtn: {
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 8,
   },
-  toggleBtnActive: {
-    backgroundColor: '#4B5D3A',
-  },
+  toggleBtnActive: {},
   toggleBtnText: {
     fontFamily: theme.typography.bodyFamily,
     fontSize: 11.5,
-    color: '#1F1F1F',
     fontWeight: '700',
   },
   toggleBtnTextActive: {
@@ -341,7 +322,6 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: 1,
-    backgroundColor: '#E8E2D8',
     marginVertical: 12,
   },
 });

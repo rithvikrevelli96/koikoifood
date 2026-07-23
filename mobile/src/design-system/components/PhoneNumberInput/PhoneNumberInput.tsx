@@ -6,10 +6,11 @@ import {
   TextInput,
   TouchableOpacity,
   ActivityIndicator,
+  ScrollView,
+  Modal,
 } from 'react-native';
 import { theme } from '../../theme';
-import { Country } from '../../constants/countries';
-import { CountryPickerBottomSheet } from '../CountryPickerBottomSheet';
+import { Country, COUNTRIES } from '../../constants/countries';
 
 interface PhoneNumberInputProps {
   value: string;
@@ -36,10 +37,18 @@ export const PhoneNumberInput = React.memo(({
 }: PhoneNumberInputProps) => {
   const [isFocused, setIsFocused] = useState(false);
   const [isPickerVisible, setIsPickerVisible] = useState(false);
+  const selectorRef = React.useRef<any>(null);
+  const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0 });
 
   const handleSelectorPress = () => {
     if (!disabled && editable) {
-      setIsPickerVisible(true);
+      selectorRef.current?.measure((x: number, y: number, width: number, height: number, pageX: number, pageY: number) => {
+        // Fallback for some Android cases where measure might return 0
+        const topPos = pageY > 0 ? pageY + height : 200; 
+        const leftPos = pageX > 0 ? pageX : 20;
+        setDropdownPos({ top: topPos, left: leftPos });
+        setIsPickerVisible(true);
+      });
     }
   };
 
@@ -61,8 +70,10 @@ export const PhoneNumberInput = React.memo(({
       >
         {/* Country Selector Button */}
         <TouchableOpacity
+          ref={selectorRef}
           style={styles.countrySelector}
           onPress={handleSelectorPress}
+          activeOpacity={0.7}
           disabled={!isInputEditable}
           accessibilityRole="button"
           accessibilityLabel={`Select country code, current is ${country.name} ${country.dialCode}`}
@@ -109,12 +120,41 @@ export const PhoneNumberInput = React.memo(({
       {/* Error Message */}
       {hasError && <Text style={styles.errorText}>{error}</Text>}
 
-      {/* Country Picker Sheet */}
-      <CountryPickerBottomSheet
+      {/* Country Picker Dropdown */}
+      <Modal
         visible={isPickerVisible}
-        onClose={() => setIsPickerVisible(false)}
-        onSelect={onCountryChange}
-      />
+        transparent={true}
+        animationType="none"
+        onRequestClose={() => setIsPickerVisible(false)}
+      >
+        <TouchableOpacity 
+          style={StyleSheet.absoluteFill} 
+          activeOpacity={1} 
+          onPress={() => setIsPickerVisible(false)}
+        >
+          <View style={[styles.dropdownContainer, { top: dropdownPos.top, left: dropdownPos.left }]}>
+            <ScrollView
+              keyboardShouldPersistTaps="handled"
+              nestedScrollEnabled={true}
+            >
+              {COUNTRIES.map((item) => (
+                <TouchableOpacity
+                  key={item.code}
+                  style={styles.dropdownItem}
+                  onPress={() => {
+                    onCountryChange(item);
+                    setIsPickerVisible(false);
+                  }}
+                >
+                  <Text style={styles.dropdownFlag}>{item.flag}</Text>
+                  <Text style={styles.dropdownDialCode}>{item.dialCode}</Text>
+                  <Text style={styles.dropdownName} numberOfLines={1}>{item.name}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 });
@@ -123,6 +163,7 @@ const styles = StyleSheet.create({
   container: {
     marginBottom: theme.spacing.lg,
     width: '100%',
+    zIndex: 1,
   },
   label: {
     fontFamily: theme.typography.bodyFamily,
@@ -202,5 +243,46 @@ const styles = StyleSheet.create({
     color: theme.colors.error,
     marginTop: theme.spacing.xs,
     fontWeight: '600',
+  },
+  dropdownContainer: {
+    position: 'absolute',
+    width: 260,
+    maxHeight: 250,
+    backgroundColor: theme.colors.light.surface,
+    borderRadius: theme.radius.sm,
+    borderWidth: 1,
+    borderColor: theme.colors.light.border,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 8,
+    zIndex: 1000,
+    overflow: 'hidden',
+  },
+  dropdownItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.light.border,
+  },
+  dropdownFlag: {
+    fontSize: 18,
+    marginRight: theme.spacing.sm,
+  },
+  dropdownDialCode: {
+    fontFamily: theme.typography.bodyFamily,
+    fontSize: 14,
+    fontWeight: '700',
+    color: theme.colors.light.text,
+    width: 50,
+  },
+  dropdownName: {
+    fontFamily: theme.typography.bodyFamily,
+    fontSize: 13,
+    color: theme.colors.light.muted,
+    flex: 1,
   },
 });

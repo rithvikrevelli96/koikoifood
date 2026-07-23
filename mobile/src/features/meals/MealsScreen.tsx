@@ -23,7 +23,8 @@ export default function MealsScreen() {
     setActiveMealIndex,
     setSelectedMealId,
     go,
-    isDark
+    isDark,
+    t,
   } = useAppContext();
 
   const weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
@@ -57,7 +58,8 @@ export default function MealsScreen() {
   /* ─── Premium Menu Card (alternating layout) ─── */
   const renderMenuItem = (item: Meal, index: number) => {
     const isEven = index % 2 === 0;
-    const typeColor = item.type === 'veg' ? '#4B5D3A' : '#C96B3C';
+    const typeColor = item.type === 'veg' ? t.veg.bg : t.nonVeg.bg;
+    const typeTextColor = item.type === 'veg' ? t.veg.text : t.nonVeg.text;
     const typeIcon = item.type === 'veg' ? '🌱' : '🍗';
 
     return (
@@ -78,8 +80,8 @@ export default function MealsScreen() {
           styles.plateContainer,
           isEven ? styles.plateLeft : styles.plateRight,
         ]}>
-          <View style={styles.plateShadow}>
-            <View style={styles.plateRing}>
+          <View style={[styles.plateShadow, { backgroundColor: isDark ? '#12100E' : '#1F1F1F' }]}>
+            <View style={[styles.plateRing, { borderColor: t.border }]}>
               <Image
                 source={{ uri: item.img }}
                 style={styles.plateImage}
@@ -88,8 +90,8 @@ export default function MealsScreen() {
             </View>
           </View>
           {/* Type badge on plate */}
-          <View style={[styles.typeBadgeOnPlate, { backgroundColor: typeColor }]}>
-            <Text style={styles.typeBadgeText}>{typeIcon}</Text>
+          <View style={[styles.typeBadgeOnPlate, { backgroundColor: typeColor, borderColor: t.card }]}>
+            <Text style={{ fontSize: 11, color: typeTextColor }}>{typeIcon}</Text>
           </View>
         </View>
 
@@ -98,25 +100,25 @@ export default function MealsScreen() {
           styles.menuTextContainer,
           isEven ? styles.menuTextRight : styles.menuTextLeft,
         ]}>
-          <Text style={styles.menuItemName}>{item.name}</Text>
-          <Text style={styles.menuItemDesc} numberOfLines={2}>{item.desc}</Text>
+          <Text style={[styles.menuItemName, { color: t.text }]}>{item.name}</Text>
+          <Text style={[styles.menuItemDesc, { color: t.sub }]} numberOfLines={2}>{item.desc}</Text>
           
           {/* Macros Row */}
           <View style={styles.macrosRow}>
-            <View style={styles.macroChip}>
-              <Flame size={10} color="#C96B3C" />
-              <Text style={styles.macroVal}>{item.cal}</Text>
+            <View style={[styles.macroChip, { backgroundColor: isDark ? 'rgba(122, 147, 104, 0.2)' : 'rgba(75, 93, 58, 0.08)' }]}>
+              <Flame size={10} color={t.primary} />
+              <Text style={[styles.macroVal, { color: t.primary }]}>{item.cal}</Text>
             </View>
-            <View style={styles.macroDot} />
-            <Text style={styles.macroLabel}>{item.protein}g prot</Text>
+            <View style={[styles.macroDot, { backgroundColor: t.border }]} />
+            <Text style={[styles.macroLabel, { color: t.sub }]}>{item.protein}g prot</Text>
           </View>
 
           {/* Price + Rating Row */}
           <View style={styles.priceRatingRow}>
-            <Text style={styles.menuItemPrice}>{item.price}</Text>
-            <View style={styles.ratingBadge}>
-              <Star size={10} color="#D9B65A" fill="#D9B65A" />
-              <Text style={styles.ratingText}>{item.rating}</Text>
+            <Text style={[styles.menuItemPrice, { color: t.secondary }]}>{item.price}</Text>
+            <View style={[styles.ratingBadge, { backgroundColor: isDark ? 'rgba(224, 194, 106, 0.18)' : 'rgba(217, 182, 90, 0.12)' }]}>
+              <Star size={10} color={t.accent} fill={t.accent} />
+              <Text style={[styles.ratingText, { color: t.accent }]}>{item.rating}</Text>
             </View>
           </View>
         </View>
@@ -127,11 +129,11 @@ export default function MealsScreen() {
   /* ─── Section Header ─── */
   const renderSectionHeader = (icon: React.ReactNode, label: string, color: string) => (
     <View style={styles.sectionHeaderRow}>
-      <View style={[styles.sectionIconCircle, { backgroundColor: color + '14' }]}>
+      <View style={[styles.sectionIconCircle, { backgroundColor: isDark ? 'rgba(122, 147, 104, 0.2)' : color + '14' }]}>
         {icon}
       </View>
-      <Text style={[styles.sectionHeaderText, { color }]}>{label}</Text>
-      <View style={[styles.sectionLine, { backgroundColor: color + '20' }]} />
+      <Text style={[styles.sectionHeaderText, { color: isDark ? t.text : color }]}>{label}</Text>
+      <View style={[styles.sectionLine, { backgroundColor: t.border }]} />
     </View>
   );
 
@@ -139,17 +141,17 @@ export default function MealsScreen() {
     <PageLayout style={{ paddingHorizontal: 0 }} background="organic" backgroundVariant="minimal">
       
       {/* ── Header ── */}
-      <View style={styles.headerContainer}>
+      <View style={[styles.headerContainer, { backgroundColor: t.bg }]}>
         <View>
-          <Text style={styles.headerTitle}>Daily Menu</Text>
-          <Text style={styles.headerSubtitle}>Fresh home-cooked meals, daily</Text>
+          <Text style={[styles.headerTitle, { color: t.text }]}>Daily Menu</Text>
+          <Text style={[styles.headerSubtitle, { color: t.sub }]}>Fresh home-cooked meals, daily</Text>
         </View>
         <TouchableOpacity
           onPress={() => go('notifications')}
-          style={styles.bellBtn}
+          style={[styles.bellBtn, { backgroundColor: t.surface, borderColor: t.border }]}
           activeOpacity={0.7}
         >
-          <Bell size={16} color="#1F1F1F" />
+          <Bell size={16} color={t.text} />
         </TouchableOpacity>
       </View>
 
@@ -164,13 +166,18 @@ export default function MealsScreen() {
               activeOpacity={0.7}
               style={[
                 styles.filterChip,
-                isActive && styles.filterChipActive,
+                {
+                  backgroundColor: isActive ? t.primary : t.surface,
+                  borderColor: isActive ? t.primary : t.border,
+                }
               ]}
             >
-              <Text style={[
-                styles.filterChipText,
-                isActive && styles.filterChipTextActive,
-              ] as any}>
+              <Text style={{
+                fontFamily: theme.typography.bodyFamily,
+                fontSize: 12.5,
+                color: isActive ? '#F8F6F2' : t.text,
+                fontWeight: '700',
+              }}>
                 {f === 'Veg' ? '🌱 Veg' : f === 'Non-Veg' ? '🍗 Non-Veg' : '🍱 All'}
               </Text>
             </TouchableOpacity>
@@ -194,14 +201,19 @@ export default function MealsScreen() {
                 activeOpacity={0.7}
                 style={[
                   styles.dayChip,
-                  isActive && styles.dayChipActive,
+                  {
+                    backgroundColor: isActive ? t.primary : t.card,
+                    borderColor: isActive ? t.primary : t.border,
+                  }
                 ]}
               >
-                <Text style={[
-                  styles.dayChipText,
-                  isActive && styles.dayChipTextActive,
-                ] as any}>
-                  {day === 'All Menu' ? 'All' : day.slice(0, 3)}
+                <Text style={{
+                  fontFamily: theme.typography.bodyFamily,
+                  fontSize: 12,
+                  color: isActive ? '#F8F6F2' : t.text,
+                  fontWeight: isActive ? '700' : '500',
+                }}>
+                  {day}
                 </Text>
               </TouchableOpacity>
             );
@@ -369,41 +381,43 @@ const styles = StyleSheet.create({
 
   /* ── Section ── */
   sectionContainer: {
-    paddingHorizontal: 16,
-    marginTop: 12,
+    paddingHorizontal: 20,
+    marginTop: 18,
   },
   sectionHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginBottom: 16,
+    gap: 10,
+    marginBottom: 18,
     paddingHorizontal: 4,
   },
   sectionIconCircle: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
   },
   sectionHeaderText: {
     fontFamily: theme.typography.headingFamily,
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '800',
-    letterSpacing: 1.5,
+    letterSpacing: 1.8,
   },
   sectionLine: {
     flex: 1,
     height: 1,
-    marginLeft: 8,
+    marginLeft: 10,
   },
 
   /* ── Menu Item (Alternating Plate Layout) ── */
   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 20,
-    gap: 14,
+    marginBottom: 24,
+    gap: 18,
+    padding: 18,
+    borderRadius: 28,
   },
   menuItemLeft: {
     flexDirection: 'row',
@@ -419,23 +433,23 @@ const styles = StyleSheet.create({
   plateLeft: {},
   plateRight: {},
   plateShadow: {
-    width: PLATE_SIZE,
-    height: PLATE_SIZE,
-    borderRadius: PLATE_SIZE / 2,
-    backgroundColor: '#1F1F1F',
+    width: PLATE_SIZE + 10,
+    height: PLATE_SIZE + 10,
+    borderRadius: (PLATE_SIZE + 10) / 2,
+    backgroundColor: '#000000',
     padding: 6,
-    elevation: 8,
-    shadowColor: '#1F1F1F',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 12,
+    elevation: 10,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.28,
+    shadowRadius: 16,
   },
   plateRing: {
     flex: 1,
-    borderRadius: PLATE_SIZE / 2,
+    borderRadius: (PLATE_SIZE + 10) / 2,
     overflow: 'hidden',
     borderWidth: 2,
-    borderColor: '#E8E2D8',
+    borderColor: '#3C362F',
   },
   plateImage: {
     width: '100%',
@@ -445,16 +459,16 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 4,
     right: 4,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: '#FCFAF6',
+    borderColor: '#24201C',
   },
   typeBadgeText: {
-    fontSize: 11,
+    fontSize: 12,
   },
 
   /* ── Menu Text ── */
@@ -470,38 +484,38 @@ const styles = StyleSheet.create({
   },
   menuItemName: {
     fontFamily: theme.typography.headingFamily,
-    fontSize: 15,
+    fontSize: 18,
     color: '#1F1F1F',
-    fontWeight: '700',
-    lineHeight: 20,
+    fontWeight: '800',
+    lineHeight: 24,
   },
   menuItemDesc: {
     fontFamily: theme.typography.bodyFamily,
-    fontSize: 11.5,
+    fontSize: 13,
     color: '#8A857B',
-    lineHeight: 16,
-    marginTop: 3,
+    lineHeight: 19,
+    marginTop: 4,
   },
 
   /* ── Macros ── */
   macrosRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    marginTop: 8,
+    gap: 8,
+    marginTop: 10,
   },
   macroChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 3,
-    backgroundColor: 'rgba(201,107,60,0.08)',
-    paddingHorizontal: 7,
-    paddingVertical: 3,
-    borderRadius: 6,
+    gap: 4,
+    backgroundColor: 'rgba(201,107,60,0.12)',
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    borderRadius: 8,
   },
   macroVal: {
     fontFamily: theme.typography.monoFamily,
-    fontSize: 10.5,
+    fontSize: 11.5,
     color: '#C96B3C',
     fontWeight: '700',
   },

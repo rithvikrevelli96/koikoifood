@@ -30,6 +30,8 @@ export default function SubscribeFlowScreen() {
     go,
     switchTab,
     back,
+    t,
+    isDark,
   } = useAppContext();
 
   const [showSuccess, setShowSuccess] = useState(false);
@@ -58,39 +60,40 @@ export default function SubscribeFlowScreen() {
         <ScrollView contentContainerStyle={{ paddingHorizontal: 24, paddingVertical: 40, justifyContent: 'center', minHeight: '90%' }} showsVerticalScrollIndicator={false}>
           
           <View style={{ alignItems: 'center', marginBottom: 24 }}>
-            <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: 'rgba(75, 93, 58, 0.08)', justifyContent: 'center', alignItems: 'center', marginBottom: 16 }}>
-              <Check size={32} color="#4B5D3A" />
+            <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: isDark ? 'rgba(122, 147, 104, 0.2)' : 'rgba(75, 93, 58, 0.08)', justifyContent: 'center', alignItems: 'center', marginBottom: 16 }}>
+              <Check size={32} color={t.primary} />
             </View>
-            <Text style={{ fontFamily: theme.typography.bodyFamily, fontSize: 12, color: '#C96B3C', fontWeight: '800', letterSpacing: 1 }}>SUCCESS</Text>
-            <Text style={{ fontFamily: theme.typography.headingFamily, fontSize: 26, color: '#1F1F1F', fontWeight: '800', marginTop: 4, textAlign: 'center' }}>Subscription Activated</Text>
-            <Text style={{ fontFamily: theme.typography.bodyFamily, fontSize: 13.5, color: '#8A857B', marginTop: 6, textAlign: 'center' }}>Your plan details are now live in your account.</Text>
+            <Text style={{ fontFamily: theme.typography.bodyFamily, fontSize: 12, color: t.secondary, fontWeight: '800', letterSpacing: 1 }}>SUCCESS</Text>
+            <Text style={{ fontFamily: theme.typography.headingFamily, fontSize: 26, color: t.text, fontWeight: '800', marginTop: 4, textAlign: 'center' }}>Subscription Activated</Text>
+            <Text style={{ fontFamily: theme.typography.bodyFamily, fontSize: 13.5, color: t.sub, marginTop: 6, textAlign: 'center' }}>Your plan details are now live in your account.</Text>
           </View>
 
-          <HeroCard style={{ padding: 24, borderWidth: 1, borderColor: '#E8E2D8', backgroundColor: '#FCFAF6', borderRadius: 24 }}>
-            <Text style={{ fontFamily: theme.typography.headingFamily, fontSize: 18, color: '#4B5D3A', fontWeight: '700' }}>{selectedPlan.name} Subscription</Text>
-            <Text style={{ fontFamily: theme.typography.bodyFamily, fontSize: 13, color: '#8A857B', marginTop: 2 }}>{selectedPlan.sub}</Text>
+          <HeroCard style={{ padding: 24, borderWidth: 1, borderColor: t.border, backgroundColor: t.card, borderRadius: 24 }}>
+            <Text style={{ fontFamily: theme.typography.headingFamily, fontSize: 18, color: t.primary, fontWeight: '700' }}>{selectedPlan.name} Subscription</Text>
+            <Text style={{ fontFamily: theme.typography.bodyFamily, fontSize: 13, color: t.sub, marginTop: 2 }}>{selectedPlan.sub}</Text>
             
-            <View style={{ height: 1, backgroundColor: '#E8E2D8', marginVertical: 16 }} />
+            <View style={{ height: 1, backgroundColor: t.divider, marginVertical: 16 }} />
 
             <View style={{ gap: 12 }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                <Text style={{ fontFamily: theme.typography.bodyFamily, fontSize: 13, color: '#8A857B' }}>Plan Status</Text>
-                <Text style={{ fontFamily: theme.typography.bodyFamily, fontSize: 13, color: '#4B5D3A', fontWeight: '700' }}>Active 🟢</Text>
+                <Text style={{ fontFamily: theme.typography.bodyFamily, fontSize: 13, color: t.sub }}>Plan Status</Text>
+                <Text style={{ fontFamily: theme.typography.bodyFamily, fontSize: 13, color: t.primary, fontWeight: '700' }}>Active 🟢</Text>
               </View>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                <Text style={{ fontFamily: theme.typography.bodyFamily, fontSize: 13, color: '#8A857B' }}>Start Date</Text>
-                <Text style={{ fontFamily: theme.typography.bodyFamily, fontSize: 13, color: '#1F1F1F', fontWeight: '700' }}>Starts Tomorrow</Text>
+                <Text style={{ fontFamily: theme.typography.bodyFamily, fontSize: 13, color: t.sub }}>Start Date</Text>
+                <Text style={{ fontFamily: theme.typography.bodyFamily, fontSize: 13, color: t.text, fontWeight: '700' }}>Starts Tomorrow</Text>
               </View>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                <Text style={{ fontFamily: theme.typography.bodyFamily, fontSize: 13, color: '#8A857B' }}>Billing Amount</Text>
-                <Text style={{ fontFamily: theme.typography.monoFamily, fontSize: 13, color: '#1F1F1F', fontWeight: '700' }}>₹{totalDueNum}</Text>
+                <Text style={{ fontFamily: theme.typography.bodyFamily, fontSize: 13, color: t.sub }}>Billing Amount</Text>
+                <Text style={{ fontFamily: theme.typography.monoFamily, fontSize: 13, color: t.text, fontWeight: '700' }}>₹{totalDueNum}</Text>
               </View>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                <Text style={{ fontFamily: theme.typography.bodyFamily, fontSize: 13, color: '#8A857B' }}>Meals Included</Text>
-                <Text style={{ fontFamily: theme.typography.bodyFamily, fontSize: 13, color: '#1F1F1F', fontWeight: '700', textAlign: 'right', flex: 1, marginLeft: 12 }}>{selectedPlan.perks.slice(0, 2).join(', ')}</Text>
+                <Text style={{ fontFamily: theme.typography.bodyFamily, fontSize: 13, color: t.sub }}>Meals Included</Text>
+                <Text style={{ fontFamily: theme.typography.bodyFamily, fontSize: 13, color: t.text, fontWeight: '700', textAlign: 'right', flex: 1, marginLeft: 12 }}>{selectedPlan.perks.slice(0, 2).join(', ')}</Text>
               </View>
             </View>
           </HeroCard>
+
 
           <View style={{ marginTop: 32, gap: 12 }}>
             <Button

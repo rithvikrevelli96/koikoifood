@@ -37,6 +37,7 @@ import MealsScreen from './src/features/meals/MealsScreen';
 import MealDetailScreen from './src/features/meals/MealDetailScreen';
 import KitchenScreen from './src/features/kitchen/KitchenScreen';
 import TourBookingScreen from './src/features/kitchen/TourBookingScreen';
+import KitchenIngredientsScreen from './src/features/kitchen/KitchenIngredientsScreen';
 import ProfileScreen from './src/features/profile/ProfileScreen';
 import PersonalScreen from './src/features/profile/PersonalScreen';
 import HealthInfoScreen from './src/features/profile/HealthInfoScreen';
@@ -312,6 +313,8 @@ function AppContent() {
         return <SettingsScreen />;
       case 'about':
         return <AboutScreen />;
+      case 'kitchen_ingredients':
+        return <KitchenIngredientsScreen />;
       case 'tracking':
         return <TrackingScreen />;
       case 'notifications':

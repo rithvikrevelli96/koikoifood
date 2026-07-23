@@ -14,6 +14,8 @@ export default function ReferScreen() {
   const {
     back,
     setToast,
+    t,
+    isDark,
   } = useAppContext();
 
   const refCode = "KOI50REWARD";
@@ -21,14 +23,16 @@ export default function ReferScreen() {
   return (
     <PageLayout style={{ paddingHorizontal: 0 }}>
       {/* Top Header Bar */}
-      <View style={{ paddingHorizontal: 20, paddingTop: 16, paddingBottom: 12, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderColor: theme.colors.light.border, backgroundColor: theme.colors.light.surface }}>
+      <View style={{ paddingHorizontal: 20, paddingTop: 16, paddingBottom: 12, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderColor: t.border, backgroundColor: t.card }}>
         <Button
           onlyIcon
           variant="ghost"
           size="medium"
           onPress={back}
-          iconLeft={<ArrowLeft size={16} color={theme.colors.light.text} />}
-          style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: theme.colors.light.surface }}
+          iconLeft={<ArrowLeft size={16} color={t.text} />}
+          style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.surface }}
+          accessibilityLabel="Go back"
+          accessibilityRole="button"
         />
         <Text variant="title" color="primary" style={{ marginLeft: 16 }}>REFER & EARN</Text>
       </View>
@@ -53,10 +57,10 @@ export default function ReferScreen() {
           </View>
 
           <View style={{
-            backgroundColor: theme.colors.light.surface,
+            backgroundColor: t.surface,
             borderRadius: 16,
             borderWidth: 1.5,
-            borderColor: theme.colors.light.border,
+            borderColor: t.border,
             paddingVertical: 12,
             paddingHorizontal: 20,
             width: '100%',

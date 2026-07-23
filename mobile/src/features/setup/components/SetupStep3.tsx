@@ -278,7 +278,7 @@ export function SetupStep3() {
                 value={user.height}
                 onChangeText={val => setUser((prev: any) => ({ ...prev, height: val.replace(/[^0-9.]/g, '') }))}
                 onBlur={() => handleFieldBlur('height', user.height)}
-                placeholder="178"
+                placeholder="e.g. 172"
                 error={errors.height}
                 keyboardType="numeric"
                 containerStyle={{ flex: 1 }}
@@ -290,7 +290,7 @@ export function SetupStep3() {
                 value={user.weight}
                 onChangeText={val => setUser((prev: any) => ({ ...prev, weight: val.replace(/[^0-9.]/g, '') }))}
                 onBlur={() => handleFieldBlur('weight', user.weight)}
-                placeholder="74"
+                placeholder="e.g. 68"
                 error={errors.weight}
                 keyboardType="numeric"
                 containerStyle={{ flex: 1 }}
@@ -302,7 +302,7 @@ export function SetupStep3() {
                 value={goalWeight}
                 onChangeText={val => setGoalWeight(val.replace(/[^0-9.]/g, ''))}
                 onBlur={() => handleFieldBlur('goalWeight', goalWeight)}
-                placeholder="70"
+                placeholder="e.g. 65"
                 error={errors.goalWeight}
                 keyboardType="numeric"
                 containerStyle={{ flex: 1 }}

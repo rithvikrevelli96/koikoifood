@@ -6,5 +6,12 @@
     "jsx": "react-native",
     "moduleResolution": "bundler",
     "skipLibCheck": true
-  }
+  },
+  "exclude": [
+    "node_modules",
+    "babel.config.js",
+    "metro.config.js",
+    "dist",
+    "build"
+  ]
 }

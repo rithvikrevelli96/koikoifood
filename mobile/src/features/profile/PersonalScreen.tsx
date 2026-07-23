@@ -17,6 +17,7 @@ export default function PersonalScreen() {
     setUser,
     back,
     setToast,
+    t,
   } = useAppContext();
 
   // Validations Local State
@@ -92,14 +93,16 @@ export default function PersonalScreen() {
   return (
     <PageLayout style={{ paddingHorizontal: 0 }} background="organic" backgroundVariant="clean">
       {/* Top Header Bar */}
-      <View style={{ paddingHorizontal: 20, paddingTop: 16, paddingBottom: 12, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderColor: theme.colors.light.border, backgroundColor: theme.colors.light.surface }}>
+      <View style={{ paddingHorizontal: 20, paddingTop: 16, paddingBottom: 12, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderColor: t.border, backgroundColor: t.card }}>
         <Button
           onlyIcon
           variant="ghost"
           size="medium"
           onPress={back}
-          iconLeft={<ArrowLeft size={16} color={theme.colors.light.text} />}
-          style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: theme.colors.light.surface }}
+          iconLeft={<ArrowLeft size={16} color={t.text} />}
+          style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.surface }}
+          accessibilityLabel="Go back"
+          accessibilityRole="button"
         />
         <Text variant="title" color="primary" style={{ marginLeft: 16 }}>EDIT PROFILE</Text>
       </View>
@@ -112,9 +115,9 @@ export default function PersonalScreen() {
               width: 90,
               height: 90,
               borderRadius: 45,
-              backgroundColor: theme.colors.light.surface,
+              backgroundColor: t.surface,
               borderWidth: 2,
-              borderColor: theme.colors.light.border,
+              borderColor: t.border,
               justifyContent: 'center',
               alignItems: 'center',
               position: 'relative',

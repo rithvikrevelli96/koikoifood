@@ -17,7 +17,9 @@ export default function FinancesScreen() {
   const {
     back,
     setToast,
-    go
+    go,
+    t,
+    isDark
   } = useAppContext();
 
   const transactions = [
@@ -43,23 +45,25 @@ export default function FinancesScreen() {
   return (
     <PageLayout style={{ paddingHorizontal: 0 }} background="organic" backgroundVariant="minimal">
       {/* HEADER */}
-      <View style={styles.headerContainer}>
+      <View style={[styles.headerContainer, { borderColor: t.border, backgroundColor: t.card }]}>
         <Button
           onlyIcon
           variant="ghost"
           size="medium"
           onPress={back}
-          iconLeft={<ArrowLeft size={16} color={theme.colors.light.text} />}
-          style={styles.backBtn}
+          iconLeft={<ArrowLeft size={16} color={t.text} />}
+          style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.surface }}
+          accessibilityLabel="Go back"
+          accessibilityRole="button"
         />
-        <Text style={styles.headerTitle}>Finances & Loyalty</Text>
+        <Text style={[styles.headerTitle, { color: t.text }]}>Finances & Loyalty</Text>
       </View>
 
       <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         
         {/* HERO SECTION - WALLET */}
-        <View style={styles.heroSection}>
-          <HeroCard style={styles.walletHeroCard}>
+        <View style={styles.sectionContainer}>
+          <HeroCard style={{ padding: 24, borderRadius: 24, backgroundColor: t.primary, borderWidth: 0 }}>
             <View style={styles.walletHeaderRow}>
               <View style={styles.walletTitleCol}>
                 <Wallet size={20} color="#FFFFFF" />
@@ -77,14 +81,14 @@ export default function FinancesScreen() {
                 title="Add Money"
                 variant="primary"
                 size="medium"
-                style={styles.walletBtnPrimary}
+                style={{ flex: 1, backgroundColor: t.secondary, borderColor: t.secondary, height: 46 }}
                 onPress={() => setToast('💳 Payment gateway simulation completed.')}
               />
               <Button
                 title="Refund to Bank"
                 variant="outline"
                 size="medium"
-                style={styles.walletBtnOutline}
+                style={{ flex: 1, borderColor: '#FFFFFF', borderWidth: 1.5, height: 46 }}
                 onPress={() => setToast('💸 Refund request initiated successfully.')}
               />
             </View>
@@ -93,24 +97,24 @@ export default function FinancesScreen() {
 
         {/* LOYALTY REWARDS SECTION */}
         <View style={styles.sectionContainer}>
-          <Text style={styles.sectionTitle}>Rewards & Streaks</Text>
-          <Card style={styles.rewardsCard}>
+          <Text style={[styles.sectionTitle, { color: t.text }]}>Rewards & Streaks</Text>
+          <Card style={{ padding: 20, backgroundColor: t.card, borderColor: t.border, borderRadius: 20 }}>
             <View style={styles.rewardsRow}>
               <View>
-                <Text style={styles.pointsLabel}>Loyalty Balance</Text>
-                <Text style={styles.pointsValue}>1,250 pts</Text>
-                <Text style={styles.pointsSub}>Gold Tier Member</Text>
+                <Text style={[styles.pointsLabel, { color: t.sub }]}>Loyalty Balance</Text>
+                <Text style={[styles.pointsValue, { color: t.text }]}>1,250 pts</Text>
+                <Text style={[styles.pointsSub, { color: t.primary }]}>Gold Tier Member</Text>
               </View>
-              <View style={styles.rewardsIconWrapper}>
-                <Gift size={24} color="#C96B3C" />
+              <View style={[styles.rewardsIconWrapper, { backgroundColor: t.surface, borderColor: t.border }]}>
+                <Gift size={24} color={t.secondary} />
               </View>
             </View>
             
             {/* Milestone tracker */}
-            <View style={styles.milestoneBlock}>
-              <Text style={styles.milestoneText}>⭐ 250 more points to Platinum</Text>
-              <View style={styles.progressBarTrack}>
-                <View style={[styles.progressBarFill, { width: '83%', backgroundColor: '#D9B65A' }]} />
+            <View style={[styles.milestoneBlock, { backgroundColor: t.surface, borderColor: t.border }]}>
+              <Text style={[styles.milestoneText, { color: t.text }]}>⭐ 250 more points to Platinum</Text>
+              <View style={[styles.progressBarTrack, { backgroundColor: t.border }]}>
+                <View style={[styles.progressBarFill, { width: '83%', backgroundColor: t.accent }]} />
               </View>
             </View>
 
@@ -125,18 +129,18 @@ export default function FinancesScreen() {
 
         {/* REFERRAL REWARDS SECTION */}
         <View style={styles.sectionContainer}>
-          <Text style={styles.sectionTitle}>Refer & Earn</Text>
-          <InfoCard style={styles.referCard}>
+          <Text style={[styles.sectionTitle, { color: t.text }]}>Refer & Earn</Text>
+          <InfoCard style={{ padding: 18, borderRadius: 20, backgroundColor: t.card, borderColor: t.border }}>
             <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center', marginBottom: 12 }}>
-              <Share2 size={22} color="#4B5D3A" />
-              <Text style={styles.referTitle}>Share the Goodness</Text>
+              <Share2 size={22} color={t.primary} />
+              <Text style={[styles.referTitle, { color: t.text }]}>Share the Goodness</Text>
             </View>
-            <Text style={styles.referDesc}>
-              Both you and your referred friend get <Text style={{ color: '#C96B3C', fontWeight: 'bold' }}>50 rewards coins</Text> (₹50 value) instantly when they complete their first monthly checkout!
+            <Text style={[styles.referDesc, { color: t.sub }]}>
+              Both you and your referred friend get <Text style={{ color: t.secondary, fontWeight: 'bold' }}>50 rewards coins</Text> (₹50 value) instantly when they complete their first monthly checkout!
             </Text>
-            <View style={styles.codeContainer}>
-              <Text style={styles.codeLabel}>YOUR UNIQUE CODE</Text>
-              <Text style={styles.codeText}>{refCode}</Text>
+            <View style={[styles.codeContainer, { backgroundColor: t.surface, borderColor: t.border }]}>
+              <Text style={[styles.codeLabel, { color: t.sub }]}>YOUR UNIQUE CODE</Text>
+              <Text style={[styles.codeText, { color: t.primary }]}>{refCode}</Text>
             </View>
             <View style={{ flexDirection: 'row', gap: 12, marginTop: 12 }}>
               <Button
@@ -152,7 +156,7 @@ export default function FinancesScreen() {
                 title="Share Link"
                 variant="primary"
                 size="small"
-                style={{ flex: 1 }}
+                style={{ flex: 1, backgroundColor: t.primary, borderColor: t.primary }}
                 onPress={() => {
                   setToast('🔗 Share sheet simulation loaded.');
                 }}
@@ -163,24 +167,25 @@ export default function FinancesScreen() {
 
         {/* TRANSACTIONS SECTION */}
         <View style={styles.sectionContainer}>
-          <Text style={styles.sectionTitle}>Transaction History</Text>
-          <Card style={{ padding: 0, overflow: 'hidden', borderWidth: 1, borderColor: '#E8E2D8' }}>
+          <Text style={[styles.sectionTitle, { color: t.text }]}>Transaction History</Text>
+          <Card style={{ padding: 0, overflow: 'hidden', borderWidth: 1, borderColor: t.border, backgroundColor: t.card }}>
             {transactions.map((tx, idx) => (
               <View
                 key={tx.id}
                 style={[
                   styles.transactionItem,
+                  { backgroundColor: t.card, borderBottomColor: t.border },
                   idx === transactions.length - 1 ? { borderBottomWidth: 0 } : undefined
                 ]}
               >
                 <View style={{ flex: 1.8 }}>
-                  <Text style={styles.txTitle}>{tx.title}</Text>
-                  <Text style={styles.txMeta}>{tx.date} · {tx.status}</Text>
+                  <Text style={[styles.txTitle, { color: t.text }]}>{tx.title}</Text>
+                  <Text style={[styles.txMeta, { color: t.sub }]}>{tx.date} · {tx.status}</Text>
                 </View>
                 <View style={{ flex: 1.2, alignItems: 'flex-end' }}>
                   <Text style={[
                     styles.txAmount,
-                    { color: tx.amount.startsWith('+') ? '#4B5D3A' : '#C96B3C' }
+                    { color: tx.amount.startsWith('+') ? t.primary : t.secondary }
                   ]}>
                     {tx.amount}
                   </Text>
@@ -192,20 +197,20 @@ export default function FinancesScreen() {
 
         {/* COUPONS SECTION */}
         <View style={styles.sectionContainer}>
-          <Text style={styles.sectionTitle}>Available Coupons</Text>
+          <Text style={[styles.sectionTitle, { color: t.text }]}>Available Coupons</Text>
           <View style={{ gap: 12 }}>
             {coupons.map((coupon, idx) => (
-              <Card key={idx} style={styles.couponCard}>
+              <Card key={idx} style={{ padding: 16, borderRadius: 20, backgroundColor: t.card, borderColor: t.border }}>
                 <View style={styles.couponHeader}>
-                  <View style={styles.couponBadge}>
-                    <Tag size={12} color="#C96B3C" style={{ marginRight: 4 }} />
-                    <Text style={styles.couponBadgeText}>{coupon.code}</Text>
+                  <View style={[styles.couponBadge, { borderColor: t.secondary, backgroundColor: isDark ? 'rgba(215,132,86,0.15)' : 'rgba(201,107,60,0.08)' }]}>
+                    <Tag size={12} color={t.secondary} style={{ marginRight: 4 }} />
+                    <Text style={[styles.couponBadgeText, { color: t.secondary }]}>{coupon.code}</Text>
                   </View>
-                  <TouchableOpacity onPress={() => setToast(`📋 Code ${coupon.code} copied!`)}>
-                    <Text style={styles.couponCopyText}>COPY</Text>
+                  <TouchableOpacity onPress={() => setToast(`🎉 Coupon ${coupon.code} applied!`)}>
+                    <Text style={[styles.couponCopyText, { color: t.primary }]}>APPLY COUPON</Text>
                   </TouchableOpacity>
                 </View>
-                <Text style={styles.couponDesc}>{coupon.desc}</Text>
+                <Text style={[styles.couponDesc, { color: t.sub }]}>{coupon.desc}</Text>
               </Card>
             ))}
           </View>
@@ -213,27 +218,28 @@ export default function FinancesScreen() {
 
         {/* INVOICES SECTION */}
         <View style={styles.sectionContainer}>
-          <Text style={styles.sectionTitle}>Billing Invoices</Text>
-          <Card style={{ padding: 0, overflow: 'hidden', borderWidth: 1, borderColor: '#E8E2D8' }}>
+          <Text style={[styles.sectionTitle, { color: t.text }]}>Billing Invoices</Text>
+          <Card style={{ padding: 0, overflow: 'hidden', borderWidth: 1, borderColor: t.border, backgroundColor: t.card }}>
             {invoices.map((inv, idx) => (
               <TouchableOpacity
                 key={inv.id}
                 onPress={() => setToast(`📥 Downloading ${inv.id}...`)}
                 style={[
                   styles.invoiceItem,
+                  { backgroundColor: t.card, borderBottomColor: t.border },
                   idx === invoices.length - 1 ? { borderBottomWidth: 0 } : undefined
                 ]}
               >
                 <View style={styles.invoiceLeft}>
-                  <FileText size={18} color="#8A857B" />
+                  <FileText size={18} color={t.primary} />
                   <View>
-                    <Text style={styles.invoiceId}>{inv.id}</Text>
-                    <Text style={styles.invoiceDate}>{inv.date}</Text>
+                    <Text style={[styles.invoiceId, { color: t.text }]}>{inv.id}</Text>
+                    <Text style={[styles.invoiceDate, { color: t.sub }]}>{inv.date}</Text>
                   </View>
                 </View>
                 <View style={styles.invoiceRight}>
-                  <Text style={styles.invoiceAmount}>{inv.amount}</Text>
-                  <ChevronRight size={14} color="#8A857B" />
+                  <Text style={[styles.invoiceAmount, { color: t.text }]}>{inv.amount}</Text>
+                  <ChevronRight size={16} color={t.sub} />
                 </View>
               </TouchableOpacity>
             ))}
@@ -256,14 +262,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderBottomWidth: 1,
-    borderColor: theme.colors.light.border,
-    backgroundColor: theme.colors.light.surface,
   },
   backBtn: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: theme.colors.light.surface,
   },
   headerTitle: {
     fontFamily: theme.typography.headingFamily,

@@ -15,28 +15,25 @@ import {
 import { BottomTabNav } from '../../core/components/BottomTabNav';
 
 export default function HealthInfoScreen() {
-  const {
-    user,
-    back,
-    calorieCalc
-  } = useAppContext();
+  const { user, back, setToast, t, calorieCalc } = useAppContext();
 
-  // BMI calculations
-  const w = parseFloat(user.weight) || 74;
-  const h = (parseFloat(user.height) || 178) / 100;
-  const bmiVal = Math.round((w / (h * h)) * 10) / 10;
-
-  let bmiStatus = 'Healthy Weight';
-  let bmiColor = '#4B5D3A'; // olive
+  // Metric Calculation Logic
+  const weight = user.weight || 72;
+  const height = user.height || 178;
+  const heightM = height / 100;
+  const bmiVal = parseFloat((weight / (heightM * heightM)).toFixed(1));
+  
+  let bmiStatus = 'Optimal';
+  let bmiColor = t.primary;
   if (bmiVal < 18.5) {
     bmiStatus = 'Underweight';
-    bmiColor = '#D9B65A'; // gold
+    bmiColor = t.accent;
   } else if (bmiVal >= 25 && bmiVal < 30) {
     bmiStatus = 'Overweight';
-    bmiColor = '#C96B3C'; // orange
+    bmiColor = t.secondary;
   } else if (bmiVal >= 30) {
     bmiStatus = 'Obese';
-    bmiColor = '#C96B3C';
+    bmiColor = t.secondary;
   }
 
   const recommendations = [
@@ -48,36 +45,37 @@ export default function HealthInfoScreen() {
   return (
     <PageLayout style={{ paddingHorizontal: 0 }} background="organic" backgroundVariant="minimal">
       {/* HEADER */}
-      <View style={styles.headerContainer}>
+      <View style={[styles.headerContainer, { backgroundColor: t.surface, borderColor: t.border }]}>
         <Button
           onlyIcon
           variant="ghost"
           size="medium"
           onPress={back}
-          iconLeft={<ArrowLeft size={16} color={theme.colors.light.text} />}
-          style={styles.backBtn}
+          iconLeft={<ArrowLeft size={16} color={t.text} />}
+          style={[styles.backBtn, { backgroundColor: t.surface }] as any}
         />
-        <Text style={styles.headerTitle}>Today's Health</Text>
+        <Text style={[styles.headerTitle, { color: t.primary }]}>Today's Health</Text>
       </View>
 
       <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         
         {/* HERO SECTION - HEALTH SCORE */}
         <View style={styles.heroSection}>
-          <HeroCard style={styles.scoreHeroCard}>
+          <HeroCard style={[styles.scoreHeroCard, { backgroundColor: t.card, borderColor: t.border }]}>
             <View style={styles.scoreHeaderRow}>
               <View style={{ flex: 1 }}>
-                <Text style={styles.scoreSubLabel}>METRIC INDEX</Text>
-                <Text style={styles.scoreTitle}>Health Score</Text>
-                <Text style={styles.scoreDesc}>Your overall metabolic & activity wellness score is calculated daily.</Text>
+                <Text style={[styles.scoreSubLabel, { color: t.secondary }]}>METRIC INDEX</Text>
+                <Text style={[styles.scoreTitle, { color: t.text }]}>Health Score</Text>
+                <Text style={[styles.scoreDesc, { color: t.sub }]}>Your overall metabolic & activity wellness score is calculated daily.</Text>
               </View>
-              <ProgressRing pct={84} size={88} strokeW={7} color="#4B5D3A" label="84" theme={theme.colors.light} />
+              <ProgressRing pct={84} size={88} strokeW={7} color={t.primary} label="84" theme={t} />
             </View>
 
             <View style={styles.scoreBadgeRow}>
-              <View style={styles.onTrackChip}>
-                <CheckCircle2 size={12} color="#4B5D3A" style={{ marginRight: 4 }} />
-                <Text style={styles.onTrackText}>88% Goals Completed</Text>
+              <View style={[styles.onTrackChip, { backgroundColor: t.elevated, borderColor: t.border }]}>
+                <CheckCircle2 size={12} color={t.primary} style={{ marginRight: 4 }} />
+                <Text style={[styles.onTrackText, { color: t.primary }]}>88% Goals Completed</Text>
+
               </View>
               <Text style={styles.tierText}>⭐ Gold Level Tracker</Text>
             </View>
@@ -215,14 +213,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderBottomWidth: 1,
-    borderColor: theme.colors.light.border,
-    backgroundColor: theme.colors.light.surface,
   },
   backBtn: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: theme.colors.light.surface,
   },
   headerTitle: {
     fontFamily: theme.typography.headingFamily,

@@ -292,7 +292,7 @@ export function SetupStep2() {
               value={addressDetails}
               onChangeText={val => handleFieldChange('addressDetails', val, setAddressDetails)}
               onBlur={() => handleFieldBlur('addressDetails', addressDetails)}
-              placeholder="E.g. Floor, House no."
+              placeholder="e.g. Flat 4B, Floor 2, House no. 42"
               error={errors.addressDetails}
               success={touched.addressDetails && !errors.addressDetails && addressDetails.trim().length > 0}
               shakeTrigger={!!errors.addressDetails}
@@ -306,7 +306,7 @@ export function SetupStep2() {
                   value={receiverDetailsName}
                   onChangeText={val => handleFieldChange('recName', val, setReceiverDetailsName)}
                   onBlur={() => handleFieldBlur('recName', receiverDetailsName)}
-                  placeholder="Receiver's name"
+                  placeholder="e.g. Sophia Williams"
                   error={errors.recName}
                   success={touched.recName && !errors.recName && receiverDetailsName.trim().length >= 3}
                   shakeTrigger={!!errors.recName}
@@ -336,7 +336,7 @@ export function SetupStep2() {
               value={receiverDetailsPhone}
               onChangeText={val => handleFieldChange('recPhone', val, setReceiverDetailsPhone)}
               onBlur={() => handleFieldBlur('recPhone', receiverDetailsPhone)}
-              placeholder="10-digit number"
+              placeholder="e.g. 98765 43210"
               keyboardType="phone-pad"
               error={errors.recPhone}
               success={touched.recPhone && !errors.recPhone && receiverDetailsPhone.replace(/[^0-9]/g, '').length === 10}

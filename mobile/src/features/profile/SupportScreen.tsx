@@ -15,6 +15,7 @@ export default function SupportScreen() {
   const {
     back,
     setToast,
+    t,
   } = useAppContext();
 
   const [message, setMessage] = useState('');
@@ -40,14 +41,16 @@ export default function SupportScreen() {
   return (
     <PageLayout style={{ paddingHorizontal: 0 }}>
       {/* Top Header Bar */}
-      <View style={{ paddingHorizontal: 20, paddingTop: 16, paddingBottom: 12, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderColor: theme.colors.light.border, backgroundColor: theme.colors.light.surface }}>
+      <View style={{ paddingHorizontal: 20, paddingTop: 16, paddingBottom: 12, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderColor: t.border, backgroundColor: t.card }}>
         <Button
           onlyIcon
           variant="ghost"
           size="medium"
           onPress={back}
-          iconLeft={<ArrowLeft size={16} color={theme.colors.light.text} />}
-          style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: theme.colors.light.surface }}
+          iconLeft={<ArrowLeft size={16} color={t.text} />}
+          style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.surface }}
+          accessibilityLabel="Go back"
+          accessibilityRole="button"
         />
         <Text variant="title" color="primary" style={{ marginLeft: 16 }}>SUPPORT & HELP DESK</Text>
       </View>
@@ -94,14 +97,14 @@ export default function SupportScreen() {
               height: 120,
               borderRadius: 14,
               borderWidth: 1.5,
-              borderColor: errors.message ? theme.colors.error : theme.colors.light.border,
-              backgroundColor: theme.colors.light.surface,
+              borderColor: errors.message ? theme.colors.error : t.border,
+              backgroundColor: t.surface,
               padding: 12,
             }}>
               <TextInput
-                style={{ flex: 1, fontSize: 13.5, color: theme.colors.light.text, textAlignVertical: 'top' }}
+                style={{ flex: 1, fontSize: 13.5, color: t.text, textAlignVertical: 'top' }}
                 placeholder="Describe your query or complaint in details here..."
-                placeholderTextColor={theme.colors.light.muted}
+                placeholderTextColor={t.muted}
                 value={message}
                 onChangeText={val => { setMessage(val); setErrors(prev => ({ ...prev, message: '' })); }}
                 multiline

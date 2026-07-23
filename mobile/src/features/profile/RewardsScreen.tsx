@@ -15,6 +15,8 @@ export default function RewardsScreen() {
   const {
     back,
     setToast,
+    t,
+    isDark,
   } = useAppContext();
 
   const rewardsHistory = [
@@ -27,14 +29,16 @@ export default function RewardsScreen() {
   return (
     <PageLayout style={{ paddingHorizontal: 0 }}>
       {/* Top Header Bar */}
-      <View style={{ paddingHorizontal: 20, paddingTop: 16, paddingBottom: 12, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderColor: theme.colors.light.border, backgroundColor: theme.colors.light.surface }}>
+      <View style={{ paddingHorizontal: 20, paddingTop: 16, paddingBottom: 12, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderColor: t.border, backgroundColor: t.card }}>
         <Button
           onlyIcon
           variant="ghost"
           size="medium"
           onPress={back}
-          iconLeft={<ArrowLeft size={16} color={theme.colors.light.text} />}
-          style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: theme.colors.light.surface }}
+          iconLeft={<ArrowLeft size={16} color={t.text} />}
+          style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.surface }}
+          accessibilityLabel="Go back"
+          accessibilityRole="button"
         />
         <Text variant="title" color="primary" style={{ marginLeft: 16 }}>KOI KOI REWARDS</Text>
       </View>
@@ -61,32 +65,40 @@ export default function RewardsScreen() {
         {/* History log list */}
         <Text variant="label" color="text" style={{ fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 12 }}>Points History Log</Text>
         
-        <Card style={{ padding: 0, overflow: 'hidden' }}>
-          {rewardsHistory.map((item, idx) => (
-            <View
-              key={item.id}
-              style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                padding: 16,
-                borderBottomWidth: idx === rewardsHistory.length - 1 ? 0 : 1,
-                borderBottomColor: theme.colors.light.border,
-                backgroundColor: theme.colors.light.surface
-              }}
-            >
-              <View style={{ flex: 1.8 }}>
-                <Text variant="body" color="text" style={{ fontWeight: '700' }}>{item.title}</Text>
-                <Text variant="caption" color="sub" style={{ marginTop: 2 }}>{item.date}</Text>
+        {rewardsHistory.length === 0 ? (
+          <View style={{ alignItems: 'center', paddingVertical: 40 }}>
+            <Gift size={40} color={t.muted} />
+            <Text variant="body" color="sub" style={{ fontWeight: '700', marginTop: 16, textAlign: 'center' }}>No rewards yet</Text>
+            <Text variant="caption" color="muted" style={{ marginTop: 6, textAlign: 'center' }}>Subscribe to start earning Dabba Points.</Text>
+          </View>
+        ) : (
+          <Card style={{ padding: 0, overflow: 'hidden' }}>
+            {rewardsHistory.map((item, idx) => (
+              <View
+                key={item.id}
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: 16,
+                  borderBottomWidth: idx === rewardsHistory.length - 1 ? 0 : 1,
+                  borderBottomColor: t.border,
+                  backgroundColor: t.card,
+                }}
+              >
+                <View style={{ flex: 1.8 }}>
+                  <Text variant="body" color="text" style={{ fontWeight: '700' }}>{item.title}</Text>
+                  <Text variant="caption" color="sub" style={{ marginTop: 2 }}>{item.date}</Text>
+                </View>
+                <View style={{ flex: 1.2, alignItems: 'flex-end' }}>
+                  <Text variant="mono" color={item.pts.startsWith('+') ? 'primary' : 'secondary'} style={{ fontWeight: '800' }}>
+                    {item.pts}
+                  </Text>
+                </View>
               </View>
-              <View style={{ flex: 1.2, alignItems: 'flex-end' }}>
-                <Text variant="mono" color={item.pts.startsWith('+') ? 'primary' : 'secondary'} style={{ fontWeight: '800' }}>
-                  {item.pts}
-                </Text>
-              </View>
-            </View>
-          ))}
-        </Card>
+            ))}
+          </Card>
+        )}
       </ScrollView>
     </PageLayout>
   );

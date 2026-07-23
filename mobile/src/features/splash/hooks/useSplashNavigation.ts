@@ -49,12 +49,6 @@ export function useSplashNavigation({
     let target: any = NAVIGATION_CONFIG.defaultTarget;
     if (user && user.profileCompleted && user.locationCompleted) {
       target = 'home';
-    } else if (user && user.phone) {
-      if (user.profileCompleted) {
-        target = 'setup2';
-      } else {
-        target = 'setup1';
-      }
     } else {
       target = 'ob1';
     }

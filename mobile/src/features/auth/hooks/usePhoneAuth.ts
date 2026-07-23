@@ -23,7 +23,9 @@ export function usePhoneAuth() {
   } = useAppContext();
 
   // Active country selector state (defaults to India)
-  const [country, setCountry] = React.useState<Country>(COUNTRIES[0]);
+  const [country, setCountry] = React.useState<Country>(
+    COUNTRIES.find(c => c.code === 'IN') || COUNTRIES[0]
+  );
 
   // Local validation and interaction states
   const [errors, setErrors] = React.useState<Record<string, string>>({});
@@ -169,8 +171,8 @@ export function usePhoneAuth() {
           const updated = {
             ...prev,
             phone: country.dialCode + ' ' + mobileNumber,
-            name: prev.name || 'Bhargav',
-            email: prev.email || 'bhargav@koikoi.in',
+            name: '',
+            email: '',
           };
           const nextScreen = getNextScreen(updated);
           setTimeout(() => go(nextScreen), 100);

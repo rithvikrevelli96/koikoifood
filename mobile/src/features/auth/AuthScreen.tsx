@@ -85,8 +85,8 @@ export default function AuthScreen() {
                     const updated = {
                       ...prev,
                       phone: '+91 9876543210',
-                      name: 'Bhargav',
-                      email: 'bhargav@koikoi.in',
+                      name: '',
+                      email: '',
                       address: 'Plot 42, Jubilee Hills',
                       height: '178',
                       weight: '74',
@@ -280,8 +280,8 @@ export default function AuthScreen() {
                   const updated = {
                     ...prev,
                     phone: '',
-                    name: 'Amrita Sen',
-                    email: 'amrita.sen@icloud.com',
+                    name: '',
+                    email: '',
                     address: '',
                     height: '',
                     weight: '',

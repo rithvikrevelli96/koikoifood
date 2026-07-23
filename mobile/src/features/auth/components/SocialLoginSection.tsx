@@ -18,6 +18,7 @@ export const SocialLoginSection = React.memo(({
       <TouchableOpacity
         style={styles.button}
         onPress={onGooglePress}
+        activeOpacity={0.7}
         accessibilityRole="button"
         accessibilityLabel="Continue with Google"
       >
@@ -31,6 +32,7 @@ export const SocialLoginSection = React.memo(({
       <TouchableOpacity
         style={styles.button}
         onPress={onApplePress}
+        activeOpacity={0.7}
         accessibilityRole="button"
         accessibilityLabel="Continue with Apple"
       >

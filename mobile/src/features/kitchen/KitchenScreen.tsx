@@ -23,7 +23,9 @@ import {
   Sparkles,
   X,
   Building,
-  Check
+  Check,
+  Leaf,
+  ChevronRight
 } from 'lucide-react-native';
 import { useAppContext } from '../../app/context';
 import {
@@ -49,7 +51,7 @@ interface StationDetails {
 }
 
 export default function KitchenScreen() {
-  const { go, setToast, back } = useAppContext();
+  const { go, setToast, back, t, isDark } = useAppContext();
 
   // Modals State
   const [selectedStation, setSelectedStation] = useState<StationDetails | null>(null);
@@ -98,45 +100,45 @@ export default function KitchenScreen() {
       highlights: [
         'Vedic slow simmer retains heat-sensitive vitamins',
         'Natural earthenware & tin-lined heavy brass cookware',
-        'Simmered exclusively with A2 Bilona Cow Ghee'
+        '100% Cold-pressed groundnut & sesame oil'
       ]
     },
     {
       id: '04',
       num: '04',
-      title: 'Zero Contamination',
-      subtitle: 'Induction Steel Packaging',
+      title: 'Chapati Counter',
+      subtitle: 'Hand-Rolled Whole Wheat',
       status: 'Active',
-      image: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=500',
-      description: 'Hot meals are packed directly into food-grade 304 stainless steel dabbas inside a sterile HEPA-filtered cleanroom.',
+      image: 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=500',
+      description: 'Chapatis are freshly hand-rolled from single-origin stone-ground wheat flour and cooked on heavy iron tava with pure A2 cow ghee.',
       highlights: [
-        '100% 304 Surgical Grade Stainless Steel Dabbas',
-        'ISO Class 7 sterile cleanroom packaging line',
-        'Zero single-use plastic contact at any stage'
+        'Zero maida, preservatives, or dough softeners',
+        'Brushed with authentic pure A2 Desi Cow Ghee',
+        'Packed hot into thermally insulated steel dabbas'
       ]
     },
     {
       id: '05',
       num: '05',
-      title: 'Grain Milling',
-      subtitle: 'Laser-Sorted Rice & Dals',
-      status: 'Cleaning',
-      image: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=500',
-      description: 'Single-polished rice grains and organic pulses undergo multi-stage optical laser sorting and destoning prior to soaking.',
+      title: 'Steel Dabba Prep',
+      subtitle: 'Hot Thermally Insulated',
+      status: 'Active',
+      image: 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=500',
+      description: 'Meals are packed directly into food-grade 304 stainless steel containers designed to maintain high thermal heat retention naturally.',
       highlights: [
-        'Optical laser sorting removes damaged grains',
-        'Single-polished unbleached heritage rice',
-        'Soaked in RO purified water for optimal digestion'
+        '100% Stainless Steel (Zero single-use plastic contact)',
+        'Hermetic silicone seals for leakproof transit',
+        'Tamper-evident security lock tag'
       ]
     },
     {
       id: '06',
       num: '06',
-      title: 'Steam Wash',
-      subtitle: '120°C Thermal Sanitization',
-      status: 'Active',
-      image: 'https://images.unsplash.com/photo-1556910103-1c02745aae4d?w=500',
-      description: 'Every returned steel dabba undergoes high-pressure 120°C pressurized steam jet cleaning and UV-C sterilization before reuse.',
+      title: 'Dabba Washing',
+      subtitle: 'High Temp Steam Sterilization',
+      status: 'Cleaning',
+      image: 'https://images.unsplash.com/photo-1585837575652-267c041d77d4?w=500',
+      description: 'Returned dabbas pass through an automated 5-stage commercial dishwashing line featuring 120°C high-pressure steam sterilization.',
       highlights: [
         '120°C high-pressure steam jet sterilization',
         'UV-C light final sanitization tunnel',
@@ -185,28 +187,28 @@ export default function KitchenScreen() {
     <PageLayout style={{ paddingHorizontal: 0 }} background="organic" backgroundVariant="minimal">
       
       {/* TOP HEADER */}
-      <View style={styles.headerBar}>
+      <View style={[styles.headerBar, { backgroundColor: t.bg }]}>
         <TouchableOpacity
           onPress={back}
-          style={styles.headerIconButton}
+          style={[styles.headerIconButton, { backgroundColor: t.surface, borderColor: t.border }]}
           activeOpacity={0.7}
           accessibilityLabel="Go back"
         >
-          <ArrowLeft size={18} color="#1F1F1F" />
+          <ArrowLeft size={18} color={t.text} />
         </TouchableOpacity>
         
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-          <ShieldCheck size={18} color="#4B5D3A" />
-          <Text style={styles.headerTitle}>Kitchen Transparency</Text>
+          <ShieldCheck size={18} color={t.primary} />
+          <Text style={[styles.headerTitle, { color: t.text }]}>Kitchen Transparency</Text>
         </View>
 
         <TouchableOpacity
           onPress={() => setToast('KOI KOI Kitchen • Certified ISO 22000 & FSSAI A+ Grade')}
-          style={styles.headerIconButton}
+          style={[styles.headerIconButton, { backgroundColor: t.surface, borderColor: t.border }]}
           activeOpacity={0.7}
           accessibilityLabel="Kitchen Info"
         >
-          <Info size={18} color="#4B5D3A" />
+          <Info size={18} color={t.primary} />
         </TouchableOpacity>
       </View>
 
@@ -218,23 +220,21 @@ export default function KitchenScreen() {
 
         {/* 1. HERO SECTION & LIVE KITCHEN BUTTON */}
         <View style={styles.sectionContainer}>
-          <Card style={styles.heroCardLight}>
-            
-            {/* Top Badge & Time Row */}
+          <Card style={[styles.heroCardLight, { backgroundColor: t.card, borderColor: t.border }]}>
             <View style={styles.heroTopRow}>
-              <View style={styles.livePillLight}>
+              <View style={[styles.livePillLight, { backgroundColor: isDark ? 'rgba(217, 107, 60, 0.2)' : 'rgba(255, 235, 230, 1)' }]}>
                 <View style={styles.redDot} />
-                <Text style={styles.livePillTextLight}>LIVE KITCHEN</Text>
+                <Text style={[styles.livePillTextLight, { color: t.secondary }]}>LIVE KITCHEN</Text>
               </View>
-              <Text style={styles.heroTimeText}>5:00 AM – 2:00 PM IST</Text>
+              <Text style={[styles.heroTimeText, { color: t.sub }]}>5:00 AM – 2:00 PM IST</Text>
             </View>
 
             {/* Title & Status */}
-            <Text style={styles.heroTitleDark}>Watch Today's Kitchen</Text>
+            <Text style={[styles.heroTitleDark, { color: t.text }]}>Watch Today's Kitchen</Text>
             <View style={styles.heroStatusRow}>
-              <Text style={styles.heroWatchingText}>👁 1,248 watching</Text>
-              <Text style={styles.heroDotSep}>•</Text>
-              <Text style={styles.heroStatusLabel}>Status: <Text style={{ color: '#4B5D3A', fontWeight: '700' }}>Preparing Lunch</Text></Text>
+              <Text style={[styles.heroWatchingText, { color: t.secondary }]}>👁 1,248 watching</Text>
+              <Text style={[styles.heroDotSep, { color: t.sub }]}>•</Text>
+              <Text style={[styles.heroStatusLabel, { color: t.sub }]}>Status: <Text style={{ color: t.primary, fontWeight: '700' }}>Preparing Lunch</Text></Text>
             </View>
 
             {/* Video Preview Frame */}
@@ -251,7 +251,7 @@ export default function KitchenScreen() {
                 <TouchableOpacity
                   activeOpacity={0.88}
                   onPress={handleOpenLiveStream}
-                  style={styles.heroPlayCircle}
+                  style={[styles.heroPlayCircle, { backgroundColor: t.secondary }]}
                 >
                   <Play size={26} color="#FFFFFF" fill="#FFFFFF" style={{ marginLeft: 3 }} />
                 </TouchableOpacity>
@@ -262,7 +262,7 @@ export default function KitchenScreen() {
             <TouchableOpacity
               onPress={handleOpenLiveStream}
               activeOpacity={0.88}
-              style={styles.heroPrimaryButton}
+              style={[styles.heroPrimaryButton, { backgroundColor: t.secondary }]}
             >
               <Text style={styles.heroPrimaryButtonText}>Open Live Kitchen</Text>
               <ExternalLink size={18} color="#FFFFFF" strokeWidth={2.5} style={{ marginLeft: 8 }} />
@@ -271,35 +271,102 @@ export default function KitchenScreen() {
           </Card>
         </View>
 
+        {/* 1B. FEATURE 3 — KITCHEN TRANSPARENCY & HYGIENE WIDGET */}
+        <View style={styles.sectionContainer}>
+          <Card style={{ padding: 16, backgroundColor: t.card, borderColor: t.border, borderRadius: 20 }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Sparkles size={16} color={t.primary} />
+                <Text variant="body" color="text" style={{ fontWeight: '800' }}>Live Kitchen Audit Index</Text>
+              </View>
+              <View style={{ backgroundColor: isDark ? 'rgba(122,147,104,0.2)' : 'rgba(75,93,58,0.1)', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 }}>
+                <Text style={{ fontSize: 11, fontWeight: '800', color: t.primary }}>🌿 Freshly Prepared</Text>
+              </View>
+            </View>
+
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+              {/* Hygiene Rating */}
+              <View style={{ flex: 1, minWidth: 130, padding: 10, borderRadius: 12, backgroundColor: t.surface, borderWidth: 1, borderColor: t.border }}>
+                <Text variant="caption" color="sub" style={{ fontSize: 10, fontWeight: '700' }}>HYGIENE RATING</Text>
+                <Text variant="mono" color="primary" style={{ fontSize: 16, fontWeight: '900', marginTop: 2 }}>4.9 / 5.0 ⭐</Text>
+                <Text variant="caption" color="sub" style={{ fontSize: 9, marginTop: 1 }}>Certified Grade A+</Text>
+              </View>
+
+              {/* Prep Temperature */}
+              <View style={{ flex: 1, minWidth: 130, padding: 10, borderRadius: 12, backgroundColor: t.surface, borderWidth: 1, borderColor: t.border }}>
+                <Text variant="caption" color="sub" style={{ fontSize: 10, fontWeight: '700' }}>COOKING TEMP</Text>
+                <Text variant="mono" color="secondary" style={{ fontSize: 16, fontWeight: '900', marginTop: 2 }}>85°C</Text>
+                <Text variant="caption" color="sub" style={{ fontSize: 9, marginTop: 1 }}>Core Thermal Log</Text>
+              </View>
+
+              {/* Chef on Duty */}
+              <View style={{ flex: 1, minWidth: 130, padding: 10, borderRadius: 12, backgroundColor: t.surface, borderWidth: 1, borderColor: t.border }}>
+                <Text variant="caption" color="sub" style={{ fontSize: 10, fontWeight: '700' }}>CHEF ON DUTY</Text>
+                <Text variant="body" color="text" style={{ fontSize: 13, fontWeight: '800', marginTop: 2 }}>Chef Lakshmi</Text>
+                <Text variant="caption" color="sub" style={{ fontSize: 9, marginTop: 1 }}>Head Kitchen Master</Text>
+              </View>
+
+              {/* Packing Timestamp */}
+              <View style={{ flex: 1, minWidth: 130, padding: 10, borderRadius: 12, backgroundColor: t.surface, borderWidth: 1, borderColor: t.border }}>
+                <Text variant="caption" color="sub" style={{ fontSize: 10, fontWeight: '700' }}>PACKING TIME</Text>
+                <Text variant="mono" color="text" style={{ fontSize: 14, fontWeight: '900', marginTop: 2 }}>11:15 AM</Text>
+                <Text variant="caption" color="sub" style={{ fontSize: 9, marginTop: 1 }}>Thermal Sealed</Text>
+              </View>
+            </View>
+          </Card>
+        </View>
+
+        {/* 1C. KITCHEN INGREDIENTS & BRANDS ENTRY CARD */}
+        <View style={styles.sectionContainer}>
+          <TouchableOpacity
+            activeOpacity={0.85}
+            onPress={() => go('kitchen_ingredients')}
+            style={[styles.ingredientsEntryCard, { backgroundColor: t.card, borderColor: t.border }]}
+          >
+            <View style={{ flex: 1 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                <Leaf size={16} color={t.primary} />
+                <Text variant="body" color="primary" style={{ fontWeight: '800', fontSize: 13 }}>KITCHEN INGREDIENTS & BRANDS</Text>
+              </View>
+              <Text variant="caption" color="sub" style={{ lineHeight: 16 }}>
+                Know exactly what brands and ingredients go into every dabba.
+              </Text>
+            </View>
+            <View style={[styles.ingredientsArrowCircle, { backgroundColor: isDark ? 'rgba(75,93,58,0.2)' : 'rgba(75,93,58,0.08)' }]}>
+              <ChevronRight size={18} color={t.primary} />
+            </View>
+          </TouchableOpacity>
+        </View>
+
         {/* 2. QUICK METRICS BAR */}
         <View style={styles.sectionContainer}>
-          <InfoCard style={styles.metricsCard}>
+          <InfoCard style={[styles.metricsCard, { backgroundColor: t.card, borderColor: t.border }]}>
             <View style={styles.metricsRow}>
               
               <View style={styles.metricCol}>
-                <Text style={styles.metricNum}>3</Text>
-                <Text style={styles.metricLabel}>Live Cameras</Text>
+                <Text style={[styles.metricNum, { color: t.text }]}>3</Text>
+                <Text style={[styles.metricLabel, { color: t.sub }]}>Live Cameras</Text>
               </View>
 
-              <View style={styles.metricDivider} />
+              <View style={[styles.metricDivider, { backgroundColor: t.border }]} />
 
               <View style={styles.metricCol}>
-                <Text style={styles.metricNum}>428</Text>
-                <Text style={styles.metricLabel}>Today's Meals</Text>
+                <Text style={[styles.metricNum, { color: t.text }]}>428</Text>
+                <Text style={[styles.metricLabel, { color: t.sub }]}>Today's Meals</Text>
               </View>
 
-              <View style={styles.metricDivider} />
+              <View style={[styles.metricDivider, { backgroundColor: t.border }]} />
 
               <View style={styles.metricCol}>
-                <Text style={styles.metricNum}>26</Text>
-                <Text style={styles.metricLabel}>Kitchen Staff</Text>
+                <Text style={[styles.metricNum, { color: t.text }]}>26</Text>
+                <Text style={[styles.metricLabel, { color: t.sub }]}>Kitchen Staff</Text>
               </View>
 
-              <View style={styles.metricDivider} />
+              <View style={[styles.metricDivider, { backgroundColor: t.border }]} />
 
               <View style={styles.metricCol}>
-                <Text style={styles.metricNum}>99%</Text>
-                <Text style={styles.metricLabel}>Quality Score</Text>
+                <Text style={[styles.metricNum, { color: t.text }]}>99%</Text>
+                <Text style={[styles.metricLabel, { color: t.sub }]}>Quality Score</Text>
               </View>
 
             </View>
@@ -308,20 +375,20 @@ export default function KitchenScreen() {
 
         {/* 3. TODAY'S KITCHEN STATUS */}
         <View style={styles.sectionContainer}>
-          <Text style={styles.sectionHeading}>Today's Kitchen Status</Text>
+          <Text style={[styles.sectionHeading, { color: t.text }]}>Today's Kitchen Status</Text>
 
-          <Card style={styles.statusCard}>
+          <Card style={[styles.statusCard, { backgroundColor: t.card, borderColor: t.border }]}>
             <View style={styles.statusHeaderRow}>
-              <View style={styles.statusChip}>
-                <View style={styles.greenDotSmall} />
-                <Text style={styles.statusChipText}>Preparing Lunch</Text>
+              <View style={[styles.statusChip, { backgroundColor: isDark ? 'rgba(122, 147, 104, 0.2)' : 'rgba(75, 93, 58, 0.08)' }]}>
+                <View style={[styles.greenDotSmall, { backgroundColor: t.primary }]} />
+                <Text style={[styles.statusChipText, { color: t.primary }]}>Preparing Lunch</Text>
               </View>
-              <Text style={styles.statusProgressPercent}>78% Complete</Text>
+              <Text style={[styles.statusProgressPercent, { color: t.text }]}>78% Complete</Text>
             </View>
 
             {/* Progress Track Bar */}
-            <View style={styles.progressTrackBg}>
-              <View style={[styles.progressTrackFill, { width: '78%' }]} />
+            <View style={[styles.progressTrackBg, { backgroundColor: t.border }]}>
+              <View style={[styles.progressTrackFill, { width: '78%', backgroundColor: t.primary }]} />
             </View>
 
             {/* Timeline Steps */}
@@ -329,27 +396,27 @@ export default function KitchenScreen() {
               
               {/* Step 1 */}
               <View style={styles.timelineStep}>
-                <View style={[styles.stepDot, styles.stepDotActive]} />
-                <Text style={styles.stepTitle}>Preparing</Text>
-                <Text style={styles.stepTime}>11:30 AM</Text>
+                <View style={[styles.stepDot, { backgroundColor: t.primary }]} />
+                <Text style={[styles.stepTitle, { color: t.text }]}>Preparing</Text>
+                <Text style={[styles.stepTime, { color: t.sub }]}>11:30 AM</Text>
               </View>
 
-              <View style={styles.timelineConnector} />
+              <View style={[styles.timelineConnector, { backgroundColor: t.border }]} />
 
               {/* Step 2 */}
               <View style={styles.timelineStep}>
-                <View style={styles.stepDot} />
-                <Text style={styles.stepTitle}>Packaging</Text>
-                <Text style={styles.stepTime}>12:10 PM</Text>
+                <View style={[styles.stepDot, { backgroundColor: t.border }]} />
+                <Text style={[styles.stepTitle, { color: t.sub }]}>Packaging</Text>
+                <Text style={[styles.stepTime, { color: t.sub }]}>12:10 PM</Text>
               </View>
 
-              <View style={styles.timelineConnector} />
+              <View style={[styles.timelineConnector, { backgroundColor: t.border }]} />
 
               {/* Step 3 */}
               <View style={styles.timelineStep}>
-                <View style={styles.stepDot} />
-                <Text style={styles.stepTitle}>Dispatch</Text>
-                <Text style={styles.stepTime}>12:45 PM</Text>
+                <View style={[styles.stepDot, { backgroundColor: t.border }]} />
+                <Text style={[styles.stepTitle, { color: t.sub }]}>Dispatch</Text>
+                <Text style={[styles.stepTime, { color: t.sub }]}>12:45 PM</Text>
               </View>
 
             </View>
@@ -2153,6 +2220,20 @@ const styles = StyleSheet.create({
     height: 52,
     borderRadius: 26,
     backgroundColor: '#C96B3C',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  ingredientsEntryCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  ingredientsArrowCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
   },

@@ -4,11 +4,13 @@ import * as Location from 'expo-location';
 import { AppContext } from './context';
 import { Screen, Meal, AppTheme } from '../core/constants/types';
 import { MEALS } from '../core/constants/meals';
-import { theme } from '../design-system';
+import { theme } from '../design-system/theme';
 
 const LIGHT = theme.colors.light;
 const DARK = theme.colors.dark;
 import { storage } from '../core/utils/storage';
+import { WalletProvider } from '../core/context/WalletContext';
+import { SubscriptionProvider } from '../core/context/SubscriptionContext';
 
 interface AppProviderProps {
   children: React.ReactNode;
@@ -21,10 +23,15 @@ export default function AppProvider({ children }: AppProviderProps) {
   const [screenStack, setScreenStack] = useState<Screen[]>(['splash']);
   const [toast, setToast] = useState<string | null>(null);
 
-  // Load saved onboarding state on mount
+  // Load saved state on mount
   useEffect(() => {
     async function loadSavedState() {
       try {
+        const savedTheme = await storage.getItem('koikoi_theme_mode');
+        if (savedTheme === 'light' || savedTheme === 'dark' || savedTheme === 'system') {
+          setThemeMode(savedTheme as AppTheme);
+        }
+
         const savedScreen = await storage.getItem('koikoi_onboarding_screen');
         const savedUser = await storage.getItem('koikoi_onboarding_user');
         const savedSubscribed = await storage.getItem('koikoi_onboarding_subscribed');
@@ -55,13 +62,26 @@ export default function AppProvider({ children }: AppProviderProps) {
           setSetup3SubPage(parseInt(savedSetup3SubPage, 10) || 1);
         }
       } catch (err) {
-        console.warn('Failed to load saved onboarding progress:', err);
+        console.warn('Failed to load saved state:', err);
       }
     }
     loadSavedState();
   }, []);
 
-  // App State
+  // Save theme mode when updated
+  useEffect(() => {
+    async function saveTheme() {
+      try {
+        await storage.setItem('koikoi_theme_mode', themeMode);
+      } catch (err) {
+        console.warn('Failed to save theme mode:', err);
+      }
+    }
+    saveTheme();
+  }, [themeMode]);
+
+
+  // App State with Demo Profile Defaults
   const [user, setUser] = useState({
     name: '',
     email: '',
@@ -70,11 +90,12 @@ export default function AppProvider({ children }: AppProviderProps) {
     foodPref: 'Veg',
     height: '',
     weight: '',
+    goalWeight: '',
     goal: 'Healthy Living',
     address: '',
     addressLabel: 'Home',
     dob: '',
-    gender: 'Male',
+    gender: 'Female',
     houseNo: '',
     street: '',
     landmark: '',
@@ -596,7 +617,11 @@ export default function AppProvider({ children }: AppProviderProps) {
         calorieCalc
       }}
     >
-      {children}
+      <WalletProvider>
+        <SubscriptionProvider>
+          {children}
+        </SubscriptionProvider>
+      </WalletProvider>
     </AppContext.Provider>
   );
 }
